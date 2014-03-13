@@ -2,10 +2,13 @@ ANDROID_CXX  = /opt/ndk_standalone/bin/arm-linux-androideabi-gcc
 
 
 ndk_build: jni/librust_android.a
-	echo "
+	echo "building ndk sample, including rust code"
 	ndk-build
+	echo "packaging apk.."
 	ant debug
+	echo "deploying apk.."
 	adb install -r bin/NativeActivity-debug.apk
+	echo "Starting apk..."
 	adb shell am start -n com.example.native_activity/android.app.NativeActivity
 
 
