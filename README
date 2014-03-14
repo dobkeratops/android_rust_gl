@@ -4,10 +4,9 @@ Displays spinning tori in a lisajous; derived from NDK "native-activity" sample.
 its just a quick sample, and pretty messy, but minimal.
 
 To run: 
-[1] consult android docs for how to configure the android project .. (android project update ... various options)
-[2]
 cd android
-make
+[1] android update project --target "android-19" --name NativeActivity  --subprojects --path .
+[2] make 
 
 .. that should compile and deploy the project.
 make in the project root should run the same rendering code on desktop.
