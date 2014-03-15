@@ -72,8 +72,8 @@ struct AndroidInput {
 
 struct AndroidInput	g_Input;	// dodgy global for interfacing, todo , rust passes object pointer?
 
-void	android_get_inputs(struct AndroidInput* out) {
-	*out = g_Input;
+struct AndroidInput	android_get_inputs() {
+	return	g_Input;
 }
 
 void	AndroidInput_Init(struct AndroidInput* ai) {
