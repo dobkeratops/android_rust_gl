@@ -18,6 +18,7 @@
 //BEGIN_INCLUDE(all)
 #include <jni.h>
 #include <errno.h>
+#include <string.h>
 
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
@@ -28,6 +29,8 @@
 #include <android/sensor.h>
 #include <android/log.h>
 #include <android_native_app_glue.h>
+#include <android/input.h>
+#include <android/keycodes.h>
 
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
@@ -50,6 +53,61 @@ struct saved_state {
     int32_t y;
 };
 
+struct Vec3f {
+	float x,y,z;	// todo: add rotaion info, incase its usefull..
+};
+
+#define MAX_TOUCH_POINTERS	12
+struct TouchPointer {
+	struct Vec3f pos; int32_t active;
+};
+
+struct AndroidInput {
+	struct AndroidInputSub_s {
+		struct TouchPointer pointers[MAX_TOUCH_POINTERS];
+		struct Vec3f	accelerometer;
+	} curr,prev;
+	// TODO: gamepad, keyboard... they do exist
+};
+
+struct AndroidInput	g_Input;	// dodgy global for interfacing, todo , rust passes object pointer?
+
+void	android_get_inputs(struct AndroidInput* out) {
+	*out = g_Input;
+}
+
+void	AndroidInput_Init(struct AndroidInput* ai) {
+
+	int	i,j;
+	
+
+	for (i=0; i<MAX_TOUCH_POINTERS; i++) {
+		struct TouchPointer p={ {0.0f,0.0f,0.0f}, 0};
+		ai->curr.pointers[i]=p;
+	}
+	struct Vec3f v={0.0f,0.0f,0.0f};
+	ai->curr.accelerometer=v;
+
+	ai->prev=ai->curr;
+}
+void AndroidInput_Update(struct AndroidInput* ai) {
+	ai->prev=ai->curr;
+}
+
+void AndroidInput_Dump(struct AndroidInput* ai) {
+	char ctrl_info[1024]={0},ctrl[256];
+	int	i;
+	sprintf(ctrl_info,"acc:%.3f,%.3f,%.3f\t", ai->curr.accelerometer.x,ai->curr.accelerometer.y,ai->curr.accelerometer.z);
+	for (i=0; i<MAX_TOUCH_POINTERS; i++) {
+		struct TouchPointer* tp=&ai->curr.pointers[i];
+		if (tp->active) {
+			sprintf(ctrl,"\t(%d:(%.3f,%.3f,%.3f))", i, tp->pos.x,tp->pos.y,tp->pos.z);
+			strcat(ctrl_info,ctrl);
+		}
+	}
+	strcat(ctrl_info,"\n");
+	LOGI("%s", ctrl_info);
+}
 
 /**
  * Shared state for our app.
@@ -67,8 +125,15 @@ struct engine {
     EGLContext context;
     int32_t width;
     int32_t height;
+
+	struct AndroidInput inputs;
+
     struct saved_state state;
 };
+
+void Engine_Init(struct engine* e) {
+	AndroidInput_Init(&e->inputs);
+}
 
 /**
  * Initialize an EGL context for the current display.
@@ -155,6 +220,7 @@ static void engine_draw_frame(struct engine* engine)
         return;
     }
 	rust_android_render();
+	AndroidInput_Update(&engine->inputs);	// cache previous controller states for next time..
     eglSwapBuffers(engine->display, engine->surface);
 }
 
@@ -182,14 +248,57 @@ static void engine_term_display(struct engine* engine) {
 /**
  * Process the next input event.
  */
+
 static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) {
     struct engine* engine = (struct engine*)app->userData;
-    if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
-        engine->animating = 1;
-        engine->state.x = AMotionEvent_getX(event, 0);
-        engine->state.y = AMotionEvent_getY(event, 0);
-        return 1;
+	int aiet=AInputEvent_getType(event);
+	LOGI("****INPUT EVENT:%d", aiet);
+
+
+    if (aiet == AINPUT_EVENT_TYPE_MOTION) {
+
+		int aiact= AMotionEvent_getAction(event);
+		LOGI("****MOTION_EVENT_ACTION:%x", aiact);
+		int act=aiact & AMOTION_EVENT_ACTION_MASK;
+		int aiacti=(aiact & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK)/(AMOTION_EVENT_ACTION_MASK+1);
+//		ASSERT(AMOTION_EVENT_ACTION_MASK==0xff);
+		{
+
+			int num_pointers = AMotionEvent_getPointerCount(event);
+			int	i;
+		
+//			for (i=0; i<num_pointers; i++) {
+//				engine->inputs.curr.pointers[i].active=0;
+//			}
+			for (i=0; i<num_pointers; i++) {
+				int id = AMotionEvent_getPointerId(event, i);
+	
+
+				float x=AMotionEvent_getX(event, i);
+				float y=AMotionEvent_getY(event, i);
+				float z=AMotionEvent_getPressure(event, i);
+				struct TouchPointer p={{x,y,z},1};
+				if (id >=0 && id<MAX_TOUCH_POINTERS) {
+					engine->inputs.curr.pointers[id]=p;
+				}
+			}
+			// Handle ACTION_UPs - overwrites '.active' set above.
+			if (act==AMOTION_EVENT_ACTION_POINTER_UP) {
+				if (aiacti >=0 && aiacti<MAX_TOUCH_POINTERS) {
+					engine->inputs.curr.pointers[aiacti].active=0;
+				}
+			} else if (act==AMOTION_EVENT_ACTION_UP) {
+				// primary pointer up = all...
+				int	i;
+				for (i=0; i<MAX_TOUCH_POINTERS; i++) {
+					engine->inputs.curr.pointers[i].active=0;
+				}
+			}
+		}	
+       return 1;	
     }
+	else LOGI("input event unhandled=%d",aiet);
+
     return 0;
 }
 
@@ -253,6 +362,7 @@ void android_main(struct android_app* state) {
 	LOGI("******************************************");
 	LOGI("******************************************");
     struct engine engine;
+	Engine_Init(&engine);
     // Make sure glue isn't stripped.
     app_dummy();
 
@@ -300,6 +410,8 @@ void android_main(struct android_app* state) {
                     int had_sensor=0;
                     while (ASensorEventQueue_getEvents(engine.sensorEventQueue,
                             &event, 1) > 0) {
+						struct Vec3f v={event.acceleration.x, event.acceleration.y, event.acceleration.z};
+						engine.inputs.curr.accelerometer=v;
 						if (!engine.animating) {
 							static int delay=0; delay++;
 							if (!(delay & 31)) {
@@ -326,6 +438,8 @@ void android_main(struct android_app* state) {
                 engine.state.angle = 0;
             }
 
+			g_Input = engine.inputs;
+			AndroidInput_Dump(&g_Input);
             engine_draw_frame(&engine);
         }
     }

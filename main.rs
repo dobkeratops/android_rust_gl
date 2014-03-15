@@ -57,6 +57,10 @@ fn main() {
 
 //////////////////////////////////////////////////
 // android hooks
+// These functions are statically linked by the
+// modified sample code main loop giving various entry points
+// for rust
+// no rendering is done there, just surface creation and swap.
 
 
 #[fixed_stack_segment]

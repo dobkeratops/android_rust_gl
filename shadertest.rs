@@ -885,7 +885,7 @@ pub fn	render_no_swap()
 //		glFrontFace(GL_CCW);
 		let matI = Matrix4::<Vec4>::identity();
 		let matP = matrix::projection_frustum(-0.5f32,0.5f32,-0.5f32,0.5f32, 90.0f32, 1.0f32, 0.5f32,5.0f32);
-		dump!(matI);
+
 		let pi=3.14159265f32;
 		let tau=pi*2.0f32;
 
@@ -1023,9 +1023,8 @@ pub fn shadertest_main()
 		glutIdleFunc(idle as *u8);
 		glEnable(GL_DEPTH_TEST);
 
-		println!("{:?}",g_grid_mesh);
+		logi!(g_grid_mesh);
 
 		glutMainLoop();
 	}
 }
-
