@@ -127,6 +127,7 @@ extern
 	pub fn glFlush(  );
 	pub fn glHint( target:GLenum, mode:GLenum );
 	pub fn glClearDepth(  depth:GLclampd );
+	pub fn glClearDepthf(  depth:GLfloat );
 	pub fn glDepthFunc(  func:GLenum );
 	pub fn glDepthMask( flag:GLboolean  );
 	pub fn glDepthRange( near_val:GLclampd , far_v:GLclampd );

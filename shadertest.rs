@@ -24,12 +24,25 @@ pub use std::io;
 use gl=r3d::rawglbinding;
 
 #[cfg(target_os = "android")]
-extern { fn android_logw(s:*c_char);}
+extern { fn android_log_print(lvl:c_int,  s:*c_char);}
 
 #[cfg(not(target_os = "android"))]
-unsafe fn android_logw(s:*c_char) {
+#[no_mangle]
+extern fn android_log_print(lvl:c_int,  s:*c_char) {
 	::std::io::println(s.to_str());
 }
+
+fn log_print(level:int, s:&str) {
+	unsafe {
+		android_log_print(level as c_int, c_str(s));
+	}
+}
+
+
+macro_rules! logi{
+	($($arg:tt)*)=>( log_print(5, format!("{:s}:{:u}: ",file!(),line!())+format!($($arg)*)))
+}
+
 
 
 #[link(name = "GLU")]
@@ -110,55 +123,54 @@ unsafe fn get_uniform_location(shader_prog:GLuint, name:&str)->GLint {
 
 unsafe fn	create_and_compile_shader(shader_type:GLenum, source:&~[&str]) ->GLuint
 {
-	android_logw(c_str("create_and_compile_shader"));
+	logi!("create_and_compile_shader");
 	let	shader = glCreateShader(shader_type );
-	android_logw(c_str(format!("shader={:?}",shader)));
+	logi!("shader={:?}",shader);
 
 	let sources_as_c_str=vec::from_fn(source.len(), |x|c_str(source[x]) );
 	let length = vec::from_fn(source.len() , |x|source[x].len() as c_int );
-	for i in range(0,source.len()) { io::println(format!("source adr={:?} source len={:?} ",sources_as_c_str[i],length[i]))};
+	for i in range(0,source.len()) { logi!("source adr={:?} source len={:?} ",sources_as_c_str[i],length[i]) };
 	
-	android_logw(c_str("set shader source.."));
+	logi!("set shader source..");
 	glShaderSource(shader, source.len() as GLsizei, &sources_as_c_str[0], 0 as *c_int/*(&length[0])*/);
-	android_logw(c_str("compile.."));
+	logi!("compile..");
 	glCompileShader(shader);
 	let	status:c_int=0;
-	android_logw(c_str("get status.."));
+	logi!("get status..");
 	glGetShaderiv(shader,GL_COMPILE_STATUS,&status);
-	android_logw(c_str("got status"));
-	android_logw(c_str(format!("status = {:?}",status)));
+	logi!("got status");
+	logi!("status = {:?}",status);
 	if status==GL_FALSE as GLint
 	{
-		android_logw(c_str(format!("failed, getting log..")));
+		logi!("failed, getting log..");
 		let compile_log:[c_char,..512]=[0 as c_char,..512]; //int len;
 	
 		let log_len:c_int=0;
 		glGetShaderInfoLog(shader, 512,&log_len as *c_int, &compile_log[0]);
-		android_logw(
-			c_str(format!("Compile Shader Failed: logsize={:?}",
-				log_len)));
+		logi!("Compile Shader Failed: logsize={:?}",
+				log_len);
 		
-		io::println(format!("compile shader {:?} failed: \n{:?}\n", shader, 
-			c_str::CString::new(&compile_log[0],false).as_str()));
+		logi!("compile shader {:?} failed: \n{:?}\n", shader, 
+			c_str::CString::new(&compile_log[0],false).as_str());
 
-		for s in source.iter() { android_logw(c_str(*s)) }
-		android_logw(
+		for s in source.iter() { logi!("{:?}",*s) }
+		logi!("{:?}",
 			match c_str::CString::new(&compile_log[0],false).as_str() {
-				Some(s)=>c_str(s),
-				None=>c_str("couldn't unwrap error lol"),
+				Some(s)=>s,
+				None=>"couldn't unwrap error lol",
 			}
 		);
 		for i in range(0,log_len) {
-			android_logw(c_str(format!("{:?}",compile_log[i])));
+			logi!("{:?}",compile_log[i]);
 		}
 		loop{}
 
 	}	
 	else {
-		io::println(format!("create shader{:?} - compile suceeded\n",  shader));
-		android_logw(c_str(format!("create shader{:?} - compile suceeded\n",  shader)));
+
+		logi!("create shader{:?} - compile suceeded\n",  shader);
 	}
-	android_logw(c_str("create shader-done"));
+	logi!("create shader-done");
 	shader
 }
 
@@ -193,11 +205,11 @@ unsafe fn	create_shader_program(
 			vertexShaderSource:&~[&str])->(PixelShader,VertexShader,ShaderProgram)
 {
 
-	android_logw(c_str("create_shader_program"));
+	logi!("create_shader_program");
 
 	let pixelShaderOut = create_and_compile_shader(GL_FRAGMENT_SHADER, pixelShaderSource);
 	let vertexShaderOut = create_and_compile_shader(GL_VERTEX_SHADER, vertexShaderSource);	let	prog = glCreateProgram();
-	android_logw(c_str("bind attrib locations"));
+	logi!("bind attrib locations");
 	
 	// assign attribute names before linking
 
@@ -214,23 +226,23 @@ unsafe fn	create_shader_program(
 	glAttachShader(prog, pixelShaderOut);
 	glAttachShader(prog, vertexShaderOut);
 
-	io::println(format!("linking verteshader{:?}, pixelshader{:?} to program{:?}\n", vertexShaderOut, pixelShaderOut, prog));
+	logi!("linking verteshader{:?}, pixelshader{:?} to program{:?}\n", vertexShaderOut, pixelShaderOut, prog);
 	glLinkProgram(prog);
 	let mut err:GLint=0;
 	glGetProgramiv(prog,GL_LINK_STATUS,(&err) as *GLint);
 	
 	let x=glGetAttribLocation(prog,c_str("a_color"));
-	io::println(format!("write,read attrib location in prog {:?} a_color={:?}", prog, x));
+	logi!("write,read attrib location in prog {:?} a_color={:?}", prog, x);
 
 	
 	if err as GLenum==GL_INVALID_VALUE || err as GLenum==GL_INVALID_OPERATION {
 		let mut buffer=[0 as GLchar,..1024];
 		let mut len:GLint=0;
 		glGetProgramInfoLog(prog,1024,&len,&buffer[0]);
-		io::println(format!("link program failed: {:?}",err));
-		io::println(c_str::CString::new(&buffer[0],false).as_str().unwrap());
+		logi!("link program failed: {:?}",err);
+		logi!("{:?}",c_str::CString::new(&buffer[0],false).as_str().unwrap());
 	} else {
-		io::println(format!("link program status {:?}", err));
+		logi!("link program status {:?}", err);
 	}
 
 	(pixelShaderOut,vertexShaderOut,prog)
@@ -652,7 +664,7 @@ fn	create_shaders()
 {
 	
 	unsafe {
-		android_logw(c_str("create shaders"));
+		logi!("create shaders");
 		let (vsh,psh,prg)=create_shader_program( 
 //						&~[g_PS_ConcatForAndroid], // this works!
 //						&~[g_PS_MinimumDebugAndroidCompiler],
@@ -864,18 +876,25 @@ static g_num_torus:int = 256;
 
 pub fn	render_no_swap() 
 {
-	//android_logw("render noswap");
+	//logw("render noswap");
 	
-	::std::io::println("shadetest::render_no_swap");
+
 	lazy_create_resources();	
 	unsafe {
-		android_logw(c_str("render_no_swap"));
-	::std::io::println(format!("{:?}",g_grid_mesh));
+		logi!("render_no_swap");
 		g_angle+=0.0025f32;
 
 //		glDrawBuffer(GL_BACK);
 		glClearColor(g_fog_color.x+sin(g_angle*2.0),g_fog_color.y,g_fog_color.z,g_fog_color.w);
+
+		glClearDepthf(1.0f32);
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+		glEnable(GL_DEPTH_TEST);
+		glDepthMask(GL_TRUE);
+		glDepthFunc(GL_LEQUAL);
+
+		glEnable(GL_CULL_FACE);
+//		glFrontFace(GL_CCW);
 		let matI = Matrix4::<Vec4>::identity();
 		let matP = matrix::projection_frustum(-0.5f32,0.5f32,-0.5f32,0.5f32, 90.0f32, 1.0f32, 0.5f32,5.0f32);
 
@@ -971,14 +990,13 @@ pub fn lazy_create_resources() {
 	
 	unsafe {
 		if g_lazy_init==false {
-			::std::io::println("lazy init shadertest resources\n");
-			android_logw(c_str("lazy init shadertest resources \n"));
+
+			logi!("lazy init shadertest resources \n");
 			create_shaders();
 			create_textures();
 			g_lazy_init=true;
 			g_grid_mesh = Mesh::new_torus((16,16)); //new GridMesh(16,16);
 		} else {
-			::std::io::println("lazy init alredy done ok\n");
 		}
 	}
 }
@@ -993,10 +1011,12 @@ pub fn render_and_swap() {
 }
 
 // desktop main.
+
+#[cfg(not(target_os = "android"))]
 pub fn shadertest_main()
 {
 	unsafe {
-		android_logw(c_str("shadertest_main"));
+		logi!("shadertest_main");
 		let mut argc:c_int=0;
 		let argv:~[*c_char]=~[];
 		glutInit((&mut argc) as *mut c_int,0 as **c_char );

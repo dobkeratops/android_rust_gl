@@ -31,6 +31,7 @@ mod shadertest;
 #[link(name = "stdc++")]
 
  
+#[cfg(not(target_os = "android"))]
 fn main() {
 	shadertest::shadertest_main();
 }
@@ -52,6 +53,8 @@ pub extern fn   rust_android_get_value()->libc::c_int {
 pub extern fn   rust_android_init() {
 	shadertest::lazy_create_resources();
 }
+
+// todo - call to recreate resources. lazy init isn't the right way! it must always init when called.
 
 #[cfg(target_os = "android")]
 #[no_mangle]

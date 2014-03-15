@@ -11,11 +11,12 @@
 #include <GLES2/gl2ext.h>
 
 
-#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
-#define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
+#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "rust", __VA_ARGS__))
+#define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "rust", __VA_ARGS__))
 
-void android_logw(const char* txt) {
-	LOGW("%s",txt);
+void android_log_print(int level, const char* txt) {
+	((void)__android_log_print( level, "rust","%s",  txt));
+
 }
 
 // todo..
