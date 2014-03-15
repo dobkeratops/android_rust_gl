@@ -32,6 +32,15 @@
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
 
+
+// statically linked hooks for the main application to interact with the activity cycle..
+extern void rust_android_init_app();
+extern void rust_android_init_display();	// creating display
+//extern void rust_android_event();			// IO events ?
+extern void rust_android_render();
+extern void rust_android_term_display();	// losing display
+extern void rust_android_term_app();
+
 /**
  * Our saved state data.
  */
@@ -131,37 +140,21 @@ static int engine_init_display(struct engine* engine) {
     engine->state.angle = 0;
     engine->animating=1;
 
-    glEnable(GL_CULL_FACE);
-
-	rust_android_init();
-
+	rust_android_init_display();
     return 0;
 }
 
 /**
  * Just the current frame in the display.
  */
- 
-extern int rust_android();
-extern void rust_android_render();
-extern void rust_android_init();
-extern int another_cfunc();
 
-static void engine_draw_frame(struct engine* engine) {
+static void engine_draw_frame(struct engine* engine) 
+{
     if (engine->display == NULL) {
         // No display.
         return;
     }
-
-    // Just fill the screen with a color.
-//    glClearColor(((float)engine->state.x)/engine->width, engine->state.angle,
-    		//another_cfunc()/255.f
-//            ((float)engine->state.y)/engine->height
-//            , 1);
-//    glClear(GL_COLOR_BUFFER_BIT);
-
 	rust_android_render();
-
     eglSwapBuffers(engine->display, engine->surface);
 }
 
@@ -183,6 +176,7 @@ static void engine_term_display(struct engine* engine) {
     engine->display = EGL_NO_DISPLAY;
     engine->context = EGL_NO_CONTEXT;
     engine->surface = EGL_NO_SURFACE;
+	rust_android_term_display();
 }
 
 /**
@@ -262,8 +256,7 @@ void android_main(struct android_app* state) {
     // Make sure glue isn't stripped.
     app_dummy();
 
-	//rust_android_foo();
-
+	rust_android_init_app();
     memset(&engine, 0, sizeof(engine));
     state->userData = &engine;
     state->onAppCmd = engine_handle_cmd;
@@ -331,15 +324,12 @@ void android_main(struct android_app* state) {
             engine.state.angle += .01f;
             if (engine.state.angle > 1) {
                 engine.state.angle = 0;
-	            LOGI("****** Rust Says %d ****", rust_android_get_value());
             }
-//            rusty_foo();
 
-            // Drawing is throttled to the screen update rate, so there
-            // is no need to do timing here.
             engine_draw_frame(&engine);
         }
     }
+	rust_android_term_app();
 }
 
 //END_INCLUDE(all)

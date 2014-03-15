@@ -23,41 +23,28 @@ pub use r3d::rawglbinding::*;
 pub use std::io;
 use gl=r3d::rawglbinding;
 
-#[cfg(target_os = "android")]
-extern { fn android_log_print(lvl:c_int,  s:*c_char);}
 
-#[cfg(not(target_os = "android"))]
-#[no_mangle]
-extern fn android_log_print(lvl:c_int,  s:*c_char) {
-	::std::io::println(s.to_str());
+#[macro_escape]
+macro_rules! logi{
+	($($arg:tt)*)=>( ::log_print(5, format!("{:s}:{:u}: ",file!(),line!())+format!($($arg)*)))
 }
-
-fn log_print(level:int, s:&str) {
-	unsafe {
-		android_log_print(level as c_int, c_str(s));
-	}
-}
-
 
 macro_rules! logi{
-	($($arg:tt)*)=>( log_print(5, format!("{:s}:{:u}: ",file!(),line!())+format!($($arg)*)))
+	($($arg:tt)*)=>( ::log_print(5, format!("{:s}:{:u}: ",file!(),line!())+format!($($arg)*)))
 }
 
+// debug macro: just print the value of an expression, at a specific location
+macro_rules! dump{ ($($a:expr),*)=>
+    (   {   let mut txt=~"";
+            $( { txt=txt.append(
+                 format!("{:s}={:?}",stringify!($a),$a)+",")
+                }
+            );*;
+            logi!("{:s}",txt);
+        }
+    )
+}
 
-
-#[link(name = "GLU")]
-#[link(name = "Xext")]
-#[link(name = "glut")]
-#[link(name = "GL")]
-#[link(name = "stdc++")]
-#[link(name = "hello")]
-//#[link(name = "GLEW")]
-
-
-
-//#define fbx_printf printf
-//#define ASSERT(X)
-//#include "texture.h"
 
 /*
 enum VertexAttrIndex
@@ -877,11 +864,10 @@ static g_num_torus:int = 256;
 pub fn	render_no_swap() 
 {
 	//logw("render noswap");
-	
 
-	lazy_create_resources();	
 	unsafe {
-		logi!("render_no_swap");
+
+		assert!(g_resources_init==true)		//logi!("render_no_swap"); // once..
 		g_angle+=0.0025f32;
 
 //		glDrawBuffer(GL_BACK);
@@ -897,7 +883,7 @@ pub fn	render_no_swap()
 //		glFrontFace(GL_CCW);
 		let matI = Matrix4::<Vec4>::identity();
 		let matP = matrix::projection_frustum(-0.5f32,0.5f32,-0.5f32,0.5f32, 90.0f32, 1.0f32, 0.5f32,5.0f32);
-
+		dump!(matI);
 		let pi=3.14159265f32;
 		let tau=pi*2.0f32;
 
@@ -963,6 +949,8 @@ fn	create_textures() {
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT  as GLint);
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT  as GLint);
 
+
+
 		let	(usize,vsize)=(256,256);
 		let buffer:~[u32] = vec::from_fn(usize*vsize,|index|{
 				let (i,j)=num::div_rem(index,usize);
@@ -985,19 +973,20 @@ fn	create_textures() {
 pub fn create_static_resources() {
 	::std::io::println("dummy create, its done lazy now");
 }
-static mut g_lazy_init:bool=false;
-pub fn lazy_create_resources() {
+static mut g_resources_init:bool=false;
+pub fn create_resources() {
 	
 	unsafe {
-		if g_lazy_init==false {
-
-			logi!("lazy init shadertest resources \n");
-			create_shaders();
-			create_textures();
-			g_lazy_init=true;
-			g_grid_mesh = Mesh::new_torus((16,16)); //new GridMesh(16,16);
-		} else {
-		}
+		logi!("shadertest Create Resources \n");
+		create_shaders();
+		create_textures();
+		g_grid_mesh = Mesh::new_torus((16,16)); //new GridMesh(16,16);
+		g_resources_init=true;
+	}
+}
+pub fn destroy_resources() {
+	unsafe {
+		g_resources_init=false;
 	}
 }
 
@@ -1016,7 +1005,8 @@ pub fn render_and_swap() {
 pub fn shadertest_main()
 {
 	unsafe {
-		logi!("shadertest_main");
+//		dump!()
+
 		let mut argc:c_int=0;
 		let argv:~[*c_char]=~[];
 		glutInit((&mut argc) as *mut c_int,0 as **c_char );

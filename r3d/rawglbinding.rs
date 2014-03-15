@@ -255,5 +255,5 @@ extern
 	Text functions
 */
 	pub fn glutStrokeCharacter(c:*c_void, c:c_char);
-
 }
+
