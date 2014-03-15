@@ -28,10 +28,12 @@ use gl=r3d::rawglbinding;
 macro_rules! logi{
 	($($arg:tt)*)=>( ::log_print(5, format!("{:s}:{:u}: ",file!(),line!())+format!($($arg)*)))
 }
-
-macro_rules! logi{
-	($($arg:tt)*)=>( ::log_print(5, format!("{:s}:{:u}: ",file!(),line!())+format!($($arg)*)))
+macro_rules! logw{
+	($($arg:tt)*)=>( ::log_print(6, format!("{:s}:{:u}: ",file!(),line!())+format!($($arg)*)))
 }
+// todo, figure out the macro call passing those var args..
+
+
 
 // debug macro: just print the value of an expression, at a specific location
 macro_rules! dump{ ($($a:expr),*)=>
