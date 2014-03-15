@@ -85,28 +85,30 @@ pub extern fn   rust_android_term_display() {
 
 // todo - call to recreate resources. lazy init isn't the right way! it must always init when called.
 
-enum {MAX_TOUCH_POINTERS=12}
+static MAX_TOUCH_POINTERS:u32=12;
 
-struct AndroidInputSub_s {
+struct AndroidInputSub {
 	pointers:[((f32,f32,f32),u32),..12],
 	accelerometer:(f32,f32,f32),
 }
 
 struct AndroidInput {
 	// TODO: gamepad, keyboard... they do exist
-	curr:[AndroidInputSub],
-	prev:[AndroidInputSub]
+	curr:AndroidInputSub,
+	prev:AndroidInputSub
 }
-extern { fn android_get_inputs()->AndroidInput }
+extern { fn android_get_inputs()->AndroidInput; }
 
 
 #[cfg(target_os = "android")]
 #[no_mangle]
 pub extern fn   rust_android_render() {
 
-	let inp=android_get_inputs();
-	dump(inp);
-	
+	// Struct holding accumulated input state
+	let inp=unsafe {android_get_inputs()};
+
+//	logi!("input={:?}",inp);
+
 	shadertest::render_no_swap();
 }
 

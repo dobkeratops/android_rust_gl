@@ -249,16 +249,17 @@ static void engine_term_display(struct engine* engine) {
  * Process the next input event.
  */
 
+#define INPUT_LOG //
 static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) {
     struct engine* engine = (struct engine*)app->userData;
 	int aiet=AInputEvent_getType(event);
-	LOGI("****INPUT EVENT:%d", aiet);
+	INPUT_LOG("****INPUT EVENT:%d", aiet);
 
 
     if (aiet == AINPUT_EVENT_TYPE_MOTION) {
 
 		int aiact= AMotionEvent_getAction(event);
-		LOGI("****MOTION_EVENT_ACTION:%x", aiact);
+		INPUT_LOG("****MOTION_EVENT_ACTION:%x", aiact);
 		int act=aiact & AMOTION_EVENT_ACTION_MASK;
 		int aiacti=(aiact & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK)/(AMOTION_EVENT_ACTION_MASK+1);
 //		ASSERT(AMOTION_EVENT_ACTION_MASK==0xff);
@@ -297,7 +298,7 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
 		}	
        return 1;	
     }
-	else LOGI("input event unhandled=%d",aiet);
+	else INPUT_LOG("input event unhandled=%d",aiet);
 
     return 0;
 }
@@ -439,7 +440,7 @@ void android_main(struct android_app* state) {
             }
 
 			g_Input = engine.inputs;
-			AndroidInput_Dump(&g_Input);
+			//AndroidInput_Dump(&g_Input);	debug, show input struct
             engine_draw_frame(&engine);
         }
     }
