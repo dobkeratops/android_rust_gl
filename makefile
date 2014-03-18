@@ -1,5 +1,5 @@
 main : main.rs *.rs TAGS
-	rustc main.rs
+	rustc main.rs -C link-args="-lGL -lGLU -lglut -LXext"
 
 run: main
 	echo "make run"

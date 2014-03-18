@@ -1,4 +1,4 @@
-use std::cmp::*;
+
 use std::cmp;
 
 pub use std::num;
@@ -16,6 +16,29 @@ pub struct Vec3<T=f32> {x:T, y:T, z:T}
 
 #[deriving(Clone,Show)]
 pub struct Vec4<T=f32> {x:T, y:T, z:T, w:T}
+
+pub trait MyOrd : Num+Ord+Clone {	// relaxed handling of floats compared to s
+	fn cmp(self, other:Self)->cmp::Ordering;
+	fn min(a:Self,b:Self)->Self { match a.clone().cmp(b.clone()) { cmp::Less|cmp::Equal=>a,cmp::Greater=>b } }
+	fn max(a:Self,b:Self)->Self { match a.clone().cmp(b.clone()) { cmp::Greater|cmp::Equal=>a,cmp::Less=>b } }
+	fn clamp(a:Self, lo:Self,hi:Self)->Self { MyOrd::max(lo,MyOrd::min(a,hi)) }
+	fn clamps(a:Self, hi:Self)->Self { clamp(a,hi.clone(),-hi) }
+}
+impl MyOrd for f32 {
+	fn cmp(self, other:f32)->cmp::Ordering {
+		if self<other {cmp::Less} else if self>other {cmp::Greater} else {cmp::Equal}
+	}
+}
+impl MyOrd for i32 {
+	fn cmp(self, other:i32)->cmp::Ordering {
+		if self<other {cmp::Less} else if self>other {cmp::Greater} else {cmp::Equal}
+	}
+}
+impl MyOrd for int {
+	fn cmp(self, other:int)->cmp::Ordering {
+		if self<other {cmp::Less} else if self>other {cmp::Greater} else {cmp::Equal}
+	}
+}
 
 /*
 if default type params are working..
@@ -122,7 +145,7 @@ pub trait VecNumOps<T:Num> {
 	fn vsub(&self,b:&Self)->Self;
 	fn vfromXYZ(x:T,y:T,z:T)->Self;
 }
-pub trait VecCmpOps<T:Ord> {
+pub trait VecCmpOps<T:MyOrd> {
 	fn vmin(&self,b:&Self)->Self;
 	fn vmax(&self,b:&Self)->Self;
 }
@@ -245,12 +268,12 @@ impl<T:Clone+Num> VecNumOps<T> for Vec2<T> {
 	fn vsub(&self,b:&Vec2<T>)->Vec2<T>	{Vec2::new(self.x-b.x,self.y-b.y)}
 	fn vfromXYZ(x:T,y:T,_:T)->Vec2<T>{Vec2::new(x.clone(),y.clone())}
 }
-impl<T:Clone+Ord> VecCmpOps<T> for Vec2<T> {
-	fn vmin(&self,b:&Vec2<T>)->Vec2<T>	{Vec2::new(min(self.x.clone(),b.x.clone()),min(self.y.clone(),b.y.clone()))}
-	fn vmax(&self,b:&Vec2<T>)->Vec2<T>	{Vec2::new(max(self.x.clone(),b.x.clone()),max(self.y.clone(),b.y.clone()))}
+impl<T:Clone+MyOrd> VecCmpOps<T> for Vec2<T> {
+	fn vmin(&self,b:&Vec2<T>)->Vec2<T>	{Vec2::new(MyOrd::min(self.x.clone(),b.x.clone()),MyOrd::min(self.y.clone(),b.y.clone()))}
+	fn vmax(&self,b:&Vec2<T>)->Vec2<T>	{Vec2::new(MyOrd::max(self.x.clone(),b.x.clone()),MyOrd::max(self.y.clone(),b.y.clone()))}
 	
 }
-impl<T:Clone+Float> VecOps<T> for Vec2<T> {
+impl<T:Clone+Float+MyOrd> VecOps<T> for Vec2<T> {
 	fn vscale(&self,f:T)->Vec2<T>		{Vec2::new(self.x*f,self.y*f)}
 	fn vmul(&self,b:&Vec2<T>)->Vec2<T>	{Vec2::new(self.x*b.x,self.y*b.y)}
 	fn vsum_elems(&self)->T	{self.x+self.y}
@@ -302,18 +325,18 @@ impl<T:Clone+Num> VecNumOps<T> for Vec3<T> {
 	fn vsub(&self,b:&Vec3<T>)->Vec3<T>	{Vec3::new(self.x-b.x,self.y-b.y,self.z-b.z)}
 	fn vfromXYZ(x:T,y:T,z:T)->Vec3<T>{Vec3::new(x,y,z)}
 }
-impl<T:Clone+Ord> VecCmpOps<T> for Vec3<T> {
+impl<T:Clone+Ord+MyOrd> VecCmpOps<T> for Vec3<T> {
 	fn vmin(&self,b:&Vec3<T>)->Vec3<T>	{Vec3::new(
-									min(self.x.clone(),b.x.clone()),
-									min(self.y.clone(),b.y.clone()),
-									min(self.z.clone(),b.z.clone()))}
+									MyOrd::min(self.x.clone(),b.x.clone()),
+									MyOrd::min(self.y.clone(),b.y.clone()),
+									MyOrd::min(self.z.clone(),b.z.clone()))}
 	fn vmax(&self,b:&Vec3<T>)->Vec3<T>	{Vec3::new(
-									max(self.x.clone(),b.x.clone()),
-									max(self.y.clone(),b.y.clone()),
-									max(self.z.clone(),b.z.clone()))}
+									MyOrd::max(self.x.clone(),b.x.clone()),
+									MyOrd::max(self.y.clone(),b.y.clone()),
+									MyOrd::max(self.z.clone(),b.z.clone()))}
 }
 
-impl<T:Float> VecOps<T> for Vec3<T> {
+impl<T:Float+MyOrd> VecOps<T> for Vec3<T> {
 	// todo-trait VecPrimOps
 	
 	fn vscale(&self,f:T)->Vec3<T>		{Vec3::new(self.x*f,self.y*f,self.z*f)}
@@ -393,19 +416,19 @@ impl<T:Clone+Num> VecNumOps<T> for Vec4<T> {
 	fn vsub(&self,b:&Vec4<T>)->Vec4<T>	{Vec4::new(self.x-b.x,self.y-b.y,self.z-b.z,self.w-b.w)}
 	fn vfromXYZ(x:T,y:T,z:T)->Vec4<T>{Vec4::new(x,y,z,zero::<T>())}
 }
-impl<T:Clone+Ord> VecCmpOps<T> for Vec4<T> {
+impl<T:Clone+MyOrd> VecCmpOps<T> for Vec4<T> {
 	fn vmin(&self,b:&Vec4<T>)->Vec4<T>	{Vec4::new(
-									min(self.x.clone(),b.x.clone()),
-									min(self.y.clone(),b.y.clone()),
-									min(self.z.clone(),b.z.clone()),
-									min(self.w.clone(),b.w.clone()))}
+									MyOrd::min(self.x.clone(),b.x.clone()),
+									MyOrd::min(self.y.clone(),b.y.clone()),
+									MyOrd::min(self.z.clone(),b.z.clone()),
+									MyOrd::min(self.w.clone(),b.w.clone()))}
 	fn vmax(&self,b:&Vec4<T>)->Vec4<T>	{Vec4::new(
-									max(self.x.clone(),b.x.clone()),
-									max(self.y.clone(),b.y.clone()),
-									max(self.z.clone(),b.z.clone()),
-									max(self.w.clone(),b.w.clone()))}
+									MyOrd::max(self.x.clone(),b.x.clone()),
+									MyOrd::max(self.y.clone(),b.y.clone()),
+									MyOrd::max(self.z.clone(),b.z.clone()),
+									MyOrd::max(self.w.clone(),b.w.clone()))}
 }
-impl<T:Clone+Float> VecOps<T> for Vec4<T> {
+impl<T:Clone+Float+MyOrd> VecOps<T> for Vec4<T> {
 	// todo-trait VecPrimOps
 
 
@@ -491,22 +514,22 @@ pub fn v3lerp<T:Float>(a:&Vec3<T>,b:&Vec3<T>,f:T)->Vec3<T> {v3add(a,&v3scale(&v3
 pub struct MinMax<T> {  
 	min:T,max:T	
 }
-impl<T:Ord+Num,V:VecOps<T>> MinMax<V> { 
+impl<T:MyOrd+Num,V:VecOps<T>> MinMax<V> { 
 	fn size(&self)->V { self.max.vsub(&self.min) }
 }
-impl<T:Ord+Num+Float,V:VecOps<T>> MinMax<V> { 
+impl<T:MyOrd+Num+Float,V:VecOps<T>> MinMax<V> { 
 	fn centre(&self)->V { self.min.vadd(&self.max).vscale(one::<T>()/(one::<T>()+one::<T>())) }
 }
 
 // todo - math UT, ask if they can go in the stdlib.
 
-fn clamp<T:Num+Ord>(x:T, lo:T, hi:T)->T {
-	cmp::max(cmp::min(x,hi),lo)
+fn clamp<T:Num+MyOrd>(x:T, lo:T, hi:T)->T {
+	MyOrd::max(MyOrd::min(x,hi),lo)
 }
-fn clamp_s<T:Num+Ord>(value:T, limit:T)->T {
+fn clamp_s<T:Num+MyOrd>(value:T, limit:T)->T {
 	clamp(value,-limit,limit)
 }
-fn deadzone<T:Num+Ord+Zero>(value:T, deadzone:T)->T {
+fn deadzone<T:Num+MyOrd+Zero>(value:T, deadzone:T)->T {
 	if value<deadzone || value>deadzone { value }
 	else {zero()}
 }

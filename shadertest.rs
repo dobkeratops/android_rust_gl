@@ -806,7 +806,7 @@ fn safe_set_uniform(loc:GLint, pvalue:&Vec4<f32>) {
 	}
 }
 
-unsafe fn as_void_ptr<T:Any>(ptr:&T)->*c_void {
+unsafe fn as_void_ptr<T>(ptr:&T)->*c_void {
 	ptr as *T as *c_void
 }
 
@@ -1016,14 +1016,14 @@ pub fn shadertest_main()
 		glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 		let win=glutCreateWindow(c_str("Rust ShaderTest"));
 //		glewInit(); //TODO- where the hell is glewInit. -lGLEW isn't found
-		create_static_resources();
+		create_resources();
 		glDrawBuffer(GL_BACK);
 		glutReshapeWindow(1024,1024);
 		glutDisplayFunc(render_and_swap as *u8);
 		glutIdleFunc(idle as *u8);
 		glEnable(GL_DEPTH_TEST);
 
-		logi!(g_grid_mesh);
+//		logi!("{}",g_grid_mesh);
 
 		glutMainLoop();
 	}

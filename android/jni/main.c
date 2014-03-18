@@ -19,6 +19,7 @@
 #include <jni.h>
 #include <errno.h>
 #include <string.h>
+#include <stdio.h>
 
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
@@ -413,37 +414,31 @@ void android_main(struct android_app* state) {
                             &event, 1) > 0) {
 						struct Vec3f v={event.acceleration.x, event.acceleration.y, event.acceleration.z};
 						engine.inputs.curr.accelerometer=v;
-						if (!engine.animating) {
-							static int delay=0; delay++;
-							if (!(delay & 31)) {
-		                    LOGI("accelerometer: x=%f y=%f z=%f",
-		                        event.acceleration.x, event.acceleration.y,
-			                    event.acceleration.z);
-							}
-						}
+//						if (!engine.animating) {
+//							static int delay=0; delay++;
+//							if (!(delay & 31)) {
+//			                    LOGI("accelerometer: x=%f y=%f z=%f",
+//			                        event.acceleration.x, event.acceleration.y,
+//				                    event.acceleration.z);
+//							}
+//						}
                     }
                 }
             }
 
             // Check if we are exiting.
             if (state->destroyRequested != 0) {
-                engine_term_display(&engine);
-                return;
+				goto quit;
             }
         }
 
         if (engine.animating) {
-            // Done with events; draw next animation frame.
-            engine.state.angle += .01f;
-            if (engine.state.angle > 1) {
-                engine.state.angle = 0;
-            }
-
 			g_Input = engine.inputs;
-			//AndroidInput_Dump(&g_Input);	debug, show input struct
             engine_draw_frame(&engine);
         }
     }
+quit:
+	engine_term_display(&engine);
 	rust_android_term_app();
 }
 
