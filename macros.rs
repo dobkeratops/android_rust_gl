@@ -128,6 +128,21 @@ macro_rules! def_vertex_format{
 	)
 }
 
+macro_rules! def_vertex_attrib(
+	( enum $attrib_group_name:ident { $($attr_name:ident),* } ) =>(
+		enum $attrib_group_name {
+			$($attr_name),*
+		}
+		fn bind_vertex_attribs(prog:GLuint) {
+			use r3d::rawglbinding::{GLuint,GLfloat,GLsizei,glBindAttribLocation};
+			unsafe {
+				$(glBindAttribLocation(prog, $attr_name as GLuint, c_str( stringify!($attr_name) ) );
+				)*
+			}
+		}
+	)
+)
+
 
 pub fn test() {
 	def_new!{

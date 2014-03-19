@@ -30,10 +30,10 @@ use gl=r3d::rawglbinding;
 
 def_vertex_format!{
 	struct TestVertex {
-		pos:	[f32(GL_FLOAT),..3](::shadertest::VAI_pos),
-		color:	[f32(GL_FLOAT),..4](::shadertest::VAI_color),
-		norm:	[f32(GL_FLOAT),..3](::shadertest::VAI_norm),
-		tex0:	[f32(GL_FLOAT),..2](::shadertest::VAI_tex0)
+		pos:	[f32(GL_FLOAT),..3](a_pos),
+		color:	[f32(GL_FLOAT),..4](a_color),
+		norm:	[f32(GL_FLOAT),..3](a_norm),
+		tex0:	[f32(GL_FLOAT),..2](a_tex0)
 	}
 }
 
@@ -54,22 +54,6 @@ static mut g_textures:[GLuint,..5]=[0,..5];
 static mut g_shader_program:GLuint=-1;
 static mut g_pixel_shader:GLuint=-1;
 static mut g_vertex_shader:GLuint=-1;
-
-enum VertexAttrIndex {
-	VAI_pos		=0x0000,
-	VAI_color,
-	VAI_norm,
-	VAI_tex0,
-	VAI_tex1,
-	VAI_joints,
-	VAI_weights,
-	VAI_tangent,
-	VAI_binormal,
-	VAI_count
-}
-
-
-
 
 unsafe fn get_attrib_location(shader_prog:GLuint, name:&str)->GLint {
 	let r=glGetAttribLocation(shader_prog, c_str(name));
@@ -141,7 +125,7 @@ static g_vertex_attr_empty:VertexAttr=VertexAttr{
 	pos:-1,color:-1,norm:-1,tex0:-1,tex1:-1,joints:-1,weights:-1,tangent:-1,binormal:-1
 };
 
-static mut g_vertex_shader_attrib:VertexAttr=g_vertex_attr_empty;
+//static mut g_vertex_shader_attrib:VertexAttr=g_vertex_attr_empty;
 
 static mut g_shader_uniforms:UniformTable=g_uniform_table_empty;
 
@@ -150,6 +134,12 @@ static mut g_shader_uniforms:UniformTable=g_uniform_table_empty;
 pub type VertexShader=GLuint;
 pub type PixelShader=GLuint;
 pub type ShaderProgram=GLuint;
+
+def_vertex_attrib!{
+	enum VertexAttrib {
+		a_pos,a_color,a_norm,a_tex0,a_tex1
+	}
+}
 
 unsafe fn create_texture(filename:~str)->GLuint {
 	return g_textures[0]
@@ -170,18 +160,8 @@ unsafe fn	create_shader_program(
 	let pixelShaderOut = create_and_compile_shader(GL_FRAGMENT_SHADER, pixelShaderSource);
 	let vertexShaderOut = create_and_compile_shader(GL_VERTEX_SHADER, vertexShaderSource);	let	prog = glCreateProgram();
 	logi!("bind attrib locations");
-	
-	// assign attribute names before linking
 
-	glBindAttribLocation(prog, VAI_pos as GLuint, c_str("a_pos"));
-	glBindAttribLocation(prog, VAI_color as GLuint, c_str("a_color"));
-	glBindAttribLocation(prog, VAI_norm as GLuint, c_str("a_norm"));
-	glBindAttribLocation(prog, VAI_tex0 as GLuint, c_str("a_tex0"));
-	glBindAttribLocation(prog, VAI_tex1 as GLuint, c_str("a_tex1"));
-	glBindAttribLocation(prog, VAI_joints as GLuint, c_str("a_joints"));
-	glBindAttribLocation(prog, VAI_weights as GLuint, c_str("a_weights"));
-	glBindAttribLocation(prog, VAI_tangent as GLuint, c_str("a_tangent"));
-	glBindAttribLocation(prog, VAI_binormal as GLuint, c_str("a_binormal"));
+	bind_vertex_attribs(prog);	
 
 	glAttachShader(prog, pixelShaderOut);
 	glAttachShader(prog, vertexShaderOut);
@@ -638,7 +618,7 @@ fn	create_shaders()
 		let (vs, su)=map_shader_params(g_shader_program);
 		println!("vs={:?}",vs);
 		println!("su={:?}",su);
-		g_vertex_shader_attrib=vs;
+//		g_vertex_shader_attrib=vs;
 		g_shader_uniforms=su;
 	}
 }
@@ -796,7 +776,6 @@ impl Mesh {
 		glBindBuffer(GL_ARRAY_BUFFER, self.vbo);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.ibo);
 
-		let vsa=&g_vertex_shader_attrib;
 
 		safe_set_uniform1i(g_shader_uniforms.tex0, 0);
 		safe_set_uniform1i(g_shader_uniforms.tex1, 1);
