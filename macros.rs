@@ -94,7 +94,7 @@ macro_rules! def_struct{
 
 macro_rules! vertex_layout{
 	($layout_name:ident{
-			$($element:ident:begin $elem_t:ident,$elem_dim:expr=$elem_index:expr );*  
+			$($element:ident: [$elem_t:ident,..$elem_count:expr] = $elem_index:expr ),*  
 		}
 	)=>{
 		mod layout_name {
@@ -127,7 +127,7 @@ pub fn test() {
 		}
 	);
 // TODO: Vertex layout macro to make a struct, and 'glVertexAttribPointer' calls, seriealizer ..
-//	vertex_layout!(MyVertex{pos:begin GL_FLOAT,3 = 0; });
+	vertex_layout!(MyVertex{pos:[GL_FLOAT,..3] = 0; });
 	let f1=MyStruct::MyStruct{foo:1, bar:2.0};
 	let f2=MyStruct::new(2);
 	MyStruct::dump();
