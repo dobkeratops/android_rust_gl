@@ -1,13 +1,3 @@
-//pub use r3d::landscape::*;
-//pub use r3d::mesh::*;
-#[feature(globs)];
-#[feature(macro_rules)];
-#[feature(default_type_params)];
-#[allow(unused_variable)];
-#[allow(dead_code)];
-#[allow(unreachable_code)];
-#[allow(unused_unsafe)];
-#[allow(unused_mut)];
 #[macro_escape];
 
 
@@ -17,6 +7,7 @@ pub use std::mem;
 pub use std::cmp;
 pub use std::c_str;
 pub use std::libc;
+pub use std::vec_ng::Vec;
 use macros::*;
 
 pub use r3d::*;
@@ -65,18 +56,18 @@ unsafe fn get_uniform_location(shader_prog:GLuint, name:&str)->GLint {
 	r
 }
 
-unsafe fn	create_and_compile_shader(shader_type:GLenum, source:&~[&str]) ->GLuint
+unsafe fn	create_and_compile_shader(shader_type:GLenum, source:&Vec<&str>) ->GLuint
 {
 	logi!("create_and_compile_shader");
 	let	shader = glCreateShader(shader_type );
 	logi!("shader={:?}",shader);
 
-	let sources_as_c_str=vec::from_fn(source.len(), |x|c_str(source[x]) );
-	let length = vec::from_fn(source.len() , |x|source[x].len() as c_int );
-	for i in range(0,source.len()) { logi!("source adr={:?} source len={:?} ",sources_as_c_str[i],length[i]) };
+	let sources_as_c_str=Vec::from_fn(source.len(), |x|c_str(*source.get(x)) );
+	let length = Vec::from_fn(source.len() , |x|source.get(x).len() as c_int );
+	for i in range(0,source.len()) { logi!("source adr={:?} source len={:?} ",*sources_as_c_str.get(i),*length.get(i)) };
 	
 	logi!("set shader source..");
-	glShaderSource(shader, source.len() as GLsizei, &sources_as_c_str[0], 0 as *c_int/*(&length[0])*/);
+	glShaderSource(shader, source.len() as GLsizei, sources_as_c_str.get(0), 0 as *c_int/*(&length[0])*/);
 	logi!("compile..");
 	glCompileShader(shader);
 	let	status:c_int=0;
@@ -127,7 +118,7 @@ static g_vertex_attr_empty:VertexAttr=VertexAttr{
 
 //static mut g_vertex_shader_attrib:VertexAttr=g_vertex_attr_empty;
 
-static mut g_shader_uniforms:UniformTable=g_uniform_table_empty;
+//static mut g_shader_uniforms:UniformTable=g_uniform_table_empty;
 
 // Paired pixel and vertex shaders.
 
@@ -151,8 +142,8 @@ pub unsafe fn c_str(s:&str)->*c_char {
 extern {pub fn bind_attrib_locations(prog:c_uint);}
 
 unsafe fn	create_shader_program(
-			pixelShaderSource:&~[&str],
-			vertexShaderSource:&~[&str])->(PixelShader,VertexShader,ShaderProgram)
+			pixelShaderSource:&Vec<&str>,
+			vertexShaderSource:&Vec<&str>)->(PixelShader,VertexShader,ShaderProgram)
 {
 
 	logi!("create_shader_program");
@@ -503,91 +494,55 @@ void main() { \n\
 }\
 ";
 
+static mut g_uniform_table:Option<UniformTable> =None;
 
-struct UniformTable {
-	mat_proj:UniformIndex,
-	mat_model_view:UniformIndex,
-	mat_model_view_proj:UniformIndex,
-	mat_color:UniformIndex,
-	mat_env_map:UniformIndex,
-	tex0:UniformIndex,
-	tex1:UniformIndex,
-	cam_in_obj:UniformIndex,
-	ambient:UniformIndex,
-	diffuse_dx:UniformIndex,
-	diffuse_dy:UniformIndex,
-	diffuse_dz:UniformIndex,
-	specular_color:UniformIndex,
-	specular_dir:UniformIndex,
-	sky_dir:UniformIndex,
-	test_vec_4:UniformIndex,
-	fog_color:UniformIndex,
-	fog_falloff:UniformIndex,
-	light0_pos_r:UniformIndex,
-	light0_color:UniformIndex,
-}
-static g_uniform_table_empty:UniformTable= UniformTable{
-	mat_proj:-1,
-	mat_model_view:-1,
-	mat_model_view_proj:-1,
-	mat_color:-1,
-	mat_env_map:-1,
-	tex0:-1,
-	tex1:-1,
-	cam_in_obj:-1,
-	ambient:-1,
-	diffuse_dx:-1,
-	diffuse_dy:-1,
-	diffuse_dz:-1,
-	specular_color:-1,
-	specular_dir:-1,
-	sky_dir:-1,
-	test_vec_4:-1,
-	fog_color:-1,
-	fog_falloff:-1,
-	light0_pos_r:-1,
-	light0_color:-1,
-};
+/// Macro to create a shader Uniform table struct, and populate it by querying a shader program
+/// TODO: create lazy state struct, allow user to set shader params in a struct and pass to GL..
+/// by embedding the type information here aswell.
 
-//map_shader_params(VertexAttr* vsa,UniformTable* su,int prog)
-fn map_shader_params(prog:GLuint)->(VertexAttr,UniformTable)
-{
-	// read attrib back from shader
-	// at the minute we've preset these from VAI indices,
-	// but leave this path for datadriven approch later
+macro_rules! def_uniform_table {
+	(struct $uniform_table:ident { $($uniform_name:ident),* }) => (
+		struct $uniform_table {
+			$( $uniform_name : GLint),*
+		}
 
-	// todo: rustic macro
-	unsafe {
-		(
-			VertexAttr{
-				pos: get_attrib_location(prog, &"a_pos"),
-				color: get_attrib_location(prog, &"a_color"),
-				norm: get_attrib_location(prog, &"a_norm"),
-				tex0: get_attrib_location(prog, &"a_tex0"),
-				tex1: get_attrib_location(prog, &"a_tex1"),
-				joints: get_attrib_location(prog, &"a_joints"),
-				weights: get_attrib_location(prog, &"a_weights"),
-				tangent: get_attrib_location(prog, &"a_binormal"),
-				binormal: get_attrib_location(prog, &"a_tangent")
+		// TODO: this could be purely data-driven for data-linked shaders,
+		// but we want to expose it conviniently to rust code..
 
-			},
-			UniformTable{
-				mat_proj:get_uniform_location(prog,&"uMatProj"),
-				mat_model_view:get_uniform_location(prog,&"uMatModelView"),
-				specular_color:get_uniform_location(prog,&"uSpecularColor"),
-				specular_dir:get_uniform_location(prog,&"uSpecularDir"),
-				ambient:get_uniform_location(prog,&"uAmbient"),
-				diffuse_dx:get_uniform_location(prog,&"uDiffuseDX"),
-				diffuse_dy:get_uniform_location(prog,&"uDiffuseDY"),
-				diffuse_dz:get_uniform_location(prog,&"uDiffuseDZ"),
-				fog_color:get_uniform_location(prog,&"uFogColor"),
-				fog_falloff:get_uniform_location(prog,&"uFogFalloff"),
-				light0_pos_r:get_uniform_location(prog,&"uLight0PosR"),
-				light0_color:get_uniform_location(prog,&"uLight0Color"),
-				..g_uniform_table_empty
+		impl $uniform_table {
+			fn new(prog:GLuint)->$uniform_table {
+				$uniform_table {
+				$(
+					$uniform_name : {
+						
+						let x=unsafe{ get_uniform_location(prog,  stringify!($uniform_name))};
+						logi!("\t {}.{}={}",stringify!($uniform_table),stringify!($uniform_name),x); 
+						x 
+					}	
+				),*
+				}
 			}
-		)
-	}	
+		}
+	)
+}
+
+def_uniform_table!{ 
+	struct UniformTable {
+		uMatProj,
+		uMatModelView,
+		uSpecularColor,
+		uSpecularDir,
+		uAmbient,
+		uDiffuseDX,
+		uDiffuseDY,
+		uDiffuseDZ,
+		uFogColor,
+		uFogFalloff,
+		uLight0PosR,
+		uLight0Color,
+		uTex0,
+		uTex1
+	}
 }
 
 #[cfg(target_os = "android")]
@@ -609,17 +564,13 @@ fn	create_shaders()
 //						&~[g_PS_ConcatForAndroid], // this works!
 //						&~[g_PS_MinimumDebugAndroidCompiler],
 //						&~[get_shader_prefix(1),ps_vs_interface0,g_PS_Flat], //PS_Alpha
-						&~[get_shader_prefix(1),ps_vs_interface0,g_PS_Alpha],
-						&~[get_shader_prefix(0), ps_vertex_format0, ps_vs_interface0, g_VS_Persp]);
+						&vec!{get_shader_prefix(1),ps_vs_interface0,g_PS_Alpha},
+						&vec!{get_shader_prefix(0), ps_vertex_format0, ps_vs_interface0, g_VS_Persp});
 		g_vertex_shader=vsh;
 		g_pixel_shader=psh;	
 		g_shader_program=prg;
 		
-		let (vs, su)=map_shader_params(g_shader_program);
-		println!("vs={:?}",vs);
-		println!("su={:?}",su);
-//		g_vertex_shader_attrib=vs;
-		g_shader_uniforms=su;
+		g_uniform_table = Some(UniformTable::new(g_shader_program));
 	}
 }
 
@@ -662,11 +613,11 @@ unsafe fn create_vertex_buffer_from_ptr(size:GLsizei, data:*c_void)->GLuint {
 unsafe fn create_index_buffer_from_ptr(size:GLsizei, data:*c_void)->GLuint {
 	create_buffer(size,data,GL_ELEMENT_ARRAY_BUFFER)
 }
-unsafe fn create_vertex_buffer<T>(data:&~[T])->GLuint {
-	create_buffer(data.len()as GLsizei *mem::size_of::<T>() as GLsizei, as_void_ptr(&data[0]), GL_ARRAY_BUFFER)
+unsafe fn create_vertex_buffer<T>(data:&Vec<T>)->GLuint {
+	create_buffer(data.len()as GLsizei *mem::size_of::<T>() as GLsizei, as_void_ptr(data.get(0)), GL_ARRAY_BUFFER)
 }
-unsafe fn create_index_buffer<T>(data:&~[T])->GLuint {
-	create_buffer(data.len()as GLsizei *mem::size_of::<T>() as GLsizei, as_void_ptr(&data[0]), GL_ELEMENT_ARRAY_BUFFER)
+unsafe fn create_index_buffer<T>(data:&Vec<T>)->GLuint {
+	create_buffer(data.len()as GLsizei *mem::size_of::<T>() as GLsizei, as_void_ptr(data.get(0)), GL_ELEMENT_ARRAY_BUFFER)
 }
 
 
@@ -677,24 +628,23 @@ impl Mesh {
 		// TODO: 2d fill array. from_fn_2f(numi,numj, &|..|->..)
 		let strip_indices = (num_u+1)*2 +2;
 		let num_indices=(num_v)*strip_indices;
-		let indices=vec::from_fn(num_indices,
+		let indices=Vec::from_fn(num_indices,
 			|ij|->GLuint{
 				let (j,i1)=num::div_rem(ij, strip_indices);
 				let i2=cmp::min(cmp::max(i1-1,0),num_u*2+1); // first,last value is repeated - degen tri.
 				let (i,dj)=num::div_rem(i2,2);	// i hope that inlines to >> &
-//				println!("indexx{:?} i={:?} j={:?}", ij, i, j);
 				(((j+dj)%num_v)*num_u+(i % num_u)) as GLuint
 			}
 		);
 		
 		let num_vertices=num_u*num_v;
-		let vertices=vec::from_fn(num_vertices,|i|generate_torus_vertex(i,num_u,num_v));
+		let vertices=Vec::from_fn(num_vertices,|i|generate_torus_vertex(i,num_u,num_v));
 
  		unsafe {
 			Mesh{
 				num_vertices:num_vertices as GLuint,
 				num_indices:num_indices as GLuint,
-				vertex_size: mem::size_of_val(&vertices[0]) as GLsizei,
+				vertex_size: mem::size_of_val(vertices.get(0)) as GLsizei,
 				vbo: create_vertex_buffer(&vertices),
 				ibo: create_index_buffer(&indices)
 			}
@@ -777,16 +727,21 @@ impl Mesh {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.ibo);
 
 
-		safe_set_uniform1i(g_shader_uniforms.tex0, 0);
-		safe_set_uniform1i(g_shader_uniforms.tex1, 1);
-		safe_set_uniform(g_shader_uniforms.specular_dir, &Vec4::new(0.032,0.707f32,0.707f32,0.0f32));
-		safe_set_uniform(g_shader_uniforms.specular_color, &Vec4::new(1.0f32,0.75f32,0.5f32,0.0f32));
-		safe_set_uniform(g_shader_uniforms.ambient, &Vec4::new(0.25f32,0.25f32,0.25f32,1.0f32));
-		safe_set_uniform(g_shader_uniforms.diffuse_dx, &Vec4::new(0.0f32,0.0f32,0.25f32,1.0f32));
-		safe_set_uniform(g_shader_uniforms.diffuse_dy, &Vec4::new(0.5f32,0.5f32,0.5f32,1.0f32));
-		safe_set_uniform(g_shader_uniforms.diffuse_dz, &Vec4::new(0.25f32,0.0f32,0.0f32,1.0f32));
-		safe_set_uniform(g_shader_uniforms.fog_color, &g_fog_color);
-		safe_set_uniform(g_shader_uniforms.fog_falloff, &Vec4::new(0.5f32,0.25f32,0.0f32,0.0f32));
+		match g_uniform_table {
+			Some(ref ut)=>{
+				safe_set_uniform1i(ut.uTex0, 0);
+				safe_set_uniform1i(ut.uTex1, 1);
+				safe_set_uniform(ut.uSpecularDir, &Vec4::new(0.032,0.707f32,0.707f32,0.0f32));
+				safe_set_uniform(ut.uSpecularColor, &Vec4::new(1.0f32,0.75f32,0.5f32,0.0f32));
+				safe_set_uniform(ut.uAmbient, &Vec4::new(0.25f32,0.25f32,0.25f32,1.0f32));
+				safe_set_uniform(ut.uDiffuseDX, &Vec4::new(0.0f32,0.0f32,0.25f32,1.0f32));
+				safe_set_uniform(ut.uDiffuseDY, &Vec4::new(0.5f32,0.5f32,0.5f32,1.0f32));
+				safe_set_uniform(ut.uDiffuseDZ, &Vec4::new(0.25f32,0.0f32,0.0f32,1.0f32));
+				safe_set_uniform(ut.uFogColor, &g_fog_color);
+				safe_set_uniform(ut.uFogFalloff, &Vec4::new(0.5f32,0.25f32,0.0f32,0.0f32));
+			},
+			None=>io::println("error no uniform table!\n")
+		}
 
 		glActiveTexture(GL_TEXTURE0+0);
 		glBindTexture(GL_TEXTURE_2D, g_textures[2]);
@@ -863,8 +818,13 @@ pub fn	render_no_swap()
 			//io::println(format!("{:?}", g_shader_program));
 
 			glUseProgram(g_shader_program);
-			glUniformMatrix4fvARB(g_shader_uniforms.mat_proj, 1,  GL_FALSE, &matP.ax.x);
-			glUniformMatrix4fvARB(g_shader_uniforms.mat_model_view, 1, GL_FALSE, &rot_trans.ax.x);
+			match g_uniform_table {
+				Some(ref ut)=>{
+					glUniformMatrix4fvARB(ut.uMatProj, 1,  GL_FALSE, &matP.ax.x);
+					glUniformMatrix4fvARB(ut.uMatModelView, 1, GL_FALSE, &rot_trans.ax.x);
+				},
+				None=>{assert!(false,"no shader uniforms")}
+			}
 
 			g_grid_mesh.render_mesh_shader();
 
@@ -896,12 +856,12 @@ fn	create_textures() {
 
 
 		let	(usize,vsize)=(256,256);
-		let buffer:~[u32] = vec::from_fn(usize*vsize,|index|{
+		let buffer = Vec::<u32>::from_fn(usize*vsize,|index|{
 				let (i,j)=num::div_rem(index,usize);
 				(i+j*256+255*256*256) as u32
 			});
 		for i in range(0 as GLint,8 as GLint) {
-			glTexImage2D(GL_TEXTURE_2D, i, GL_RGB as GLint, usize as GLint,vsize as GLint, 0, GL_RGB, GL_UNSIGNED_BYTE, as_void_ptr(&buffer[0]));
+			glTexImage2D(GL_TEXTURE_2D, i, GL_RGB as GLint, usize as GLint,vsize as GLint, 0, GL_RGB, GL_UNSIGNED_BYTE, as_void_ptr(buffer.get(0)));
 		}
 		glBindTexture(GL_TEXTURE_2D,0);
 	
@@ -950,7 +910,7 @@ pub fn shadertest_main()
 {
 	unsafe {
 		let mut argc:c_int=0;
-		let argv:~[*c_char]=~[];
+		let argv:Vec<*c_char> =Vec::new();
 		glutInit((&mut argc) as *mut c_int,0 as **c_char );
 
 		::macros::test();
