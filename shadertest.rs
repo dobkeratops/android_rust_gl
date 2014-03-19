@@ -45,6 +45,7 @@ enum VertexAttrIndex
 }
 */
 //GFX gfx;
+/*
 struct	TestVertex 
 {
 	pos:[f32,..3],
@@ -52,6 +53,18 @@ struct	TestVertex
 	norm:[f32,..3],
 	tex0:[f32,..2]
 }
+*/
+
+def_vertex_format!(
+	struct TestVertex {
+		pos:	[f32(GL_FLOAT),..3](::shadertest::VAI_pos),
+		color:	[f32(GL_FLOAT),..4](::shadertest::VAI_color),
+		norm:	[f32(GL_FLOAT),..3](::shadertest::VAI_norm),
+		tex0:	[f32(GL_FLOAT),..2](::shadertest::VAI_tex0)
+	}
+)
+
+//type TestVertex = TestVertex::TestVertex;
 
 //typedef int IndexType;
 //	enum {IndexSize = sizeof(IndexType) };
@@ -758,6 +771,7 @@ impl Mesh {
 	fn	render_mesh_from_buffer(&self)
 	{
 		unsafe {
+			use shadertest::TestVertex;
 
 			let	client_state:[GLenum,..3]=[GL_VERTEX_ARRAY,GL_COLOR_ARRAY,GL_TEXTURE_COORD_ARRAY];
 			for &x in client_state.iter() {glEnableClientState(x);};
@@ -796,10 +810,13 @@ unsafe fn as_void_ptr<T>(ptr:&T)->*c_void {
 }
 
 //Vec4 g_FogColor=Vec4::<f32>::new(0.25,0.5,0.5,1.0);
+
+//vertex_layout!(struct MyVertex{pos:[f32=GL_FLOAT,..3] = 0 })
+
+
 static g_fog_color:Vec4<f32> =Vec4{x:0.25,y:0.5,z:0.5,w:1.0};
 impl Mesh {
 	unsafe fn	render_mesh_shader(&self)  {
-
 		
 		let clientState:[GLenum,..3]=[GL_VERTEX_ARRAY,GL_COLOR_ARRAY,GL_TEXTURE_COORD_ARRAY];
 
@@ -808,10 +825,10 @@ impl Mesh {
 
 		let vsa=&g_vertex_shader_attrib;
 
-		glEnableVertexAttribArray(VAI_pos as GLuint);
-		glEnableVertexAttribArray(VAI_color as GLuint);
-		glEnableVertexAttribArray(VAI_tex0 as GLuint);
-		glEnableVertexAttribArray(VAI_norm as GLuint);
+//		glEnableVertexAttribArray(VAI_pos as GLuint);
+//		glEnableVertexAttribArray(VAI_color as GLuint);
+//		glEnableVertexAttribArray(VAI_tex0 as GLuint);
+//		glEnableVertexAttribArray(VAI_norm as GLuint);
 
 		safe_set_uniform1i(g_shader_uniforms.tex0, 0);
 		safe_set_uniform1i(g_shader_uniforms.tex1, 1);
@@ -833,11 +850,14 @@ impl Mesh {
 		// todo: Rustic struct element offset macro
 		let baseVertex=0 as *TestVertex;
 
+		TestVertex::set_vertex_attrib();
+
+/*
 		glVertexAttribPointer(VAI_pos as GLuint,	3,GL_FLOAT, GL_FALSE, self.vertex_size, as_void_ptr(&(*baseVertex).pos)); 
 		glVertexAttribPointer(VAI_color as GLuint,	4,GL_FLOAT, GL_FALSE, self.vertex_size, as_void_ptr(&(*baseVertex).color)); 
 		glVertexAttribPointer(VAI_tex0 as GLuint,	2,GL_FLOAT, GL_FALSE, self.vertex_size, as_void_ptr(&(*baseVertex).tex0)); 
 		glVertexAttribPointer(VAI_norm as GLuint,	3,GL_FLOAT, GL_FALSE, self.vertex_size, as_void_ptr(&(*baseVertex).norm)); 
-
+*/
 		glDrawElements(GL_TRIANGLE_STRIP, self.num_indices as GLsizei, GL_UNSIGNED_INT,0 as *c_void);
 	}
 }

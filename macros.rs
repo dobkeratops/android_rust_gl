@@ -91,33 +91,44 @@ macro_rules! def_struct{
 	)
 }
 
-
-macro_rules! vertex_layout{
-	($layout_name:ident{
-			$($element:ident: [$elem_t:ident,..$elem_count:expr] = $elem_index:expr ),*  
+/// Defines a vertex structure with embedded  attribute index annotations & GL type enums; 
+/// generates an corresponding function to set gl vertex attribute data.
+/// TODO: change that to create a data-table.
+macro_rules! def_vertex_format{
+	( struct $layout_name:ident {
+			$($element:ident : [$elem_type:ident($elem_enum:expr),..$elem_count:expr]( $elem_index:expr)  ),*  
 		}
-	)=>{
-		mod layout_name {
-			struct $layout_name {
-				$( $element: [$elem_t ,.. $elem_dim] ),*
+	)=>(
+//		mod $layout_name {
+			pub struct $layout_name {
+				$( $element: [$elem_type ,.. $elem_count],)*
 			}
-			fn set_gl_attrib() {
-				$( unsafe {
-						let base_vertex = 0 as *$layout_name;
-						glVertexAttribPointer(
-							$index as GLuint, 
-							$elem_dum,
-							$elem_type,	// todo: type -> GL type.
-							GL_FALSE, 
-							$layout_name::size_of::<>(),
-							&(*base_vertex).$element as *GL_FLOAT as *std::libc::c_void,
-						);
-					}
-				);*
+			impl $layout_name {
+				pub fn set_vertex_attrib() {
+					use r3d::rawglbinding::{GLuint,GLfloat,GLsizei,glVertexAttribPointer,glEnableVertexAttribArray};
+					use r3d::gl_h_consts::{GL_FLOAT,GL_FALSE};
+					use std::intrinsics::size_of;
+					use std::libc::c_void;
+					$( unsafe {
+							let base_vertex = 0 as *$layout_name;
+							glEnableVertexAttribArray($elem_index as GLuint);
+							glVertexAttribPointer(
+								$elem_index as GLuint, 
+								$elem_count,
+								$elem_enum,	// todo: type -> GL type.
+								GL_FALSE, 
+								size_of::<$layout_name>() as GLsizei,
+								&(*base_vertex).$element as *GLfloat as *c_void,
+							);
+						}
+					);*
+				}
 			}
-		}
-	}
+//		}	
+	)
 }
+
+def_vertex_format!(struct MyVertex{pos:[f32(GL_FLOAT),..3](0)})
 
 pub fn test() {
 	def_struct!(
@@ -127,7 +138,7 @@ pub fn test() {
 		}
 	);
 // TODO: Vertex layout macro to make a struct, and 'glVertexAttribPointer' calls, seriealizer ..
-	vertex_layout!(MyVertex{pos:[GL_FLOAT,..3] = 0; });
+//	vertex_layout!(MyVertex{pos:[f32=GL_FLOAT,..3] = 0 });
 	let f1=MyStruct::MyStruct{foo:1, bar:2.0};
 	let f2=MyStruct::new(2);
 	MyStruct::dump();
