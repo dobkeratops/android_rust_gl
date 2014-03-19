@@ -1,5 +1,6 @@
 //pub use r3d::landscape::*;
 //pub use r3d::mesh::*;
+
 #[feature(globs)];
 #[feature(macro_rules)];
 #[feature(default_type_params)];
@@ -10,7 +11,8 @@
 #[allow(unused_unsafe)];
 #[allow(unused_mut)];
 #[allow(non_camel_case_types)];
-#[macro_escape]
+#[macro_escape];
+
 
 extern crate collections;
 pub use std::str::raw::*;
@@ -19,36 +21,27 @@ pub use std::vec;
 pub use std::libc;
 pub use std::libc::{c_int,c_char};
 use shadertest::c_str;
-//use camera;
+use std::io;
 
-//mod everywhere;
+mod macros;	// must preceed others for macro visibility.
 mod r3d;
 mod shadertest;
-//mod testcommon;
-
-
-#[link(name = "GLU")]
-#[link(name = "Xext")]
-#[link(name = "glut")]
-#[link(name = "GL")]
-#[link(name = "stdc++")]
 
 #[cfg(target_os = "android")]
 extern { fn android_log_print(lvl:c_int,  s:*c_char);}
 
-#[cfg(not(target_os = "android"))]
-#[no_mangle]
-extern fn android_log_print(lvl:c_int,  s:*c_char) {
-	::std::io::println(s.to_str());
-}
+#[cfg(target_os = "android")]
 fn log_print(level:int, s:&str) {
 	unsafe {
 		android_log_print(level as c_int, c_str(s));
 	}
 }
-macro_rules! logi{
-	($($arg:tt)*)=>( ::log_print(5, format!("{:s}:{:u}: ",file!(),line!())+format!($($arg)*)))
+
+#[cfg(not(target_os = "android"))]
+fn log_print(level:int, s:&str) {
+	io::println(s);
 }
+
  
 #[cfg(not(target_os = "android"))]
 fn main() {

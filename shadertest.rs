@@ -8,6 +8,8 @@
 #[allow(unreachable_code)];
 #[allow(unused_unsafe)];
 #[allow(unused_mut)];
+#[macro_escape];
+
 
 pub use std::num;
 pub use std::vec;
@@ -15,6 +17,7 @@ pub use std::mem;
 pub use std::cmp;
 pub use std::c_str;
 pub use std::libc;
+use macros::*;
 
 pub use r3d::*;
 pub use r3d::matrix::*;
@@ -24,28 +27,10 @@ pub use std::io;
 use gl=r3d::rawglbinding;
 
 
-#[macro_escape]
-macro_rules! logi{
-	($($arg:tt)*)=>( ::log_print(5, format!("{:s}:{:u}: ",file!(),line!())+format!($($arg)*)))
-}
-macro_rules! logw{
-	($($arg:tt)*)=>( ::log_print(6, format!("{:s}:{:u}: ",file!(),line!())+format!($($arg)*)))
-}
 // todo, figure out the macro call passing those var args..
 
 
 
-// debug macro: just print the value of an expression, at a specific location
-macro_rules! dump{ ($($a:expr),*)=>
-    (   {   let mut txt=~"";
-            $( { txt=txt.append(
-                 format!("{:s}={:?}",stringify!($a),$a)+",")
-                }
-            );*;
-            logi!("{:s}",txt);
-        }
-    )
-}
 
 
 /*
@@ -731,7 +716,7 @@ impl Mesh {
 				let (j,i1)=num::div_rem(ij, strip_indices);
 				let i2=cmp::min(cmp::max(i1-1,0),num_u*2+1); // first,last value is repeated - degen tri.
 				let (i,dj)=num::div_rem(i2,2);	// i hope that inlines to >> &
-				println!("indexx{:?} i={:?} j={:?}", ij, i, j);
+//				println!("indexx{:?} i={:?} j={:?}", ij, i, j);
 				(((j+dj)%num_v)*num_u+(i % num_u)) as GLuint
 			}
 		);
@@ -1007,14 +992,12 @@ pub fn render_and_swap() {
 pub fn shadertest_main()
 {
 	unsafe {
-//		dump!()
-
 		let mut argc:c_int=0;
 		let argv:~[*c_char]=~[];
 		glutInit((&mut argc) as *mut c_int,0 as **c_char );
 
 		glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
-		let win=glutCreateWindow(c_str("Rust ShaderTest"));
+		let win=verify!(glutCreateWindow(c_str("Rust ShaderTest")) isnt 0);
 //		glewInit(); //TODO- where the hell is glewInit. -lGLEW isn't found
 		create_resources();
 		glDrawBuffer(GL_BACK);
