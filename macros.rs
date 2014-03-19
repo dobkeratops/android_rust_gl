@@ -73,8 +73,8 @@ macro_rules! verify{
 }
 
 // Define a structure with a scala style constructor.
-macro_rules! def_struct{
-	( $struct_name:ident($($arg_name:ident:$arg_type:ident),*) {$($field_name:ident:$field_type:ident=$field_init_expr:expr),*} )=>(
+macro_rules! def_new{
+	( struct $struct_name:ident($($arg_name:ident:$arg_type:ident),*) {$($field_name:ident:$field_type:ident=$field_init_expr:expr),*} )=>(
 		mod $struct_name {
 			pub struct $struct_name {
 			$( $field_name: $field_type,)*
@@ -128,19 +128,18 @@ macro_rules! def_vertex_format{
 	)
 }
 
-def_vertex_format!(struct MyVertex{pos:[f32(GL_FLOAT),..3](0)})
 
 pub fn test() {
-	def_struct!(
-		MyStruct(x:int) {
-			foo:int=x,
+	def_new!{
+		struct MyStruct(x:int,y:int,z:int) {
+			foo:int=x+y+z,
 			bar:f32=0.0
 		}
-	);
+	};
 // TODO: Vertex layout macro to make a struct, and 'glVertexAttribPointer' calls, seriealizer ..
 //	vertex_layout!(MyVertex{pos:[f32=GL_FLOAT,..3] = 0 });
 	let f1=MyStruct::MyStruct{foo:1, bar:2.0};
-	let f2=MyStruct::new(2);
+	let f2=MyStruct::new(2,3,4);
 	MyStruct::dump();
 	dump!(f1);
 	dump!(f2);

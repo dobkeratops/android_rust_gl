@@ -26,43 +26,16 @@ pub use r3d::rawglbinding::*;
 pub use std::io;
 use gl=r3d::rawglbinding;
 
-
 // todo, figure out the macro call passing those var args..
 
-
-
-
-
-/*
-enum VertexAttrIndex
-{
-	VAI_pos=0,
-	VAI_color,
-	VAI_normal,
-	VAI_tex0,
-	VAI_tex1,
-	VAI_count
-}
-*/
-//GFX gfx;
-/*
-struct	TestVertex 
-{
-	pos:[f32,..3],
-	color:[f32,..4],
-	norm:[f32,..3],
-	tex0:[f32,..2]
-}
-*/
-
-def_vertex_format!(
+def_vertex_format!{
 	struct TestVertex {
 		pos:	[f32(GL_FLOAT),..3](::shadertest::VAI_pos),
 		color:	[f32(GL_FLOAT),..4](::shadertest::VAI_color),
 		norm:	[f32(GL_FLOAT),..3](::shadertest::VAI_norm),
 		tex0:	[f32(GL_FLOAT),..2](::shadertest::VAI_tex0)
 	}
-)
+}
 
 //type TestVertex = TestVertex::TestVertex;
 
@@ -825,11 +798,6 @@ impl Mesh {
 
 		let vsa=&g_vertex_shader_attrib;
 
-//		glEnableVertexAttribArray(VAI_pos as GLuint);
-//		glEnableVertexAttribArray(VAI_color as GLuint);
-//		glEnableVertexAttribArray(VAI_tex0 as GLuint);
-//		glEnableVertexAttribArray(VAI_norm as GLuint);
-
 		safe_set_uniform1i(g_shader_uniforms.tex0, 0);
 		safe_set_uniform1i(g_shader_uniforms.tex1, 1);
 		safe_set_uniform(g_shader_uniforms.specular_dir, &Vec4::new(0.032,0.707f32,0.707f32,0.0f32));
@@ -846,18 +814,8 @@ impl Mesh {
 		glActiveTexture(GL_TEXTURE0+1);
 		glBindTexture(GL_TEXTURE_2D, g_textures[1]);
 
-//		glVertexAttribPointer(VAI_pos as GLuint,	3,GL_FLOAT, GL_FALSE, stride, &((*baseVertex).pos[0]) as *f32 as *c_void);
-		// todo: Rustic struct element offset macro
-		let baseVertex=0 as *TestVertex;
-
 		TestVertex::set_vertex_attrib();
 
-/*
-		glVertexAttribPointer(VAI_pos as GLuint,	3,GL_FLOAT, GL_FALSE, self.vertex_size, as_void_ptr(&(*baseVertex).pos)); 
-		glVertexAttribPointer(VAI_color as GLuint,	4,GL_FLOAT, GL_FALSE, self.vertex_size, as_void_ptr(&(*baseVertex).color)); 
-		glVertexAttribPointer(VAI_tex0 as GLuint,	2,GL_FLOAT, GL_FALSE, self.vertex_size, as_void_ptr(&(*baseVertex).tex0)); 
-		glVertexAttribPointer(VAI_norm as GLuint,	3,GL_FLOAT, GL_FALSE, self.vertex_size, as_void_ptr(&(*baseVertex).norm)); 
-*/
 		glDrawElements(GL_TRIANGLE_STRIP, self.num_indices as GLsizei, GL_UNSIGNED_INT,0 as *c_void);
 	}
 }
