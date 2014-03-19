@@ -1,6 +1,6 @@
 Minimal Rust Android OpenGL ES sample 
 
-Displays spinning tori in a lisajous; derived from NDK "native-activity" sample. creates an opengl 2 context. Uses a C stub, which calls rust_android_init  .. rust_android_render;  these are #[no_mangle] extern "C" functions defined in main.rs, 
+Displays spinning tori in a lisajous curve; derived from NDK "native-activity" sample. creates an opengl 2 context. Uses a C stub, which calls rust_android_init  .. rust_android_render;  these are #[no_mangle] extern "C" functions defined in main.rs, 
 its just a quick sample, and pretty messy, but minimal.
 
 To run: 
@@ -13,5 +13,4 @@ make in the project root should run the same rendering code on desktop.
 
 android/jni/desktop_emu_gl.c  provides empty stub functions for linking.
 
-PROBLEMS: many, but currently the desktop code doesn't link, its simplified from another project, the absence of certain references seems to preclude it linking gl ??
 

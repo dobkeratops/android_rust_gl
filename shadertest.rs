@@ -996,6 +996,8 @@ pub fn shadertest_main()
 		let argv:~[*c_char]=~[];
 		glutInit((&mut argc) as *mut c_int,0 as **c_char );
 
+		::macros::test();
+
 		glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 		let win=verify!(glutCreateWindow(c_str("Rust ShaderTest")) isnt 0);
 //		glewInit(); //TODO- where the hell is glewInit. -lGLEW isn't found

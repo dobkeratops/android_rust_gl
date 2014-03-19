@@ -72,3 +72,66 @@ macro_rules! verify{
 	)
 }
 
+// Define a structure with a scala style constructor.
+macro_rules! def_struct{
+	( $struct_name:ident($($arg_name:ident:$arg_type:ident),*) {$($field_name:ident:$field_type:ident=$field_init_expr:expr),*} )=>(
+		mod $struct_name {
+			pub struct $struct_name {
+			$( $field_name: $field_type,)*
+			}
+			pub fn dump() {
+				$(::std::io::println(stringify!($field_name)+":"+stringify!($field_type)); )*
+			}
+			pub fn new($($arg_name:$arg_type),*)->$struct_name {
+				$struct_name {
+					$($field_name: $field_init_expr),*
+				}
+			}
+		}
+	)
+}
+
+
+macro_rules! vertex_layout{
+	($layout_name:ident{
+			$($element:ident:begin $elem_t:ident,$elem_dim:expr=$elem_index:expr );*  
+		}
+	)=>{
+		mod layout_name {
+			struct $layout_name {
+				$( $element: [$elem_t ,.. $elem_dim] ),*
+			}
+			fn set_gl_attrib() {
+				$( unsafe {
+						let base_vertex = 0 as *$layout_name;
+						glVertexAttribPointer(
+							$index as GLuint, 
+							$elem_dum,
+							$elem_type,	// todo: type -> GL type.
+							GL_FALSE, 
+							$layout_name::size_of::<>(),
+							&(*base_vertex).$element as *GL_FLOAT as *std::libc::c_void,
+						);
+					}
+				);*
+			}
+		}
+	}
+}
+
+pub fn test() {
+	def_struct!(
+		MyStruct(x:int) {
+			foo:int=x,
+			bar:f32=0.0
+		}
+	);
+// TODO: Vertex layout macro to make a struct, and 'glVertexAttribPointer' calls, seriealizer ..
+//	vertex_layout!(MyVertex{pos:begin GL_FLOAT,3 = 0; });
+	let f1=MyStruct::MyStruct{foo:1, bar:2.0};
+	let f2=MyStruct::new(2);
+	MyStruct::dump();
+	dump!(f1);
+	dump!(f2);
+
+}
