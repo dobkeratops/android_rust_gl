@@ -27,6 +27,8 @@ mod macros;	// must preceed others for macro visibility.
 mod r3d;
 mod shadertest;
 
+
+
 #[cfg(target_os = "android")]
 extern { fn android_log_print(lvl:c_int,  s:*c_char);}
 
@@ -54,9 +56,6 @@ fn main() {
 // modified sample code main loop giving various entry points
 // for rust
 // no rendering is done there, just surface creation and swap.
-
-
-#[fixed_stack_segment]
 
 
 #[no_mangle]

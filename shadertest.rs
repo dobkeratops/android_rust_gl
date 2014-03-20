@@ -13,9 +13,64 @@ use macros::*;
 pub use r3d::*;
 pub use r3d::matrix::*;
 pub use r3d::vecmath::*;
-pub use r3d::rawglbinding::*;
+pub use r3d::gl::*;
 pub use std::io;
-use gl=r3d::rawglbinding;
+use gl=r3d::gl;
+
+/// Defines a vertex structure with embedded  attribute index annotations & GL type enums; 
+/// generates an corresponding function to set gl vertex attribute data.
+/// TODO: change that to create a data-table.
+macro_rules! def_vertex_format{
+	( struct $layout_name:ident {
+			$($element:ident : [$elem_type:ident($elem_enum:expr),..$elem_count:expr]( $elem_index:expr)  ),*  
+		}
+	)=>(
+//		mod $layout_name {
+			pub struct $layout_name {
+				$( $element: [$elem_type ,.. $elem_count],)*
+			}
+			impl $layout_name {
+				pub fn set_vertex_attrib() {
+					use r3d::gl::{GLuint,GLfloat,GLsizei,glVertexAttribPointer,glEnableVertexAttribArray};
+					use r3d::gl_h_consts::{GL_FLOAT,GL_FALSE};
+					use std::intrinsics::size_of;
+					use std::libc::c_void;
+					$( unsafe {
+							let base_vertex = 0 as *$layout_name;
+							glEnableVertexAttribArray($elem_index as GLuint);
+							glVertexAttribPointer(
+								$elem_index as GLuint, 
+								$elem_count,
+								$elem_enum,	// todo: type -> GL type.
+								GL_FALSE, 
+								size_of::<$layout_name>() as GLsizei,
+								&(*base_vertex).$element as *GLfloat as *c_void,
+							);
+						}
+					);*
+				}
+			}
+//		}	
+	)
+}
+
+macro_rules! def_vertex_attrib(
+	( enum $attrib_group_name:ident { $($attr_name:ident),* } ) =>(
+		enum $attrib_group_name {
+			$($attr_name),*
+		}
+		impl $attrib_group_name {
+			fn bind_attribs(prog:GLuint) {
+				use r3d::gl::{GLuint,GLfloat,GLsizei,glBindAttribLocation};
+				unsafe {
+					$(glBindAttribLocation(prog, $attr_name as GLuint, c_str( stringify!($attr_name) ) );
+					)*
+				}
+			}
+		}
+	)
+)
+
 
 // todo, figure out the macro call passing those var args..
 
@@ -58,34 +113,29 @@ unsafe fn get_uniform_location(shader_prog:GLuint, name:&str)->GLint {
 
 unsafe fn	create_and_compile_shader(shader_type:GLenum, source:&Vec<&str>) ->GLuint
 {
-	logi!("create_and_compile_shader");
-	let	shader = glCreateShader(shader_type );
-	logi!("shader={:?}",shader);
+	logi!("create_and_compile_shader")
+	let	shader_id = glCreateShader(shader_type );
+	dump!(shader_id);
 
 	let sources_as_c_str=Vec::from_fn(source.len(), |x|c_str(*source.get(x)) );
 	let length = Vec::from_fn(source.len() , |x|source.get(x).len() as c_int );
 	for i in range(0,source.len()) { logi!("source adr={:?} source len={:?} ",*sources_as_c_str.get(i),*length.get(i)) };
 	
-	logi!("set shader source..");
-	glShaderSource(shader, source.len() as GLsizei, sources_as_c_str.get(0), 0 as *c_int/*(&length[0])*/);
-	logi!("compile..");
-	glCompileShader(shader);
-	let	status:c_int=0;
-	logi!("get status..");
-	glGetShaderiv(shader,GL_COMPILE_STATUS,&status);
-	logi!("got status");
-	logi!("status = {:?}",status);
-	if status==GL_FALSE as GLint
+	glShaderSource(shader_id, source.len() as GLsizei, sources_as_c_str.get(0), 0 as *c_int/*(&length[0])*/);
+	glCompileShader(shader_id);
+	let	sh_status:c_int=0;
+	glGetShaderiv(shader_id,GL_COMPILE_STATUS,&sh_status);
+	dump!(sh_status);
+	if sh_status==GL_FALSE as GLint
 	{
 		logi!("failed, getting log..");
 		let compile_log:[c_char,..512]=[0 as c_char,..512]; //int len;
 	
 		let log_len:c_int=0;
-		glGetShaderInfoLog(shader, 512,&log_len as *c_int, &compile_log[0]);
+		glGetShaderInfoLog(shader_id, 512,&log_len as *c_int, &compile_log[0]);
 		logi!("Compile Shader Failed: logsize={:?}",
 				log_len);
-		
-		logi!("compile shader {:?} failed: \n{:?}\n", shader, 
+		logi!("compile shader {:?} failed: \n{:?}\n", shader_id, 
 			c_str::CString::new(&compile_log[0],false).as_str());
 
 		for s in source.iter() { logi!("{:?}",*s) }
@@ -95,18 +145,14 @@ unsafe fn	create_and_compile_shader(shader_type:GLenum, source:&Vec<&str>) ->GLu
 				None=>"couldn't unwrap error lol",
 			}
 		);
-		for i in range(0,log_len) {
-			logi!("{:?}",compile_log[i]);
-		}
 		loop{}
 
 	}	
 	else {
-
-		logi!("create shader{:?} - compile suceeded\n",  shader);
+		logi!("create shader{:?} - compile suceeded\n",  shader_id);
 	}
 	logi!("create shader-done");
-	shader
+	shader_id
 }
 
 struct	VertexAttr {
@@ -139,25 +185,26 @@ unsafe fn create_texture(filename:~str)->GLuint {
 pub unsafe fn c_str(s:&str)->*c_char {
 	s.to_c_str().unwrap()
 }
-extern {pub fn bind_attrib_locations(prog:c_uint);}
+//extern {pub fn bind_attrib_locations(prog:c_uint);}
 
 unsafe fn	create_shader_program(
 			pixelShaderSource:&Vec<&str>,
 			vertexShaderSource:&Vec<&str>)->(PixelShader,VertexShader,ShaderProgram)
 {
-
+	// todo: we bind vertex attribs, but read uniforms. use one method for both, which is more convinient?
 	logi!("create_shader_program");
 
-	let pixelShaderOut = create_and_compile_shader(GL_FRAGMENT_SHADER, pixelShaderSource);
-	let vertexShaderOut = create_and_compile_shader(GL_VERTEX_SHADER, vertexShaderSource);	let	prog = glCreateProgram();
+	let pixel_shader = create_and_compile_shader(GL_FRAGMENT_SHADER, pixelShaderSource);
+	let vertex_shader = create_and_compile_shader(GL_VERTEX_SHADER, vertexShaderSource);	let	prog = glCreateProgram();
+	
 	logi!("bind attrib locations");
 
-	bind_vertex_attribs(prog);	
+	VertexAttrib::bind_attribs(prog);	
 
-	glAttachShader(prog, pixelShaderOut);
-	glAttachShader(prog, vertexShaderOut);
+	glAttachShader(prog, pixel_shader);
+	glAttachShader(prog, vertex_shader);
 
-	logi!("linking verteshader{:?}, pixelshader{:?} to program{:?}\n", vertexShaderOut, pixelShaderOut, prog);
+	logi!("linking verteshader{:?}, pixelshader{:?} to program{:?}\n", vertex_shader, pixel_shader, prog);
 	glLinkProgram(prog);
 	let mut err:GLint=0;
 	glGetProgramiv(prog,GL_LINK_STATUS,(&err) as *GLint);
@@ -176,23 +223,8 @@ unsafe fn	create_shader_program(
 		logi!("link program status {:?}", err);
 	}
 
-	(pixelShaderOut,vertexShaderOut,prog)
+	(pixel_shader,vertex_shader,prog)
 }
-
-//TODO: split into default uniforms, default vertex, default vertex-shader-out
-
-
-//#if OPENGL_ES
-//#define SHADER_PREFIX \
-//"#version 100\n"\
-//"precision highp float;"
-//#else
-//#define SHADER_PREFIX \
-//"#version 120\n"\
-//"#define highp\n"\
-//"#define mediump\n"\
-//"#define lowp\n"
-//#endif
 
 // TODO [cfg OPENGL_ES ..]
 static shader_prefix_desktop:&'static str=&"\
@@ -215,28 +247,27 @@ precision mediump float;	\n\
 
 
 //#define PS_VS_INTERFACE0
-static ps_vs_interface0:&'static str=&
-"varying	highp vec4 v_pos;\n\
+static ps_vs_interface0:&'static str=&"\n\
+varying	highp vec4 v_pos;\n\
 varying	highp vec4 v_color;\n\
 varying	highp vec3 v_norm;\n\
 varying	highp vec2 v_tex0;\n\
 varying	highp vec3 v_tex1;\n\
 varying	highp vec4 v_tangent;\n\
-varying	highp vec4 v_binormal;\n";
+varying	highp vec4 v_binormal;\n\
+\n";
 
 
 //#define PS_VERTEX_FORMAT0
-static ps_vertex_format0:&'static str=&
-"attribute vec3 a_pos;\n\
+static ps_vertex_format0:&'static str=&"\n\
+attribute vec3 a_pos;\n\
 attribute vec2 a_tex0;\n\
 attribute vec4 a_color;\n\
-attribute vec3 a_norm;\n";
+attribute vec3 a_norm;\n\
+\n";
 
-static g_VS_Default:&'static str=
-//SHADER_PREFIX
-//PS_VERTEX_FORMAT0
-//PS_VS_INTERFACE0
-&"uniform mat4 uMatProj;\n\
+static g_VS_Default:&'static str=&"\n\
+uniform mat4 uMatProj;\n\
 uniform mat4 uMatModelView;\n\
 void main() {\n\
 	vec4 posw = vec4(a_pos.xyz,1.0);\n\
@@ -252,11 +283,8 @@ void main() {\n\
 }";
 
 /// replacement debug vertex shader - dont apply transformations, just view vertices..
-static g_VS_PassThru:&'static str=
-//SHADER_PREFIX
-//PS_VERTEX_FORMAT0
-//PS_VS_INTERFACE0
-&"uniform mat4 uMatProj;\n\
+static g_VS_PassThru:&'static str=&"\n\
+uniform mat4 uMatProj;\n\
 uniform mat4 uMatModelView;\n\
 void main() {\n\
 	vec4 posw = vec4(a_pos.xyz,1.0);\n\
@@ -271,11 +299,8 @@ void main() {\n\
 	v_norm = enorm;\n\
 }";
 /// replacement debug vertex shader - dont apply perspective, just view translated models
-static g_VS_Translate2d:&'static str=
-//SHADER_PREFIX
-//PS_VERTEX_FORMAT0
-//PS_VS_INTERFACE0
-&"uniform mat4 uMatProj;\n\
+static g_VS_Translate2d:&'static str=&"\n\
+uniform mat4 uMatProj;\n\
 uniform mat4 uMatModelView;\n\
 void main() {\n\
 	vec4 posw = vec4(a_pos.xyz,1.0);\n\
@@ -289,11 +314,8 @@ void main() {\n\
 	v_tex1 = a_pos.xyz;\n\
 	v_norm = enorm;\n\
 }";
-static g_VS_Persp:&'static str=
-//SHADER_PREFIX
-//PS_VERTEX_FORMAT0
-//PS_VS_INTERFACE0
-&"uniform mat4 uMatProj;\n\
+static g_VS_Persp:&'static str=&"\n\
+uniform mat4 uMatProj;\n\
 uniform mat4 uMatModelView;\n\
 void main() {\n\
 	vec4 posw = vec4(a_pos.xyz,1.0);\n\
@@ -903,7 +925,6 @@ pub fn render_and_swap() {
 	}
 }
 
-// desktop main.
 
 #[cfg(not(target_os = "android"))]
 pub fn shadertest_main()
@@ -913,7 +934,7 @@ pub fn shadertest_main()
 		let argv:Vec<*c_char> =Vec::new();
 		glutInit((&mut argc) as *mut c_int,0 as **c_char );
 
-		::macros::test();
+		//::macros::test();
 
 		glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 		let win=verify!(glutCreateWindow(c_str("Rust ShaderTest")) isnt 0);
@@ -924,8 +945,6 @@ pub fn shadertest_main()
 		glutDisplayFunc(render_and_swap as *u8);
 		glutIdleFunc(idle as *u8);
 		glEnable(GL_DEPTH_TEST);
-
-//		logi!("{}",g_grid_mesh);
 
 		glutMainLoop();
 	}

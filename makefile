@@ -1,5 +1,9 @@
+RUST_LINK_GL=-C link-args="-lGL -lGLU -lglut -LXext"
+RUSTC=rustc $(RUST_LINK_GL) 
+
 main : main.rs *.rs TAGS
-	rustc main.rs -C link-args="-lGL -lGLU -lglut -LXext"
+	$(RUSTC) main.rs
+
 
 run: main
 	echo "make run"
