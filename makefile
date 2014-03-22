@@ -4,6 +4,9 @@ RUSTC=rustc $(RUST_LINK_GL)
 main : main.rs *.rs TAGS
 	$(RUSTC) main.rs
 
+bsp : bsp.rs TAGS
+	$(RUSTC) bsp.rs -o bsp
+	./bsp
 
 run: main
 	echo "make run"
