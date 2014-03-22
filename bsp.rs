@@ -445,6 +445,7 @@ unsafe fn void_ptr<T>(p:&T)->*c_void {
 	ofs_u8_ptr(p,0) as *c_void
 }
 
+static g_palette:&'static [u8]=include_bin!("data/palette.lmp");
 
 fn	show_texture(tx:&MipTex) {
 	unsafe {
@@ -468,9 +469,11 @@ fn	show_texture(tx:&MipTex) {
 		let image = Vec::<u32>::from_fn((tx.width*tx.height) as uint, 
 			|i|{
 				let x = ofs_ptr(mip0, i);
-				let y=*x;
-				((y&15)<<4) as u32
-//				i as u32
+				let ci=*x;
+				let r=g_palette[ci*3+0] as u32;
+				let g=g_palette[ci*3+1] as u32;
+				let b=g_palette[ci*3+2] as u32;
+				(r|(g<<8)|(b<<16)|(if ci<255{0xff000000}else{0})) as u32
 			}
 		);
 
