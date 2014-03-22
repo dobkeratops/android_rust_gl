@@ -460,7 +460,7 @@ impl BspHeader {
 			let txp = void_ptr(tx);
 			let local_pal = ofs_ptr(tx,1) as *u8;
 
-			let mip0:*u8 = ofs_u8_ptr(tx,tx.offset1);
+			let mip0 = ofs_u8_ptr(tx,tx.offset1);
 			let mip1 = ofs_u8_ptr(tx,tx.offset2);
 			let mip2 = ofs_u8_ptr(tx,tx.offset4);
 			let mip3 = ofs_u8_ptr(tx,tx.offset8);
