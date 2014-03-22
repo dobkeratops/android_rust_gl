@@ -422,5 +422,11 @@ pub struct Face {
 }
 
 
+fn	show_texture(tx:&MipTex) {
+	unsafe {
+		let tx = tx.as_void_ptr();
+	}
+}
+
 
  
