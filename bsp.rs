@@ -72,7 +72,7 @@ pub fn main()
 		let bsp=Blob::<BspHeader>::read(&Path::new("data/e1m1.bsp"));
 		let mut a=0.0;
 
-		bsp.visit_textures( &mut |i,tx|{show_texture(tx)});
+		bsp.visit_textures( &mut |i,tx|{self.show_texture(i)});
 		bsp.visit_triangles(
 			&|_,(v0,v1,v2),(_,txinfo),(_,plane),(face_id,_)| {
 				draw_tri_iso(v0,v1,v2, random_color(face_id), 1.0/2000.0)
@@ -447,44 +447,50 @@ unsafe fn void_ptr<T>(p:&T)->*c_void {
 
 static g_palette:&'static [u8]=include_bin!("data/palette.lmp");
 
-fn	show_texture(tx:&MipTex) {
-	unsafe {
-		let i = (tx as *_ as int);
-		let a= ((i^(i<<4)^(i>>7)*i) as f32) *0.57;
-		let x = f32::sin(a)*0.5;
-		let y = f32::cos(a*0.551)*0.5;
-		let buffer = Vec::<u32>::from_fn(256*256, |i|(i|0xff0000) as u32);
-//		let txp = tx as*_ as* c_void;
-		let txp = void_ptr(tx);
-		let local_pal = ofs_ptr(tx,1) as *u8;
-		let mip0:*u8 = ofs_u8_ptr(tx,tx.offset1);
-		let mip1 = ofs_u8_ptr(tx,tx.offset2);
-		let mip2 = ofs_u8_ptr(tx,tx.offset4);
-		let mip3 = ofs_u8_ptr(tx,tx.offset8);
-//		println!("tx={:p} txp={:p} mip0={:p} ",tx, txp, mip0);
-		println!("size={}x{} miptex offsets {} {} {} {}",
-			tx.width, tx.height, 
-			tx.offset1, tx.offset2, tx.offset4, tx.offset8);
+impl BspHeader {
+	fn get_texture_image<'a>(&'a self, i:index)->(&'a MipText, ~Vec<u32>) {
+		unsafe {
+			let txp = void_ptr(tx);
+			let local_pal = ofs_ptr(tx,1) as *u8;
 
-		// todo - its double-deref local & global palette..
-		let image = Vec::<u32>::from_fn((tx.width*tx.height) as uint, 
-			|i|{
-				let x = ofs_ptr(mip0, i);
-				let cii=(*x) as int;
-//				let ci=*(ofs_ptr(local_pal,cii));
-				let r=g_palette[cii*3+0] as u32;
-				let g=g_palette[cii*3+1] as u32;
-				let b=g_palette[cii*3+2] as u32;
-				(r|(g<<8)|(b<<16)|(if cii<255{0xff000000}else{0})) as u32
+			let mip0:*u8 = ofs_u8_ptr(tx,tx.offset1);
+			let mip1 = ofs_u8_ptr(tx,tx.offset2);
+			let mip2 = ofs_u8_ptr(tx,tx.offset4);
+			let mip3 = ofs_u8_ptr(tx,tx.offset8);
+
+			println!("size={}x{} miptex offsets {} {} {} {}",
+				tx.width, tx.height, 
+				tx.offset1, tx.offset2, tx.offset4, tx.offset8);
+
+			let image = Vec::<u32>::from_fn((tx.width*tx.height) as uint, 
+				|i|{
+					let x = ofs_ptr(mip0, i);
+					let cii=(*x) as int;
+					let r=g_palette[cii*3+0] as u32;
+					let g=g_palette[cii*3+1] as u32;
+					let b=g_palette[cii*3+2] as u32;
+					(r|(g<<8)|(b<<16)|(if cii<255{0xff000000}else{0})) as u32
+				}
 			}
+			(tx,image)
 		);
+	}
 
-		glRasterPos2f(x,y);
-		glDrawPixels(tx.width as GLsizei,tx.height as GLsizei, GL_RGBA, GL_UNSIGNED_BYTE, void_ptr(image.get(0)));
-		glFlush();
+	fn	show_texture(&self, i) {
+		unsafe {
+			let i = (tx as *_ as int);
+			let a= ((i^(i<<4)^(i>>7)*i) as f32) *0.57;
+			let x = f32::sin(a)*0.5;
+			let y = f32::cos(a*0.551)*0.5;
+	
+			let (tx,image)= self.get_texture_image(i);
 
+			glRasterPos2f(x,y);
+			glDrawPixels(tx.width as GLsizei,tx.height as GLsizei, GL_RGBA, GL_UNSIGNED_BYTE, void_ptr(image.get(0)));
+			glFlush();
+		}
 	}
 }
 
-
+	
  
