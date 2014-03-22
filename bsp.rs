@@ -3,17 +3,19 @@
 #[feature(default_type_params)];
 #[allow(dead_code)];
 
+extern crate collections;
 use r3d::gl::*;
 use r3d::vecmath::*;
 use std::vec_ng::Vec;
 use std::io;
 use std::intrinsics::{size_of,offset};
 use std::libc::*;
+use std::c_str::CString;
 use std::f32;
+use collections::hashmap::HashSet;
 //use std::c_str::*;
 mod r3d;
 //mod macros;
-
 // graphical test main, immiediate debug lines
 
 fn draw_line(&(x0,y0,z0):&(f32,f32,f32),&(x1,y1,z1):&(f32,f32,f32), color:u32) {
@@ -24,7 +26,7 @@ fn draw_line(&(x0,y0,z0):&(f32,f32,f32),&(x1,y1,z1):&(f32,f32,f32), color:u32) {
 		glEnd();
 	}
 }
-fn v3isometric(&(x,y,z):&BspVec3)->BspVec3 {(x+y,z+(x-y)*0.5, z)}
+fn v3isometric(&(x,y,z):&(f32,f32,f32))->(f32,f32,f32) {(x+y,z+(x-y)*0.5, z)}
 
 fn draw_line_iso(v0:&BspVec3,v1:&BspVec3,color:u32, scale:f32) {
 	draw_line(&v3isometric(&v3scale(v0,scale)),&v3isometric(&v3scale(v1,scale)), color)
@@ -68,12 +70,16 @@ pub fn main()
 
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 		let bsp=Blob::<BspHeader>::read(&Path::new("data/e1m1.bsp"));
-//		bsp.dump();
 		let mut a=0.0;
 
-		bsp.draw_faces();
-		bsp.draw_edges();
-//		bsp.draw_all_surface_edges();
+		bsp.visit_textures( &mut |i,tx|{});
+		bsp.visit_triangles(
+			&|_,(v0,v1,v2),(_,txinfo),(_,plane),(face_id,_)| {
+				draw_tri_iso(v0,v1,v2, random_color(face_id), 1.0/2000.0)
+			}
+		);
+//		bsp.visit_texture();
+
 		glFlush();
 
 		while true {
@@ -137,13 +143,13 @@ pub struct BspHeader {
 	entities:BspDEntry<Entity>,
 	planes:BspDEntry<Plane>,
 
-	miptex:BspDEntry<MipTex>,
+	miptex:BspDEntry<MipHeader>,
 	vertices:BspDEntry<BspVec3>,
 
 	visibility:BspDEntry<VisiList>,
 	nodes:BspDEntry<BspNode>,
 
-	texinfo:BspDEntry<TextureInfo>,
+	texinfo:BspDEntry<TexInfo>,
 
 	faces:BspDEntry<Face>,
 
@@ -156,9 +162,17 @@ pub struct BspHeader {
 	edges:BspDEntry<Edge>,
 
 	surfedges:BspDEntry<i32>, // ? no
-	models:BspDEntry<Model>
+	models:BspDEntry<Model>,
 }
-
+fn random_color3(a:uint,b:uint,c:uint)->u32 {
+	(a*b*c ^(a<<3)^(b<<8)*(c<<2)^(a<<19)^(b<<22)*(c<<13) )as u32
+}
+fn random_color(a:uint)->u32 {
+	(a^(a<<3)^(a<<8)*(a<<2)^(a<<19)^(a<<22)*(a<<13) )as u32
+}
+macro_rules! get {
+	($obj:ident . $field:ident [ $id:expr ] )=>($obj . $field . get( $obj , $id as uint ))
+}
 impl BspHeader {
 	fn dump_vertices(&self) {	
 		println!("{}",self.vertices.len());
@@ -172,63 +186,110 @@ impl BspHeader {
 			i+=1;
 			let v=*vtref;
 		}
-		println!("{:p}, {:p}, {:p}", 
-			self.vertices.get(self,0),
-			self.vertices.get(self,1),
-			self.vertices.get(self,2));
 	
 	}
 	fn dump(&self) {
 		println!("vertices: {:u}", self.vertices.len());
 		self.dump_vertices();
 	}
+	// some convinient accessors. - TODO autogenerate from a macro
+	fn visit_triangles<'a,'b,R>(
+			&'a self,
+			fn_apply_to_tri:
+				&'b|	tri_indices:(uint,uint,uint),
+						tri_vertices:(&'a BspVec3,&'a BspVec3,&'a BspVec3),
+						texinfo:(uint,&'a TexInfo),
+						plane:(uint,&'a Plane),
+						face_id:(uint,&'a Face)|->R
+			)->Vec<R>
+	{
+		let mut return_val:Vec<R> =Vec::new();	// todo: reserve
+		for face_id in range(0,self.faces.len()) {
+			let face=self.faces.get(self, face_id);
+			let eii = face.firstedge;
+			let first_ei= *get!{self.surfedges[eii]};
+			let first_edge= get!{self.edges[if first_ei>=0{first_ei}else{-first_ei}]};
+			let iv0=(if first_ei>=0 {first_edge.vertex0}else{first_edge.vertex1})  as uint;
+			let v0 = self.vertices.get(self, iv0 as uint) ;
+			
+			// todo: iterate as strips, not fans.
+			for esubi in range(0, face.num_edges) {
+				let ei = *get!{self.surfedges[eii+esubi as i32]};
+				let edge=get!{self.edges[ei]};
+				let edge=get!{self.edges[if ei>0{ei}else{-ei}]};
+				let (iv1,iv2)=if ei>=0{ 
+					(edge.vertex0 as uint,edge.vertex1 as uint)
+				} else {
+					(edge.vertex1 as uint,edge.vertex0 as uint)
+				};
+				let mut v1=self.vertices.get(self, iv1 as uint);
+				let mut v2=self.vertices.get(self, iv2 as uint);
+
+				let tri_result=
+				(*fn_apply_to_tri) (
+					(iv0,iv1,iv2),
+					(v0,v1,v2),	
+					(face.texinfo as uint,	get!{self.texinfo[face.texinfo]} ),
+					(face.plane as uint,	get!{self.planes[face.plane]} ),
+					(face_id, face)
+				);
+				return_val.push(tri_result);
+			}
+		}
+		return_val
+	}
+	fn visit_faces<'a>(&'a self, f:&mut 'a |i:uint, f:&Face |) {
+		for i in range(0, self.faces.len()) {
+			(*f)(i, get!{self.faces[i]} );
+		}
+	}
+
+	fn get_used_textures(&self)->HashSet<uint> {
+		let mut used_tx= HashSet::<uint>::new();
+		self.visit_faces( &mut |i:uint,face:&Face|{used_tx.insert(face.texinfo as uint);});
+		used_tx
+	}
+
+	fn visit_textures<'a>(&'a self, mut tex_fn:&'a|i:uint,tx:&MipTex|) {
+		let txh =self.miptex.get(self,0);
+		for i in range(0,txh.numtex) {
+			let tx = unsafe {&*(
+				(txh as *_ as *u8).offset(*txh.miptex_offset.unsafe_ref(i as uint) as int) as *MipTex
+			)};
+			unsafe {
+				println!("tx: {} {} {}",
+					i,
+					// ::std::c_str::CString::new(&tx.name[0],false).as_str().unwrap_or(""), 
+					tx.width, tx.height);
+			}
+			(*tex_fn)( i as uint, tx );
+		}
+	}
+
+}
+
+impl BspHeader {
 	fn draw_edges(&self) {
 		let scale=1.0f32/3000.0f32;
 		let mut i=0u;
 		while i < self.edges.len() {
-			let e= self.edges.get(self,i);
-			let v0 = self.vertices.get(self, e.vertex0 as uint);
-			let v1 = self.vertices.get(self, e.vertex1 as uint);
+			let e= get!{self.edges[i]};
+			let v0 = get!{self.vertices[e.vertex0]};
+			let v1 = get!{self.vertices[e.vertex1]};
 			draw_line_iso(v0,v1,0xffffff, scale);
 			i+=1;
 		}
 	}
 	fn draw_faces(&self) {
 		let scale=1.0f32/3000.0f32;
-
-		for i in range(0,self.faces.len()) {
-			let face=self.faces.get(self, i);
-			let eii = face.firstedge;
-			let first_ei= *self.surfedges.get(self, eii as uint);
-			let first_edge=if first_ei>=0 {self.edges.get(self,first_ei as uint)} else {self.edges.get(self,-first_ei as uint)};
-			let first_vertex=if first_ei>=0 {first_edge.vertex0}else{first_edge.vertex1};
-			let vfirst = self.vertices.get(self, first_vertex as uint);
-			
-			for esubi in range(0, face.num_edges) {
-				let ei = *self.surfedges.get(self, (eii+esubi as i32) as uint);
-				let edge=self.edges.get(self, ei as uint);
-				let (v0,v1)=if ei>0 {
-					let edge=self.edges.get(self, ei as uint);
-					(	self.vertices.get(self, edge.vertex0 as uint),
-						self.vertices.get(self, edge.vertex1 as uint)
-					)
-				} else {
-					let edge=self.edges.get(self, -ei as uint);
-					(	self.vertices.get(self, edge.vertex1 as uint),
-						self.vertices.get(self, edge.vertex0 as uint)
-					)
-				};
-				draw_tri_iso(vfirst, v0,v1, (((i^ i <<13)*i)^(i<<13)) as u32, scale);
-//				draw_line_iso(v0,v1,scale);
-			}
-		}
+		self.visit_triangles(
+			&|(i0,i1,i2),(v0,v1,v2),(_,txinfo),_,(face_id,_)| draw_tri_iso(v0,v1,v2, random_color(face_id), scale)
+		);
+		
 	}
 	fn draw_all_surface_edges(&self)
 	{
 		for i in range(0, self.surfedges.len()) {
-			//let mut ei=self.edgelist.get(self, i);
-			
-//			let edge = self.edges.get(self, ei);
 			self.draw_edge(*(self.surfedges.get(self, i))  as int);
 		}
 	}
@@ -267,6 +328,7 @@ pub struct MipTex {
 }
 pub struct MipHeader {
 	numtex:u32, 
+	miptex_offset:[u32,..0]	// actual size is..
 }
 impl MipHeader {
 	pub unsafe fn tex_offsets(&self)->*u32 {
@@ -304,7 +366,7 @@ impl BspNode {
 	}
 }
 
-pub struct TextureInfo {
+pub struct TexInfo {
 	axis_s:BspVec3, ofs_s:f32,
 	axis_t:BspVec3, ofs_t:f32,
 	miptex:int,
