@@ -12,21 +12,47 @@ use std::libc::*;
 use std::f32;
 //use std::c_str::*;
 mod r3d;
+//mod macros;
 
 // graphical test main, immiediate debug lines
 
-fn draw_line(&(x0,y0,z0):&(f32,f32,f32),&(x1,y1,z1):&(f32,f32,f32)) {
+fn draw_line(&(x0,y0,z0):&(f32,f32,f32),&(x1,y1,z1):&(f32,f32,f32), color:u32) {
 	unsafe {
 		glBegin(GL_LINES);
+		gl_color(color);
 		glVertex3f(x0,y0,z0); glVertex3f(x1,y1,z1);
 		glEnd();
 	}
 }
 fn v3isometric(&(x,y,z):&BspVec3)->BspVec3 {(x+y,z+(x-y)*0.5, z)}
 
-fn draw_line_iso(v0:&BspVec3,v1:&BspVec3,scale:f32) {
-	draw_line(&v3isometric(&v3scale(v0,scale)),&v3isometric(&v3scale(v1,scale)))
+fn draw_line_iso(v0:&BspVec3,v1:&BspVec3,color:u32, scale:f32) {
+	draw_line(&v3isometric(&v3scale(v0,scale)),&v3isometric(&v3scale(v1,scale)), color)
 }
+unsafe fn gl_vertex_v3(&(x,y,z):&BspVec3) {
+	glVertex3f(x,y,z);
+}
+unsafe fn gl_color(color:u32) {
+	let r=(color)&255;
+	let g=(color>>8)&255;
+	let b=(color>>16)&255;
+	glColor3f(r as f32 *(1.0/255.0),g as f32 *(1.0/255.0),b as f32 *(1.0/255.0));
+}
+fn draw_tri_iso(v0:&BspVec3,v1:&BspVec3,v2:&BspVec3,color:u32, scale:f32 ) {
+	let tv0=v3isometric(&v3scale(v0,scale));
+	let tv1=v3isometric(&v3scale(v1,scale));
+	let tv2=v3isometric(&v3scale(v2,scale));
+	unsafe {
+		glBegin(GL_TRIANGLES);
+		gl_color(color);
+		gl_vertex_v3(&tv0);	
+		gl_vertex_v3(&tv1);	
+		gl_vertex_v3(&tv2);	
+		glEnd();
+	}
+
+}
+
 
 pub fn main()
 {
@@ -45,7 +71,9 @@ pub fn main()
 //		bsp.dump();
 		let mut a=0.0;
 
+		bsp.draw_faces();
 		bsp.draw_edges();
+//		bsp.draw_all_surface_edges();
 		glFlush();
 
 		while true {
@@ -108,18 +136,26 @@ pub struct BspHeader {
 	version:u32,
 	entities:BspDEntry<Entity>,
 	planes:BspDEntry<Plane>,
+
 	miptex:BspDEntry<MipTex>,
 	vertices:BspDEntry<BspVec3>,
+
 	visibility:BspDEntry<VisiList>,
 	nodes:BspDEntry<BspNode>,
+
 	texinfo:BspDEntry<TextureInfo>,
-	faces:BspDEntry<i16>,
+
+	faces:BspDEntry<Face>,
+
 	lightmaps:BspDEntry<LightMap>,
 	clipnodes:BspDEntry<ClipNode>,
+
 	leafs:BspDEntry<BspLeaf>,
-	lface:BspDEntry<Face>,
+
+	marksurfaces:BspDEntry<i16>, //? no
 	edges:BspDEntry<Edge>,
-	surfedges:BspDEntry<i16>,	
+
+	surfedges:BspDEntry<i32>, // ? no
 	models:BspDEntry<Model>
 }
 
@@ -147,20 +183,62 @@ impl BspHeader {
 		self.dump_vertices();
 	}
 	fn draw_edges(&self) {
+		let scale=1.0f32/3000.0f32;
 		let mut i=0u;
 		while i < self.edges.len() {
 			let e= self.edges.get(self,i);
 			let v0 = self.vertices.get(self, e.vertex0 as uint);
 			let v1 = self.vertices.get(self, e.vertex1 as uint);
-			let scale=1.0f32/3000.0f32;
-			draw_line_iso(v0,v1,scale);
+			draw_line_iso(v0,v1,0xffffff, scale);
 			i+=1;
 		}
 	}
 	fn draw_faces(&self) {
+		let scale=1.0f32/3000.0f32;
+
 		for i in range(0,self.faces.len()) {
-//			let face=
+			let face=self.faces.get(self, i);
+			let eii = face.firstedge;
+			let first_ei= *self.surfedges.get(self, eii as uint);
+			let first_edge=if first_ei>=0 {self.edges.get(self,first_ei as uint)} else {self.edges.get(self,-first_ei as uint)};
+			let first_vertex=if first_ei>=0 {first_edge.vertex0}else{first_edge.vertex1};
+			let vfirst = self.vertices.get(self, first_vertex as uint);
+			
+			for esubi in range(0, face.num_edges) {
+				let ei = *self.surfedges.get(self, (eii+esubi as i32) as uint);
+				let edge=self.edges.get(self, ei as uint);
+				let (v0,v1)=if ei>0 {
+					let edge=self.edges.get(self, ei as uint);
+					(	self.vertices.get(self, edge.vertex0 as uint),
+						self.vertices.get(self, edge.vertex1 as uint)
+					)
+				} else {
+					let edge=self.edges.get(self, -ei as uint);
+					(	self.vertices.get(self, edge.vertex1 as uint),
+						self.vertices.get(self, edge.vertex0 as uint)
+					)
+				};
+				draw_tri_iso(vfirst, v0,v1, (((i^ i <<13)*i)^(i<<13)) as u32, scale);
+//				draw_line_iso(v0,v1,scale);
+			}
 		}
+	}
+	fn draw_all_surface_edges(&self)
+	{
+		for i in range(0, self.surfedges.len()) {
+			//let mut ei=self.edgelist.get(self, i);
+			
+//			let edge = self.edges.get(self, ei);
+			self.draw_edge(*(self.surfedges.get(self, i))  as int);
+		}
+	}
+	fn draw_edge(&self, mut ei:int) {
+		let scale=1.0f32/3000.0f32;
+		if ei<0 {ei=-ei}
+		let edge=self.edges.get(self, ei as uint);
+		let v0 = self.vertices.get(self, edge.vertex0 as uint);
+		let v1 = self.vertices.get(self, edge.vertex1 as uint);
+		draw_line_iso(v0,v1,0xffffff, scale);
 	}
 }
 
