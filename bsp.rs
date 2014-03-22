@@ -456,6 +456,7 @@ fn	show_texture(tx:&MipTex) {
 		let buffer = Vec::<u32>::from_fn(256*256, |i|(i|0xff0000) as u32);
 //		let txp = tx as*_ as* c_void;
 		let txp = void_ptr(tx);
+		let pal = ofs_ptr(tx,1) as *u8;
 		let mip0:*u8 = ofs_u8_ptr(tx,tx.offset1);
 		let mip1 = ofs_u8_ptr(tx,tx.offset2);
 		let mip2 = ofs_u8_ptr(tx,tx.offset4);
@@ -469,7 +470,8 @@ fn	show_texture(tx:&MipTex) {
 		let image = Vec::<u32>::from_fn((tx.width*tx.height) as uint, 
 			|i|{
 				let x = ofs_ptr(mip0, i);
-				let ci=*x;
+				let cii=*x;
+				let ci=*(txp.offset(cii));
 				let r=g_palette[ci*3+0] as u32;
 				let g=g_palette[ci*3+1] as u32;
 				let b=g_palette[ci*3+2] as u32;
