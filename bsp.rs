@@ -72,7 +72,7 @@ pub fn main()
 		let bsp=Blob::<BspHeader>::read(&Path::new("data/e1m1.bsp"));
 		let mut a=0.0;
 
-		bsp.visit_textures( &mut |i,tx|{});
+		bsp.visit_textures( &mut |i,tx|{show_texture(tx)});
 		bsp.visit_triangles(
 			&|_,(v0,v1,v2),(_,txinfo),(_,plane),(face_id,_)| {
 				draw_tri_iso(v0,v1,v2, random_color(face_id), 1.0/2000.0)
@@ -420,11 +420,64 @@ pub struct Face {
 	light:[u8,..2],
 	lightmap_ofs:i32, // [styles*sursize] samples..
 }
+/*
+unsafe fn unpalettize_image_256(pixels:*u8, palette:&[u32,..256],   xsize:uint, ysize:uint)->Vec<u32> {
+	buffer=Vec3::<u32>::from_fn(xsize*ysize,
+		|i|{ pixels[i]
+		);
+}
+*/
+
+unsafe fn ofs_u8_ptr<T,I:Int>(p:&T, ofs:I)->*u8 {
+	(p as *T as *u8).offset(ofs.to_int().unwrap()) as *u8
+}
+unsafe fn ofs_void_ptr<T,I:Int>(p:&T, ofs:I)->*c_void {
+	(p as *T as *u8).offset(ofs.to_int().unwrap()) as *c_void
+}
+unsafe fn ofs_ref<'a, T,I:Int>(p:&'a T, ofs:I)->&'a T {
+	&*((p as *T).offset(ofs.to_int().unwrap()))
+}
+unsafe fn ofs_ptr<'a, T,I:Int>(p:*T, ofs:I)->*T {
+	(p.offset(ofs.to_int().unwrap()))
+}
+
+unsafe fn void_ptr<T>(p:&T)->*c_void {
+	ofs_u8_ptr(p,0) as *c_void
+}
 
 
 fn	show_texture(tx:&MipTex) {
 	unsafe {
-		let tx = tx.as_void_ptr();
+		let i = (tx as *_ as int);
+		let a= ((i^(i<<4)^(i>>7)*i) as f32) *0.57;
+		let x = f32::sin(a)*0.5;
+		let y = f32::cos(a*0.551)*0.5;
+		let buffer = Vec::<u32>::from_fn(256*256, |i|(i|0xff0000) as u32);
+//		let txp = tx as*_ as* c_void;
+		let txp = void_ptr(tx);
+		let mip0:*u8 = ofs_u8_ptr(tx,tx.offset1);
+		let mip1 = ofs_u8_ptr(tx,tx.offset2);
+		let mip2 = ofs_u8_ptr(tx,tx.offset4);
+		let mip3 = ofs_u8_ptr(tx,tx.offset8);
+//		println!("tx={:p} txp={:p} mip0={:p} ",tx, txp, mip0);
+		println!("size={}x{} miptex offsets {} {} {} {}",
+			tx.width, tx.height, 
+			tx.offset1, tx.offset2, tx.offset4, tx.offset8);
+
+		// todo - its double-deref local & global palette..
+		let image = Vec::<u32>::from_fn((tx.width*tx.height) as uint, 
+			|i|{
+				let x = ofs_ptr(mip0, i);
+				let y=*x;
+				((y&15)<<4) as u32
+//				i as u32
+			}
+		);
+
+		glRasterPos2f(x,y);
+		glDrawPixels(tx.width as GLsizei,tx.height as GLsizei, GL_RGBA, GL_UNSIGNED_BYTE, void_ptr(image.get(0)));
+		glFlush();
+
 	}
 }
 
