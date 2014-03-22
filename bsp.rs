@@ -72,7 +72,7 @@ pub fn main()
 		let bsp=Blob::<BspHeader>::read(&Path::new("data/e1m1.bsp"));
 		let mut a=0.0;
 
-		bsp.visit_textures( &mut |i,tx|{self.show_texture(i)});
+		bsp.visit_textures( &mut |i,tx|{bsp.show_texture(i)} );
 		bsp.visit_triangles(
 			&|_,(v0,v1,v2),(_,txinfo),(_,plane),(face_id,_)| {
 				draw_tri_iso(v0,v1,v2, random_color(face_id), 1.0/2000.0)
@@ -250,12 +250,18 @@ impl BspHeader {
 		used_tx
 	}
 
+	fn get_texture<'a>(&'a self, i:uint)->&'a MipTex {
+		let txh=self.miptex.get(self,0);
+		let tx = unsafe {&*(
+			(txh as *_ as *u8).offset(*txh.miptex_offset.unsafe_ref(i as uint) as int) as *MipTex
+		)};
+		tx
+	}
+
 	fn visit_textures<'a>(&'a self, mut tex_fn:&'a|i:uint,tx:&MipTex|) {
 		let txh =self.miptex.get(self,0);
 		for i in range(0,txh.numtex) {
-			let tx = unsafe {&*(
-				(txh as *_ as *u8).offset(*txh.miptex_offset.unsafe_ref(i as uint) as int) as *MipTex
-			)};
+			let tx=self.get_texture(i as uint);
 			unsafe {
 				println!("tx: {} {} {}",
 					i,
@@ -448,8 +454,9 @@ unsafe fn void_ptr<T>(p:&T)->*c_void {
 static g_palette:&'static [u8]=include_bin!("data/palette.lmp");
 
 impl BspHeader {
-	fn get_texture_image<'a>(&'a self, i:index)->(&'a MipText, ~Vec<u32>) {
+	fn get_texture_image<'a>(&'a self, i:uint)->(&'a MipTex, Vec<u32>) {
 		unsafe {
+			let tx=self.get_texture(i);
 			let txp = void_ptr(tx);
 			let local_pal = ofs_ptr(tx,1) as *u8;
 
@@ -462,7 +469,8 @@ impl BspHeader {
 				tx.width, tx.height, 
 				tx.offset1, tx.offset2, tx.offset4, tx.offset8);
 
-			let image = Vec::<u32>::from_fn((tx.width*tx.height) as uint, 
+			let image = Vec::<u32>::from_fn(
+				(tx.width*tx.height) as uint, 
 				|i|{
 					let x = ofs_ptr(mip0, i);
 					let cii=(*x) as int;
@@ -471,19 +479,19 @@ impl BspHeader {
 					let b=g_palette[cii*3+2] as u32;
 					(r|(g<<8)|(b<<16)|(if cii<255{0xff000000}else{0})) as u32
 				}
-			}
+			);
 			(tx,image)
-		);
+		}
 	}
 
-	fn	show_texture(&self, i) {
+	fn	show_texture(&self, i:uint) {
 		unsafe {
+	
+			let (tx,image)= self.get_texture_image(i);
 			let i = (tx as *_ as int);
 			let a= ((i^(i<<4)^(i>>7)*i) as f32) *0.57;
 			let x = f32::sin(a)*0.5;
 			let y = f32::cos(a*0.551)*0.5;
-	
-			let (tx,image)= self.get_texture_image(i);
 
 			glRasterPos2f(x,y);
 			glDrawPixels(tx.width as GLsizei,tx.height as GLsizei, GL_RGBA, GL_UNSIGNED_BYTE, void_ptr(image.get(0)));
