@@ -13,8 +13,10 @@ use std::libc::*;
 use std::c_str::CString;
 use std::f32;
 use collections::hashmap::HashSet;
+use r3d::ut::*;
 //use std::c_str::*;
 mod r3d;
+
 //mod macros;
 // graphical test main, immiediate debug lines
 
@@ -34,6 +36,9 @@ fn draw_line_iso(v0:&BspVec3,v1:&BspVec3,color:u32, scale:f32) {
 unsafe fn gl_vertex_v3(&(x,y,z):&BspVec3) {
 	glVertex3f(x,y,z);
 }
+unsafe fn gl_tex0(&(u,v):&(f32,f32)) {
+	glTexCoord2f(u,v);
+}
 unsafe fn gl_color(color:u32) {
 	let r=(color)&255;
 	let g=(color>>8)&255;
@@ -52,7 +57,26 @@ fn draw_tri_iso(v0:&BspVec3,v1:&BspVec3,v2:&BspVec3,color:u32, scale:f32 ) {
 		gl_vertex_v3(&tv2);	
 		glEnd();
 	}
-
+}
+fn draw_tri_iso_tex(
+		(v0,uv0):(&BspVec3,BspVec2), 
+		(v1,uv1):(&BspVec3,BspVec2),
+		(v2,uv2):(&BspVec3,BspVec2),
+		color:u32, scale:f32 ) {
+	let tv0=v3isometric(&v3scale(v0,scale));
+	let tv1=v3isometric(&v3scale(v1,scale));
+	let tv2=v3isometric(&v3scale(v2,scale));
+	unsafe {
+		glBegin(GL_TRIANGLES);
+		gl_color(color);
+		gl_tex0(&uv0);
+		gl_vertex_v3(&tv0);
+		gl_tex0(&uv1);
+		gl_vertex_v3(&tv1);	
+		gl_tex0(&uv2);
+		gl_vertex_v3(&tv2);	
+		glEnd();
+	}
 }
 
 
@@ -72,10 +96,26 @@ pub fn main()
 		let bsp=Blob::<BspHeader>::read(&Path::new("data/e1m1.bsp"));
 		let mut a=0.0;
 
+		let mut tex_array=Vec::<GLuint>::new();
 		bsp.visit_textures( &mut |i,tx|{bsp.show_texture(i)} );
+		bsp.visit_textures( &mut |i,_|{ // we miss do notation :(
+				let (tx,img)=bsp.get_texture_image(i); 
+				let txi=create_texture((tx.width as uint,tx.height as uint), &img,8);
+				tex_array.push(txi);
+			}
+		);
 		bsp.visit_triangles(
 			&|_,(v0,v1,v2),(_,txinfo),(_,plane),(face_id,_)| {
-				draw_tri_iso(v0,v1,v2, random_color(face_id), 1.0/2000.0)
+				glEnable(GL_TEXTURE_2D);
+				let txi=txinfo.miptex as uint;
+				println!("{},{}", txi,tex_array.len());
+				glBindTexture(GL_TEXTURE_2D, *tex_array.get(txi));
+				
+//				draw_tri_iso_tex(v0,v1,v2, random_color(face_id), 1.0/2000.0)
+				fn applytx<'a>(tx:&'a TexInfo,v:&'a BspVec3)->(&'a BspVec3,(f32,f32)){
+					(v, (v3dot(&tx.axis_s,v)-tx.ofs_s,v3dot(&tx.axis_t,v)-tx.ofs_t) )
+				}
+				draw_tri_iso_tex(applytx(txinfo,v0),applytx(txinfo,v1),applytx(txinfo,v2), 0xffffff, 1.0/2000.0)
 			}
 		);
 //		bsp.visit_texture();
@@ -129,11 +169,20 @@ pub struct DEntry<Header, T> {
 	offset:u32, 
 	size:u32
 }
+//unsafe fn byte_ofs_ref<'a,X,Y=X,I:Int=int>(base:&'a X, ofs:I)->&'a Y {
+//	&*( (base as *_ as *u8).offset( ofs.to_int().unwrap() ) as *Y)
+//}
+
+
 impl<Header,T> DEntry<Header,T> {
 	fn len(&self)->uint { unsafe {self.size as uint /  size_of::<T>()} }
 	fn get<'a>(&'a self, owner:&'a Header,i:uint) -> &'a T{
+		// TODO: to REALLY be safe, the sub-elements need to check safety from the blob 'owner'
+		// unfortunately 'bspheader' doesn't seem to have that, although the last elements' ofs & size could be used
+		// for an assert?
 		unsafe {
-			&*(((owner as *Header as *u8).offset(self.offset as int) as *T).offset(i as int))
+//			&*(((owner as *Header as *u8).offset(self.offset as int) as *T).offset(i as int))
+			&*(byte_ofs_ptr(owner, self.offset).offset(i as int))
 		}
 	}
 }
@@ -352,6 +401,7 @@ impl MipHeader {
 }
 
 pub type BspVec3=(f32,f32,f32);
+pub type BspVec2=(f32,f32);
 pub struct VisiList;
 pub struct BspNode {
 	plane_id:u32,
@@ -375,8 +425,8 @@ impl BspNode {
 pub struct TexInfo {
 	axis_s:BspVec3, ofs_s:f32,
 	axis_t:BspVec3, ofs_t:f32,
-	miptex:int,
-	flags:int
+	miptex:i32,
+	flags:i32
 }
 pub struct Faces;
 pub struct LightMap; //{ 	texels:[u8]} ??
@@ -434,6 +484,7 @@ unsafe fn unpalettize_image_256(pixels:*u8, palette:&[u32,..256],   xsize:uint, 
 }
 */
 
+/*
 unsafe fn ofs_u8_ptr<T,I:Int>(p:&T, ofs:I)->*u8 {
 	(p as *T as *u8).offset(ofs.to_int().unwrap()) as *u8
 }
@@ -450,6 +501,49 @@ unsafe fn ofs_ptr<'a, T,I:Int>(p:*T, ofs:I)->*T {
 unsafe fn void_ptr<T>(p:&T)->*c_void {
 	ofs_u8_ptr(p,0) as *c_void
 }
+*/
+
+/// return a reference to a different type at a byte offset from the given base object reference
+unsafe fn byte_ofs_ref<'a,X,Y,I:Int=int>(base:&'a X, ofs:I)->&'a Y {	&*( (base as *_ as *u8).offset( ofs.to_int().unwrap() ) as *Y) }
+/// return a raw ptr to a different type at a byte offset from the given base object reference
+unsafe fn byte_ofs_ptr<'a,X,Y,I:Int=int>(base:&'a X, ofs:I)->*Y {
+	(base as *_ as *u8).offset( ofs.to_int().unwrap() ) as *Y
+}
+
+trait ToVoidPtr {
+	/// Get a void pointer for the contents of a collection
+	unsafe fn void_ptr(&self)->*std::libc::c_void;
+	/// Get a void pointer for the contents of a collection, with a byte offset
+	unsafe fn byte_ofs<I:Int>(&self, ofs:I)->*std::libc::c_void;
+}
+impl<T> ToVoidPtr for Vec<T> {
+	unsafe fn void_ptr(&self)->*std::libc::c_void {
+		self.get(0) as *_ as *c_void
+	}
+	unsafe fn byte_ofs<I:Int>(&self,ofs:I)->*std::libc::c_void {
+		self.void_ptr().offset(ofs.to_int().unwrap())
+	}
+}
+impl<'a,T> ToVoidPtr for &'a T {
+	unsafe fn void_ptr(&self)->*std::libc::c_void {
+		// NOTE special handling of self, self here is &&T, we deref to get &T
+		(*self) as *_ as *std::libc::c_void
+	}	
+	unsafe fn byte_ofs<I:Int>(&self,ofs:I)->*std::libc::c_void {
+		// NOTE special handling of self, self here is &&T, we deref to get &T
+		(*self as *_ as *u8).offset(ofs.to_int().unwrap()) as *c_void
+	}
+}
+impl ToVoidPtr for *c_void {
+	unsafe fn void_ptr(&self)->*std::libc::c_void {
+		// NOTE special handling of self, self here is &&T, we deref to get &T
+		*self
+	}	
+	unsafe fn byte_ofs<I:Int>(&self,ofs:I)->*std::libc::c_void {
+		// NOTE special handling of self, self here is &&T, we deref to get &T
+		(*self as *u8).offset(ofs.to_int().unwrap()) as *c_void
+	}
+}
 
 static g_palette:&'static [u8]=include_bin!("data/palette.lmp");
 
@@ -457,13 +551,9 @@ impl BspHeader {
 	fn get_texture_image<'a>(&'a self, i:uint)->(&'a MipTex, Vec<u32>) {
 		unsafe {
 			let tx=self.get_texture(i);
-			let txp = void_ptr(tx);
-			let local_pal = ofs_ptr(tx,1) as *u8;
+//			let txp = void_ptr(tx);
 
-			let mip0 = ofs_u8_ptr(tx,tx.offset1);
-			let mip1 = ofs_u8_ptr(tx,tx.offset2);
-			let mip2 = ofs_u8_ptr(tx,tx.offset4);
-			let mip3 = ofs_u8_ptr(tx,tx.offset8);
+			let mip0 = tx.byte_ofs(tx.offset1);
 
 			println!("size={}x{} miptex offsets {} {} {} {}",
 				tx.width, tx.height, 
@@ -472,12 +562,13 @@ impl BspHeader {
 			let image = Vec::<u32>::from_fn(
 				(tx.width*tx.height) as uint, 
 				|i|{
-					let x = ofs_ptr(mip0, i);
-					let cii=(*x) as int;
-					let r=g_palette[cii*3+0] as u32;
-					let g=g_palette[cii*3+1] as u32;
-					let b=g_palette[cii*3+2] as u32;
-					(r|(g<<8)|(b<<16)|(if cii<255{0xff000000}else{0})) as u32
+					let x = mip0.byte_ofs(i);
+					let color_index=*(x as *u8) as uint;
+					let rgb_index=color_index*3;
+					let r=g_palette[rgb_index+0] as u32;
+					let g=g_palette[rgb_index+1] as u32;
+					let b=g_palette[rgb_index+2] as u32;
+					(r|(g<<8)|(b<<16)|(if color_index<255{0xff000000}else{0})) as u32
 				}
 			);
 			(tx,image)
@@ -494,11 +585,42 @@ impl BspHeader {
 			let y = f32::cos(a*0.551)*0.5;
 
 			glRasterPos2f(x,y);
-			glDrawPixels(tx.width as GLsizei,tx.height as GLsizei, GL_RGBA, GL_UNSIGNED_BYTE, void_ptr(image.get(0)));
+			glDrawPixels(tx.width as GLsizei,tx.height as GLsizei, GL_RGBA, GL_UNSIGNED_BYTE, image.as_ptr() as *c_void);
 			glFlush();
 		}
 	}
 }
+
+// should return option status.
+
+fn create_texture<Texel>((w,h):(uint,uint), raw_pixels:&Vec<Texel>, alpha_bits:int)->GLuint {
+	// todo: generic over format, u16->1555, u32->8888 u8->dxt5 and so on
+	unsafe {
+		let (fmt,fmt2)=match (size_of::<Texel>(),alpha_bits) {
+			(4,_) => (GL_RGBA,GL_UNSIGNED_BYTE),
+			(3,0) => (GL_RGB,GL_UNSIGNED_BYTE),
+			(2,4) => (GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4),
+			(2,1) => (GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1),
+			(2,0) => (GL_RGB, GL_UNSIGNED_SHORT_5_6_5),
+//			(1,8) => (GL_RGB, GL_UNSIGNED_BYTE_3_3_2),	// todo:should mean compressed.
+			(1,_) => (GL_RGB, GL_UNSIGNED_BYTE_3_3_2),	// todo:should mean compressed.
+			_ => (GL_RGBA, GL_UNSIGNED_BYTE)
+		};
+		assert!(w*h==raw_pixels.len())
+		let mut tx:[GLuint,..1]=[0,..1];
+		glGenTextures(1,tx.as_mut_ptr());
+		glBindTexture(GL_TEXTURE_2D,tx[0]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR as GLint);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR as GLint);
+		glTexImage2D(GL_TEXTURE_2D, 0, fmt as GLint, w as GLsizei,h as GLsizei, 0, fmt, fmt2, raw_pixels.as_ptr() as *c_void); 
+//		glGenerateMipMaps(GL_TEXTURE_2D);
+		tx[0]
+	}
+}
+
+
+
+
 
 	
  
