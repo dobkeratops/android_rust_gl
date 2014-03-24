@@ -1,8 +1,9 @@
 RUST_LINK_GL=-C link-args="-lGL -lGLU -lglut -LXext"
 RUSTC=rustc $(RUST_LINK_GL) 
 
-main : main.rs *.rs TAGS
-	$(RUSTC) main.rs
+bsp : bsp.rs TAGS
+	$(RUSTC) bsp.rs -o bsp --cfg testbed
+	./bsp
 
 run: main
 	echo "make run"
@@ -12,10 +13,9 @@ run: main
 TAGS: 
 	ctags -eR *.rs
 
+
 clean:
-	rm ./*.o
-	rm ./*.a
-	rm ./main
 	rm TAGS
+	rm ./bsp
 
 
