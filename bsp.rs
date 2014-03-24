@@ -97,29 +97,28 @@ pub fn main()
 		let mut a=0.0;
 
 		let mut tex_array=Vec::<GLuint>::new();
-		bsp.visit_textures( &mut |i,tx|{bsp.show_texture(i)} );
+		// Load textures to GL
 		bsp.visit_textures( &mut |i,_|{ // we miss do notation :(
 				let (tx,img)=bsp.get_texture_image(i); 
+				show_texture(tx,&img);
 				let txi=create_texture((tx.width as uint,tx.height as uint), &img,8);
 				tex_array.push(txi);
 			}
 		);
+		// show the map, isometric.
 		bsp.visit_triangles(
 			&|_,(v0,v1,v2),(_,txinfo),(_,plane),(face_id,_)| {
 				glEnable(GL_TEXTURE_2D);
 				let txi=txinfo.miptex as uint;
-				println!("{},{}", txi,tex_array.len());
 				glBindTexture(GL_TEXTURE_2D, *tex_array.get(txi));
 				
 //				draw_tri_iso_tex(v0,v1,v2, random_color(face_id), 1.0/2000.0)
 				fn applytx<'a>(tx:&'a TexInfo,v:&'a BspVec3)->(&'a BspVec3,(f32,f32)){
-					(v, (v3dot(&tx.axis_s,v)-tx.ofs_s,v3dot(&tx.axis_t,v)-tx.ofs_t) )
+					(v, (v3dot(&tx.axis_s,v)+tx.ofs_s,v3dot(&tx.axis_t,v)+tx.ofs_t) )
 				}
 				draw_tri_iso_tex(applytx(txinfo,v0),applytx(txinfo,v1),applytx(txinfo,v2), 0xffffff, 1.0/2000.0)
 			}
 		);
-//		bsp.visit_texture();
-
 		glFlush();
 
 		while true {
@@ -575,37 +574,39 @@ impl BspHeader {
 		}
 	}
 
-	fn	show_texture(&self, i:uint) {
-		unsafe {
-	
-			let (tx,image)= self.get_texture_image(i);
-			let i = (tx as *_ as int);
-			let a= ((i^(i<<4)^(i>>7)*i) as f32) *0.57;
-			let x = f32::sin(a)*0.5;
-			let y = f32::cos(a*0.551)*0.5;
+}
 
-			glRasterPos2f(x,y);
-			glDrawPixels(tx.width as GLsizei,tx.height as GLsizei, GL_RGBA, GL_UNSIGNED_BYTE, image.as_ptr() as *c_void);
-			glFlush();
-		}
+fn	show_texture(tx:&MipTex, image:&Vec<u32>) {
+	unsafe {
+//		let (tx,image)= self.get_texture_image(i);
+		let i = (tx as *_ as int);
+		let a= ((i^(i<<4)^(i>>7)*i) as f32) *0.57;
+		let x = f32::sin(a)*0.5;
+		let y = f32::cos(a*0.551)*0.5;
+
+		glRasterPos2f(x,y);
+		glDrawPixels(tx.width as GLsizei,tx.height as GLsizei, GL_RGBA, GL_UNSIGNED_BYTE, image.as_ptr() as *c_void);
+		glFlush();
 	}
 }
 
-// should return option status.
+fn get_format(bytes_per_pixel:uint, alpha_bits:uint)->(GLenum,GLenum) {
+	match (bytes_per_pixel,alpha_bits) {
+		(4,_) => (GL_RGBA,GL_UNSIGNED_BYTE),
+		(3,0) => (GL_RGB,GL_UNSIGNED_BYTE),
+		(2,4) => (GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4),
+		(2,1) => (GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1),
+		(2,0) => (GL_RGB, GL_UNSIGNED_SHORT_5_6_5),
+		(1,8) => (GL_RGB, GL_UNSIGNED_BYTE_3_3_2),	// todo:should mean compressed.
+		(1,_) => (GL_RGB, GL_UNSIGNED_BYTE_3_3_2),	// todo:should mean compressed.
+		_ => (GL_RGBA, GL_UNSIGNED_BYTE)
+	}
+}
 
-fn create_texture<Texel>((w,h):(uint,uint), raw_pixels:&Vec<Texel>, alpha_bits:int)->GLuint {
+fn create_texture<Texel>((w,h):(uint,uint), raw_pixels:&Vec<Texel>, alpha_bits:uint)->GLuint {
 	// todo: generic over format, u16->1555, u32->8888 u8->dxt5 and so on
 	unsafe {
-		let (fmt,fmt2)=match (size_of::<Texel>(),alpha_bits) {
-			(4,_) => (GL_RGBA,GL_UNSIGNED_BYTE),
-			(3,0) => (GL_RGB,GL_UNSIGNED_BYTE),
-			(2,4) => (GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4),
-			(2,1) => (GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1),
-			(2,0) => (GL_RGB, GL_UNSIGNED_SHORT_5_6_5),
-//			(1,8) => (GL_RGB, GL_UNSIGNED_BYTE_3_3_2),	// todo:should mean compressed.
-			(1,_) => (GL_RGB, GL_UNSIGNED_BYTE_3_3_2),	// todo:should mean compressed.
-			_ => (GL_RGBA, GL_UNSIGNED_BYTE)
-		};
+		let (fmt,fmt2)=get_format(size_of::<Texel>(), alpha_bits);
 		assert!(w*h==raw_pixels.len())
 		let mut tx:[GLuint,..1]=[0,..1];
 		glGenTextures(1,tx.as_mut_ptr());
