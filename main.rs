@@ -74,7 +74,6 @@ pub extern fn   rust_android_init_display() {
 pub extern fn   rust_android_term_display() {
 	logi!("terminate display");
 }
-println
 
 // todo - call to recreate resources. lazy init isn't the right way! it must always init when called.
 

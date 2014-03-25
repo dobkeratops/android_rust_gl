@@ -308,20 +308,23 @@ pub fn v3add(&(x0,y0,z0):&V3,&(x1,y1,z1):&V3)->BspVec3 {	(x0+x1,y0+y1,z0+z1)}
 pub fn v3add4(a:&V3,b:&V3,c:&V3,d:&V3)->BspVec3 {v3add(&v3add(a,b),&v3add(c,d))}
 pub fn v3add3(a:&V3,b:&V3,c:&V3)->BspVec3 {v3add(&v3add(a,b),c)}
 pub fn v3sub(&(x0,y0,z0):&V3,&(x1,y1,z1):&V3)->BspVec3 {	(x0-x1,y0-y1,z0-z1)}
+pub fn v3neg(&(x,y,z):&V3)->V3 { (-x,-y,-z)}
 pub fn v3mad(v0:&BspVec3,v1:&BspVec3,f:f32)->BspVec3 { v3add(v0,&v3scale(v1,f))}
 pub fn v3lerp(v0:&BspVec3,v1:&BspVec3,f:f32)->BspVec3 { v3add(v0,&v3scale(&v3sub(v1,v0),f))}
-pub fn v3dot(&(x0,y0,z0):&BspVec3,&(x1,y1,z1):&BspVec3)->f32 {	x0*x1+y0*y1+z0*z1}
+pub fn v3dot(&(x0,y0,z0):&BspVec3,&(x1,y1,z1):&BspVec3)->f32 {	x0*x1+y0*y1+z0*z1 }
 pub fn v3cross(&(x0,y0,z0):&BspVec3,&(x1,y1,z1):&BspVec3)->BspVec3 { ((y0*z1-z0*y1),(z0*x1-z1*x0),(x0*y1-x1*y0)) }
 pub fn v3norm(v0:&BspVec3)->BspVec3{ v3scale(v0,1.0/f32::sqrt(v3dot(v0,v0))) }
 pub fn v3sub_norm(v0:&BspVec3,v1:&BspVec3)->V3{ v3norm(&v3sub(v0,v1))}
 pub fn v3perp(v0:&BspVec3,axis:&V3)->BspVec3{ v3mad(v0, axis, -v3dot(v0,axis))}
 pub fn v3para_perp(v0:&BspVec3,axis:&V3)->(V3,V3){ let para=v3scale(axis, v3dot(v0,axis)); (para, v3sub(v0,&para)) }
 pub fn v3mat_mul(&(ref ax,ref ay,ref az,ref pos):&(V3,V3,V3,V3), &(x,y,z):&V3)->V3 { v3add4(&v3scale(ax,x), &v3scale(ay,y), &v3scale(az,z),pos ) }
+// inv only if orthonormal
 pub fn v3mat_invmul(&(ref ax,ref ay,ref az,ref pos):&(V3,V3,V3,V3),src:&V3)->V3 { let ofs=v3sub(src,pos); (v3dot(src,ax),v3dot(src,ay),v3dot(src,az)) }
 pub fn v3mat_lookat(pos:&V3, at:&V3,up:&V3)->(V3,V3,V3,V3) { let az=v3sub_norm(at,pos); let ax=v3norm(&v3cross(&az,up)); let ay=v3cross(&ax,&az); (ax,ay,az,pos.clone()) }
 pub fn v3mat_identity()->(V3,V3,V3,V3) {((1.0,0.0,0.0),(0.0,1.0,0.0),(0.0,0.0,1.0),(0.0,0.0,0.0))}
 pub fn v3triangle_norm(v0:&V3,v1:&V3,v2:&V3)->V3 { let v01=v3sub(v1,v0); let v02=v3sub(v2,v0); v3norm(&v3cross(&v02,&v01))}
-
+// inv only if orthonormal
+pub fn v3mat_inv(&((xx,xy,xz),(yx,yy,yz),(zx,zy,zz),ref pos):&(V3,V3,V3,V3) )->(V3,V3,V3,V3){ let ax=(xx,yx,zx);let ay=(xy,yy,zy);let az=(xz,yz,zz); let px= -v3dot(&ax,pos); let py=-v3dot(&ay,pos); let pz=-v3dot(&az,pos); let invpos=(px,py,pz); (ax,ay,az, invpos) }
 
 
 pub type Point3s=(i16,i16,i16);
