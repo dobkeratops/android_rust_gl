@@ -394,10 +394,16 @@ pub struct Face {
 }
 
 /// return a reference to a different type at a byte offset from the given base object reference
-unsafe fn byte_ofs_ref<'a,X,Y,I:Int=int>(base:&'a X, ofs:I)->&'a Y {	&*( (base as *_ as *u8).offset( ofs.to_int().unwrap() ) as *Y) }
+unsafe fn byte_ofs_ref<'a,X,Y=X,I:Int=int>(base:&'a X, ofs:I)->&'a Y {
+	&*byte_ofs_ptr(base,ofs)
+}
 /// return a raw ptr to a different type at a byte offset from the given base object reference
-unsafe fn byte_ofs_ptr<'a,X,Y,I:Int=int>(base:&'a X, ofs:I)->*Y {
-	(base as *_ as *u8).offset( ofs.to_int().unwrap() ) as *Y
+unsafe fn byte_ofs_ptr<'a,FROM,TO=u8,I:Int=int>(base:&'a FROM, ofs:I)->*TO {
+	byte_ofs(base as *_, ofs)
+}
+/// offsets a raw pointer by a byte amount, and changes type based on return value inference.
+unsafe fn byte_ofs<'a,FROM,TO=u8,I:Int=int>(base:*FROM, ofs:I)->*TO {
+	(base as *u8).offset( ofs.to_int().unwrap() ) as *TO
 }
 
 static g_palette:&'static [u8]=include_bin!("palette.lmp");
@@ -406,7 +412,7 @@ impl BspHeader {
 	fn get_texture_image<'a>(&'a self, i:uint)->(&'a MipTex, Vec<u32>) {
 		unsafe {
 			let tx=self.get_texture(i);
-			let mip0 = (tx as*_ as*u8).offset(tx.offset1 as int);
+			let mip0:*u8=byte_ofs_ptr(tx, tx.offset1);
 
 			println!("size={}x{} miptex offsets {} {} {} {}",
 				tx.width, tx.height, 
