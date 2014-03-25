@@ -145,12 +145,6 @@ pub struct BspHeader {
 	surfedges:BspDEntry<i32>, // ? no
 	models:BspDEntry<Model>,
 }
-fn random_color3(a:uint,b:uint,c:uint)->u32 {
-	(a*b*c ^(a<<3)^(b<<8)*(c<<2)^(a<<19)^(b<<22)*(c<<13) )as u32
-}
-fn random_color(a:uint)->u32 {
-	(a^(a<<3)^(a<<8)*(a<<2)^(a<<19)^(a<<22)*(a<<13) )as u32
-}
 macro_rules! get {
 	($obj:ident . $field:ident [ $id:expr ] )=>($obj . $field . get( $obj , $id as uint ))
 }
@@ -406,50 +400,13 @@ unsafe fn byte_ofs_ptr<'a,X,Y,I:Int=int>(base:&'a X, ofs:I)->*Y {
 	(base as *_ as *u8).offset( ofs.to_int().unwrap() ) as *Y
 }
 
-trait ToVoidPtr {
-	/// Get a void pointer for the contents of a collection
-	unsafe fn void_ptr(&self)->*std::libc::c_void;
-	/// Get a void pointer for the contents of a collection, with a byte offset
-	unsafe fn byte_ofs<I:Int>(&self, ofs:I)->*std::libc::c_void;
-}
-impl<T> ToVoidPtr for Vec<T> {
-	unsafe fn void_ptr(&self)->*std::libc::c_void {
-		self.get(0) as *_ as *c_void
-	}
-	unsafe fn byte_ofs<I:Int>(&self,ofs:I)->*std::libc::c_void {
-		self.void_ptr().offset(ofs.to_int().unwrap())
-	}
-}
-impl<'a,T> ToVoidPtr for &'a T {
-	unsafe fn void_ptr(&self)->*std::libc::c_void {
-		// NOTE special handling of self, self here is &&T, we deref to get &T
-		(*self) as *_ as *std::libc::c_void
-	}	
-	unsafe fn byte_ofs<I:Int>(&self,ofs:I)->*std::libc::c_void {
-		// NOTE special handling of self, self here is &&T, we deref to get &T
-		(*self as *_ as *u8).offset(ofs.to_int().unwrap()) as *c_void
-	}
-}
-impl ToVoidPtr for *c_void {
-	unsafe fn void_ptr(&self)->*std::libc::c_void {
-		// NOTE special handling of self, self here is &&T, we deref to get &T
-		*self
-	}	
-	unsafe fn byte_ofs<I:Int>(&self,ofs:I)->*std::libc::c_void {
-		// NOTE special handling of self, self here is &&T, we deref to get &T
-		(*self as *u8).offset(ofs.to_int().unwrap()) as *c_void
-	}
-}
-
 static g_palette:&'static [u8]=include_bin!("palette.lmp");
 
 impl BspHeader {
 	fn get_texture_image<'a>(&'a self, i:uint)->(&'a MipTex, Vec<u32>) {
 		unsafe {
 			let tx=self.get_texture(i);
-//			let txp = void_ptr(tx);
-
-			let mip0 = tx.byte_ofs(tx.offset1);
+			let mip0 = (tx as*_ as*u8).offset(tx.offset1 as int);
 
 			println!("size={}x{} miptex offsets {} {} {} {}",
 				tx.width, tx.height, 
@@ -458,8 +415,7 @@ impl BspHeader {
 			let image = Vec::<u32>::from_fn(
 				(tx.width*tx.height) as uint, 
 				|i|{
-					let x = mip0.byte_ofs(i);
-					let color_index=*(x as *u8) as uint;
+					let color_index = *mip0.offset(i as int) as uint;
 					let rgb_index=color_index*3;
 					let r=g_palette[rgb_index+0] as u32;
 					let g=g_palette[rgb_index+1] as u32;

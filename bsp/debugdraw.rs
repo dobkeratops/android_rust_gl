@@ -184,3 +184,9 @@ pub unsafe fn draw_set_texture(tex_unit:i32, tex_id:GLuint) {
 }
 
 
+pub fn random_color3(a:uint,b:uint,c:uint)->u32 {
+	(a*b*c ^(a<<3)^(b<<8)*(c<<2)^(a<<19)^(b<<22)*(c<<13) )as u32
+}
+pub fn random_color(a:uint)->u32 {
+	(a^(a<<3)^(a<<8)*(a<<2)^(a<<19)^(a<<22)*(a<<13) )as u32
+}
