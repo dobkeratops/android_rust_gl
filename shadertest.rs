@@ -516,7 +516,7 @@ void main() { \n\
 }\
 ";
 
-static mut g_uniform_table:Option<UniformTable> =None;
+STATIC mut g_uniform_table:Option<UniformTable> =None;
 
 /// Macro to create a shader Uniform table struct, and populate it by querying a shader program
 /// TODO: create lazy state struct, allow user to set shader params in a struct and pass to GL..
@@ -933,7 +933,7 @@ pub fn shadertest_main()
 		let mut argc:c_int=0;
 		let argv:Vec<*c_char> =Vec::new();
 		glutInit((&mut argc) as *mut c_int,0 as **c_char );
-
+Option
 		//::macros::test();
 
 		glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
@@ -948,4 +948,6 @@ pub fn shadertest_main()
 
 		glutMainLoop();
 	}
+
+	
 }

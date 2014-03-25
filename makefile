@@ -10,7 +10,7 @@ run: main
 
 #emacs tags; relies on the rust config in .ctags or wherever.
 TAGS: 
-	ctags -eR *.rs
+	ctags -e -f $@ *.rs --options=$(RUST_SRC)/etc/ctags.rust --languages=+rust --recurse *
 
 clean:
 	rm ./*.o
