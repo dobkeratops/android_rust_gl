@@ -1,5 +1,10 @@
 
-
+type V3f=(f32,f32,f23);
+type V2f=(f32,f32);
+type V3i=(i32,i32,i32);
+type V2i=(i32,i32);
+type V3b=(u8,u8,u8);
+type V2b=(u8,u8);
 
 
 struct Q3BspFileHeader {
@@ -22,21 +27,43 @@ struct Q3BspFileHeader {
 	lightvols:Q3DirEntry<LightVols>,
 	visdata:Q3DirEntry<VisData>
 }
+
+struct Q3Bsp<'a> {
+	blob:&'a [u8],
+	entities:&'a[Entities]
+	textures:&'a[Textures],
+	planes:&'a[Planes],
+	nodes:&'a[Nodes],
+	leafs:&'a[Leafs],
+	leaf_faces:&'a[LeafFaces],
+	models:&'a[Models],
+	brushes:&'a[Brushes],
+	brushsides:&'a[BrushSides],
+	vertexes:&'a[Vertex],
+	meshverts:&'a[MeshVerts],
+	effects:&'a [Effects],
+	faces:&'a [Faces],
+	lightmaps:&'a [LightMaps],
+	lightvols:&'a [LightVols],
+	visdata:&'a [VisData],
+}
+
+
 type LeafFace=i32;
 type LeafBrush=i32;
 struct Leaf {
 	cluster:i32,
 	area:i32,
-	mins:(i32,i32,i32),
-	maxs:(i32,i32,i32),
+	mins:V3i,
+	maxs:V3i,
 	leaf_face:i32,
 	n_leaf_faces:i32,
 	leaf_brush:i32,
 	n_leaf_brushes:i32,
 }
 struct Model {
-	min:(f32,f32,f32),
-	max:(f32,f32,f32),
+	min:V3f,
+	max:V3f,
 	face:i32,
 	n_faces:i32,
 	brush:i32,
@@ -52,10 +79,10 @@ struct BrushSide {
 	texture;i32,
 }
 struct Vertex {
-	position:(f32,f32,f32),
-	texcoord:(f32,f32),
-	lightmap:(f32,f32),
-	normal:(f32,f32,f32),
+	position:V3f,
+	texcoord:V2f,
+	lightmap:V2f,
+	normal:V3f,
 	color:u32,
 }
 type MeshVert=i32;	// "offset relative to first vertex of corresponding face"
@@ -82,20 +109,24 @@ struct Face {
 	meshvert:i32,
 	n_meshverts:i32,
 	lightmap_index:i32,
-	lightmap_start:(i32,i32),
-	lightmap_size:(i32,i32),
-	lightmap_origin:(f32,f32,f32),
-	lightmap_s:(f32,f32,f32),
-	lightmap_t:(f32,f32,f32),
-	normal:(f32,f32,f32),
-	size:(i32,i32)
+	lightmap_start:V2i,
+	lightmap_size:V2i,
+	lightmap_origin:V3f,
+	lightmap_s:V3f,
+	lightmap_t:V3f,
+	normal:V3f,
+	size:V2i
 }
+
+
+
+
 
 // todo: we want to encode this as an SH
 struct LightVol {
-	ambient:(u8,u8,u8),
-	directional:(u8,u8,u8),
-	dir:(u8,u8),
+	ambient:V3b,
+	directional:V3b,
+	dir:V2b,
 }
 struct VisData {
 	n_vecs:i32,
@@ -109,8 +140,13 @@ struct DirEntry<T,H> {
 }
 type Q3DirEntry<T>=DirEntry<T,Q3BspHeader>;
 
-fn load_q3bsp(filename:&Path) {
+fn cast_slice<'a,T,H>(entire_blob:&[u8], H DEntry<T,H>)->&'a [T] {
+}
+
+fn fixup_q3bsp<'a> (&'a [u8])->Q3Bsp {
 	
+	// *** [2] Create slices, fix them up.
+
 }
 
 
