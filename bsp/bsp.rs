@@ -11,7 +11,7 @@ use debugdraw::*;
 #[cfg(testbed)]
 use r3d::gl::*;
 
-use std::vec_ng::Vec;
+use std::vec::Vec;
 use std::io;
 use std::intrinsics::{size_of,offset};
 use std::libc::*;

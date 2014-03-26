@@ -1,5 +1,5 @@
 
-type V3f=(f32,f32,f23);
+type V3f=(f32,f32,f32);
 type V2f=(f32,f32);
 type V3i=(i32,i32,i32);
 type V2i=(i32,i32);
@@ -146,6 +146,7 @@ fn cast_slice<'a,T,H>(entire_blob:&[u8], H DEntry<T,H>)->&'a [T] {
 fn fixup_q3bsp<'a> (&'a [u8])->Q3Bsp {
 	
 	// *** [2] Create slices, fix them up.
+	glActiveTexture
 
 }
 

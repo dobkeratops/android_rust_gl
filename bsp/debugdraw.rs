@@ -1,6 +1,6 @@
 #[cfg(testbed)]
 use r3d::glut::*;
-use std::vec_ng::Vec;
+use std::vec::Vec;
 use std::intrinsics::{size_of,offset};
 use std::f32;
 

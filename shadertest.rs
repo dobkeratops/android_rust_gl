@@ -7,13 +7,14 @@ pub use std::mem;
 pub use std::cmp;
 pub use std::c_str;
 pub use std::libc;
-pub use std::vec_ng::Vec;
+pub use std::vec::Vec;
 use macros::*;
 
 pub use r3d::*;
 pub use r3d::matrix::*;
 pub use r3d::vecmath::*;
 pub use r3d::gl::*;
+pub use r3d::glut::*;
 pub use std::io;
 use gl=r3d::gl;
 
