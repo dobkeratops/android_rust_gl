@@ -29,7 +29,7 @@ macro_rules! new_class {
 	($tname:ty for $sname:ident { $($field:ident : $val:expr),* })=>{
 		// todo: we can't make initializer list work for arbitrary type,
 		// so add another rule to accept a constructor function for non ident type.
-		CppClass::<$sname,$tname> {
+		CppClass::<$sname,& $tname> {
 			vtable_ptr:unsafe {
 				let null_obj=cast::transmute::<_,&'static $sname>(0);
 				let (vt,_):(*u8,*u8)=
@@ -51,7 +51,7 @@ impl Foo for Banana {
 
 
 fn main() {
-	let mut b :CppClass<Banana,&'static Foo> = new_class!( Foo for Banana  {x:10} );
+	let mut b :CppClass<Banana,&Foo> = new_class!( Foo for Banana  {x:10} );
 	b.data.x=10;
 	// can you write to 'vtable_ptr' unsafely?
 
