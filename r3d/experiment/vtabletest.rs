@@ -71,6 +71,20 @@ impl Foo for Banana {
 	}
 }
 
+macro_rules! repeat {
+	(($it:ident=$it_init:expr ; $condition:expr ; $inc:expr)  $($e:expr);*)=>
+	{
+		{
+			let mut $it=$it_init;
+			while $condition {
+				let ret={$($e);*};
+				$inc;
+				ret
+			}
+		}
+		
+	}
+}
 
 fn main() {
 	let mut b :CppClass<Banana,&Foo> = new_class!( Foo for Banana  {x:10} );
@@ -79,7 +93,9 @@ fn main() {
 
 	b.as_trait().foo(3);
 
+	repeat!{(i=0; i<10; i+=1)
+		println!("{}",i)		
+	}
 
 
 }
-
