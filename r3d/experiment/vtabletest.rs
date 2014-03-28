@@ -33,9 +33,6 @@ impl<Struct,T> DerefMut<T> for  CppClass<Struct,&'static T> {
 	}
 }
 */
-//impl<Struct,Trait> DerefMut<Trait> for  CppClass<Struct,Trait> {
-//	fn deref_mut<'a> (&'a mut self)->&'a mut Struct { &mut self.data }
-//}
 
 impl<Struct,Trait>  CppClass<Struct,Trait> {
 	pub fn as_trait<'a>(&'a self)->Trait  {
