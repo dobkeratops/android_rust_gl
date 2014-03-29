@@ -196,7 +196,8 @@ unsafe fn	create_shader_program(
 	logi!("create_shader_program");
 
 	let pixel_shader = create_and_compile_shader(GL_FRAGMENT_SHADER, pixelShaderSource);
-	let vertex_shader = create_and_compile_shader(GL_VERTEX_SHADER, vertexShaderSource);	let	prog = glCreateProgram();
+	let vertex_shader = create_and_compile_shader(GL_VERTEX_SHADER, vertexShaderSource);
+	let	prog = glCreateProgram();
 	
 	logi!("bind attrib locations");
 
@@ -840,6 +841,12 @@ pub fn	render_no_swap()
 			let matMV = matT;	// toodo - combine rotation...
 			//io::println(format!("{:?}", g_shader_program));
 
+			// fixed function pipeline view, for debug.
+			glMatrixMode(GL_PROJECTION);
+			glLoadMatrix(&matP.ax.x as *_);
+			glMatrixMode(GL_MODELVIEW);
+			glLoadMatrix(&rot_trans.ax.x as *_);
+
 			glUseProgram(g_shader_program);
 			match g_uniform_table {
 				Some(ref ut)=>{
@@ -852,6 +859,41 @@ pub fn	render_no_swap()
 			g_grid_mesh.render_mesh_shader();
 
 			a0+=da0;a1+=da1;a2+=da2;a3+=da3;a4+=da4;a5+=da5;
+
+			
+			glBegin(GL_LINES);
+
+				let s=0.1f32;
+				glColor4f(0.0,0.0,0.0,1.0);
+				glNormal3f(-1.0,-1.0,-1.0);
+				glVertex3f(-s,-s,-s);
+				glColor4f(0.0,0.0,0.0,1.0);
+				glNormal3f(-1.0,-1.0,-1.0);
+				glVertex3f(s,s,s);
+
+				glColor4f(1.0,0.0,0.0,1.0);
+				glNormal3f(-1.0,-1.0,-1.0);
+				glVertex3f(s,-s,-s);
+				glColor4f(1.0,0.0,0.0,1.0);
+				glNormal3f(-1.0,-1.0,-1.0);
+				glVertex3f(-s,s,s);
+
+				glColor4f(0.0,0.0,1.0,1.0);
+				glNormal3f(-1.0,-1.0,-1.0);
+				glVertex3f(-s,s,-s);
+				glColor4f(0.0,0.0,1.0,1.0);
+				glNormal3f(-1.0,-1.0,-1.0);
+				glVertex3f(-s,s,s);
+
+				glColor4f(0.0,1.0,0.0,1.0);
+				glNormal3f(-1.0,-1.0,-1.0);
+				glVertex3f(s,s,-s);
+				glColor4f(0.0,1.0,0.0,1.0);
+				glNormal3f(-1.0,-1.0,-1.0);
+				glVertex3f(-s,-s,-s);
+
+
+			glEnd();
 		}
 
 		g_frame+=1;

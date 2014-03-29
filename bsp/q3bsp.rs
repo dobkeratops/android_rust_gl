@@ -6,7 +6,6 @@ type V2i=(i32,i32);
 type V3b=(u8,u8,u8);
 type V2b=(u8,u8);
 
-
 struct Q3BspFileHeader {
 	magic:[u8,..4],
 	version:i32,
@@ -49,6 +48,8 @@ struct Q3Bsp<'a> {
 }
 
 
+
+
 type LeafFace=i32;
 type LeafBrush=i32;
 struct Leaf {
@@ -87,7 +88,7 @@ struct Vertex {
 }
 type MeshVert=i32;	// "offset relative to first vertex of corresponding face"
 
-struct Effect {
+^ ustruct Effect {
 	name:[u8,..64],
 	brush:i32,
 	unknown:i32
@@ -140,17 +141,25 @@ struct DirEntry<T,H> {
 }
 type Q3DirEntry<T>=DirEntry<T,Q3BspHeader>;
 
-fn cast_slice<'a,T,H>(entire_blob:&[u8], H DEntry<T,H>)->&'a [T] {
+trait Read {
+	fn read(FILE)->X;
 }
 
-fn fixup_q3bsp<'a> (&'a [u8])->Q3Bsp {
-	
-	// *** [2] Create slices, fix them up.
-	glActiveTexture
-
+trait 
+fn unwrap_or<T,E>(Result<T,E>) { 
 }
 
+impl Read for LightVol {
+	fn read(f:File)->LightVol {
+		LightVol {
+			x:f.read_le_f32().ok().unwrap_or(0),
+			y:f.read_le_f32().ok().unwrap_or(),
+		}
+	}
+}
 
-
-
-
+fn bsp_load(filename:CString&)->Bsp {
+}
+struct Bsp {
+	vector&
+}

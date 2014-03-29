@@ -91,6 +91,20 @@ macro_rules! def_new{
 	)
 }
 
+macro_rules! forr {
+	( ($($it:ident=$it_init:expr),* ; $condition:expr ; $($inc:expr),*)  $($e:expr);*)=>
+	{
+		{
+			$(let mut $it=$it_init);*;
+			while $condition {
+				let ret={$($e);*};
+				$($inc);*;
+			}
+		}
+		
+	}
+}
+
 
 
 pub fn test() {
@@ -107,5 +121,9 @@ pub fn test() {
 	MyStruct::dump();
 	dump!(f1);
 	dump!(f2);
+
+	forr!{(i=0; i<10; i+=1)
+		dump!(i)
+	}
 
 }

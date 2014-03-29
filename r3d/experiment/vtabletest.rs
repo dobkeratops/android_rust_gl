@@ -71,20 +71,6 @@ impl Foo for Banana {
 	}
 }
 
-macro_rules! forr {
-	( ($($it:ident=$it_init:expr),* ; $condition:expr ; $($inc:expr),*)  $($e:expr);*)=>
-	{
-		{
-			$(let mut $it=$it_init);*;
-			while $condition {
-				let ret={$($e);*};
-				$($inc);*;
-				ret
-			}
-		}
-		
-	}
-}
 
 fn main() {
 	let mut b :CppClass<Banana,&Foo> = new_class!( Foo for Banana  {x:10} );
@@ -92,17 +78,6 @@ fn main() {
 	// can you write to 'vtable_ptr' unsafely?
 
 	b.as_trait().foo(3);
-
-	
-	forr!{(i=0,j=0; i<10; i+=1,j+=2)
-		println!("{} {}",i,j)		
-	}
-
-
-	let x=
-	forr!{(i=0,acc=0; i<10; i+=1)
-		println!("{} {}",i,j); acc+=i; acc
-	}
 
 
 }

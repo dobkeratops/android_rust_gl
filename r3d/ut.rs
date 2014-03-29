@@ -52,3 +52,6 @@ impl ToVoidPtr for *c_void {
 		(*self as *u8).offset(ofs.to_int().unwrap()) as *c_void
 	}
 }
+
+
+

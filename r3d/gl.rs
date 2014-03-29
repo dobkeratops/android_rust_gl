@@ -104,6 +104,7 @@ extern
 	pub fn glIsBuffer(buffer:GLuint)->GLboolean;
 
 	pub fn glLoadIdentity();
+	pub fn glLoadMatrix(mat:*f32);
 	pub fn glMatrixMode(e:GLenum);
 	pub fn glClear(e:GLenum);
 
@@ -187,9 +188,15 @@ extern
 	pub fn glColor4f(r:GLfloat,g:GLfloat,b:GLfloat,a:GLfloat);
 	pub fn glVertex3f(x:GLfloat,y:GLfloat,z:GLfloat);
 	pub fn glTexCoord2f( s:GLfloat , t:GLfloat );
+	pub fn glNormal3f(x:GLfloat,y:GLfloat,z:GLfloat);
+	pub fn glVertex4f(x:GLfloat,y:GLfloat,z:GLfloat);
 
 
 	pub fn glBufferData(target:GLenum, size:GLsizei, data:*GLvoid, usage:GLenum);
+
+	// convieniences in C
+	pub fn glLoadMatrixAt(mat:*f32, e: GLenum);
+	pub fn glCompileShaderSources(sh:GLint, src0:*c_char,opt_src1:*c_char,opt_src2:*c_char,opt_src3:*c_char, buffersize:GLsizei, err_text:*c_char  )->GLint;
 
 }
 
