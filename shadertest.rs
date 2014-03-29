@@ -843,9 +843,9 @@ pub fn	render_no_swap()
 
 			// fixed function pipeline view, for debug.
 			glMatrixMode(GL_PROJECTION);
-			glLoadMatrix(&matP.ax.x as *_);
+			glLoadMatrixf(&matP.ax.x as *_);
 			glMatrixMode(GL_MODELVIEW);
-			glLoadMatrix(&rot_trans.ax.x as *_);
+			glLoadMatrixf(&rot_trans.ax.x as *_);
 
 			glUseProgram(g_shader_program);
 			match g_uniform_table {
@@ -860,45 +860,51 @@ pub fn	render_no_swap()
 
 			a0+=da0;a1+=da1;a2+=da2;a3+=da3;a4+=da4;a5+=da5;
 
-			
-			glBegin(GL_LINES);
-
-				let s=0.1f32;
-				glColor4f(0.0,0.0,0.0,1.0);
-				glNormal3f(-1.0,-1.0,-1.0);
-				glVertex3f(-s,-s,-s);
-				glColor4f(0.0,0.0,0.0,1.0);
-				glNormal3f(-1.0,-1.0,-1.0);
-				glVertex3f(s,s,s);
-
-				glColor4f(1.0,0.0,0.0,1.0);
-				glNormal3f(-1.0,-1.0,-1.0);
-				glVertex3f(s,-s,-s);
-				glColor4f(1.0,0.0,0.0,1.0);
-				glNormal3f(-1.0,-1.0,-1.0);
-				glVertex3f(-s,s,s);
-
-				glColor4f(0.0,0.0,1.0,1.0);
-				glNormal3f(-1.0,-1.0,-1.0);
-				glVertex3f(-s,s,-s);
-				glColor4f(0.0,0.0,1.0,1.0);
-				glNormal3f(-1.0,-1.0,-1.0);
-				glVertex3f(-s,s,s);
-
-				glColor4f(0.0,1.0,0.0,1.0);
-				glNormal3f(-1.0,-1.0,-1.0);
-				glVertex3f(s,s,-s);
-				glColor4f(0.0,1.0,0.0,1.0);
-				glNormal3f(-1.0,-1.0,-1.0);
-				glVertex3f(-s,-s,-s);
-
-
-			glEnd();
+			if (i & 15) == 0{
+				debug_draw_cross(0.2f32);
+			}
 		}
 
 		g_frame+=1;
 	}
 }
+
+fn debug_draw_cross(s:f32) {
+	unsafe {
+		glBegin(GL_LINES);
+
+		glColor4f(0.0,0.0,0.0,1.0);
+		glNormal3f(-1.0,-1.0,-1.0);
+		glVertex3f(-s,-s,-s);
+		glColor4f(0.0,0.0,0.0,1.0);
+		glNormal3f(-1.0,-1.0,-1.0);
+		glVertex3f(s,s,s);
+
+		glColor4f(1.0,0.0,0.0,1.0);
+		glNormal3f(-1.0,-1.0,-1.0);
+		glVertex3f(s,-s,-s);
+		glColor4f(1.0,0.0,0.0,1.0);
+		glNormal3f(-1.0,-1.0,-1.0);
+		glVertex3f(-s,s,s);
+
+		glColor4f(0.0,0.0,1.0,1.0);
+		glNormal3f(-1.0,-1.0,-1.0);
+		glVertex3f(-s,s,-s);
+		glColor4f(0.0,0.0,1.0,1.0);
+		glNormal3f(-1.0,-1.0,-1.0);
+		glVertex3f(s,-s,s);
+
+		glColor4f(0.0,1.0,0.0,1.0);
+		glNormal3f(-1.0,-1.0,-1.0);
+		glVertex3f(s,s,-s);
+		glColor4f(0.0,1.0,0.0,1.0);
+		glNormal3f(-1.0,-1.0,-1.0);
+		glVertex3f(-s,-s,s);
+		glEnd();
+	}
+}
+
+
 
 fn idle() 
 {

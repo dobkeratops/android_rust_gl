@@ -354,7 +354,7 @@ void glLoadIdentity() {
 		pmat[i] =((i&3)==(i>>2))?1.0f:0.0f;
 	}
 }
-void glLoadMatrix(const GLfloat* m) {
+void glLoadMatrixf(const GLfloat* m) {
 	float* pmat = GetMatrix();
 	int	i;
 	for (i=0; i<16; i++) {
@@ -364,7 +364,7 @@ void glLoadMatrix(const GLfloat* m) {
 
 void glLoadMatrixAt(const GLfloat* f, GLenum mode) {
 	glMatrixMode(mode);
-	glLoadMatrix(f);
+	glLoadMatrixf(f);
 }
 void glMatrixMode(GLenum mode) {
 	g_State.matrix_mode=mode;

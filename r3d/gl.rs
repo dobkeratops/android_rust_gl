@@ -104,7 +104,7 @@ extern
 	pub fn glIsBuffer(buffer:GLuint)->GLboolean;
 
 	pub fn glLoadIdentity();
-	pub fn glLoadMatrix(mat:*f32);
+	pub fn glLoadMatrixf(mat:*f32);
 	pub fn glMatrixMode(e:GLenum);
 	pub fn glClear(e:GLenum);
 
