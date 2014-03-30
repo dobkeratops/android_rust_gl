@@ -78,13 +78,13 @@ pub fn main()
 {
 	unsafe {
 		let mut argc:c_int=0;
-		glutInit((&mut argc) as *mut c_int,0 as **c_char );
+		glutInit((&mut argc) as *mut std::libc::c_int,0 as **libc::c_char );
 
 		glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 		glutInitWindowSize(1280,800);
 		let win=verify!(glutCreateWindow(c_str("Rust ShaderTest")) isnt 0);
 
-		let mut app = app_create();
+		let mut app = app_create(0,0 as **std::libc::c_char,1280,800);
 		app_display_create(app);
 		glDrawBuffer(GL_BACK);
 		glutReshapeWindow(1024,1024);

@@ -955,7 +955,7 @@ pub extern "C" fn app_destroy(_:~App) {
 
 
 #[no_mangle]
-pub extern "C" fn app_create()->~App {
+pub extern "C" fn app_create(argc:c_int, argv:**libc::c_char, w:libc::c_int,h:libc::c_int)->~App {
 	~App
 }
 

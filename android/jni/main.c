@@ -42,7 +42,7 @@
 typedef void App_t;
 App_t* g_pApp;
 
-extern App_t* app_create();
+extern App_t* app_create(int argc, const char** argv, int w, int h);
 extern void app_display_create(App_t* borrowed_app_ref);	// creating display
 //extern void rust_android_event();			// IO events ?
 extern void app_render(App_t* borrowed_app_ref);
@@ -375,7 +375,7 @@ void android_main(struct android_app* state) {
     // Make sure glue isn't stripped.
     app_dummy();
 
-	g_pApp=app_create();
+	g_pApp=app_create(0,(const char**) 0,  engine.width, engine.height);
     memset(&engine, 0, sizeof(engine));
     state->userData = &engine;
     state->onAppCmd = engine_handle_cmd;
