@@ -22,7 +22,10 @@ pub use std::libc;
 pub use std::libc::{c_int,c_char};
 use shadertest::c_str;
 use std::io;
-use shadertest::App;
+use shadertest::*;
+use r3d::gl::*;
+use r3d::glut::*;
+
 
 pub mod macros;	// must preceed others for macro visibility.
 pub mod r3d;
@@ -81,20 +84,20 @@ pub fn main()
 		glutInitWindowSize(1280,800);
 		let win=verify!(glutCreateWindow(c_str("Rust ShaderTest")) isnt 0);
 
-		let app = ::app_create();
-		::app_display_create(app);
+		let mut app = app_create();
+		app_display_create(app);
 		glDrawBuffer(GL_BACK);
 		glutReshapeWindow(1024,1024);
 		glEnable(GL_DEPTH_TEST);
 
 		while true {
 			glutMainLoopEvent();
-			::app_render(app);
+			app_render(app);
 			glFlush();
 			glutSwapBuffers();
 		}
-		::app_display_destroy(app);
-		::app_destroy(app);
+		app_display_destroy(app);
+		app_destroy(app);
 	}
 }
 

@@ -780,7 +780,7 @@ static g_num_torus:int = 256;
 /// render a load of meshes in a lissajous curve
 
 #[no_mangle]
-pub extern "C" fn	app_render(_:~App) 
+pub extern "C" fn	app_render(_:&mut App) 
 {
 	//logw("render noswap");
 
