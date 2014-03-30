@@ -17,6 +17,7 @@ pub use r3d::glut::*;
 pub use std::io;
 use gl=r3d::gl;
 
+pub struct App;
 /// Defines a vertex structure with embedded  attribute index annotations & GL type enums; 
 /// generates an corresponding function to set gl vertex attribute data.
 /// TODO: change that to create a data-table.
@@ -209,7 +210,7 @@ unsafe fn	create_shader_program(
 	glLinkProgram(prog);
 	let mut err:GLint=0;
 	glGetProgramiv(prog,GL_LINK_STATUS,(&err) as *GLint);
-	
+
 	let x=glGetAttribLocation(prog,c_str("a_color"));
 	logi!("write,read attrib location in prog {:?} a_color={:?}", prog, x);
 
@@ -578,7 +579,7 @@ fn get_shader_prefix(is_ps:int)->&'static str {
 	shader_prefix_desktop
 }
 
-fn	create_shaders()
+pub fn	create_shaders()
 {
 	
 	unsafe {
@@ -689,9 +690,7 @@ static mut g_grid_mesh:Mesh=Mesh{
 	vertex_size:0
 };
 
-
 type UniformIndex=GLint;
-
 
 impl Mesh {
 	fn	render_mesh_from_buffer(&self)
@@ -735,9 +734,6 @@ unsafe fn as_void_ptr<T>(ptr:&T)->*c_void {
 	ptr as *T as *c_void
 }
 
-//Vec4 g_FogColor=Vec4::<f32>::new(0.25,0.5,0.5,1.0);
-
-//vertex_layout!(struct MyVertex{pos:[f32=GL_FLOAT,..3] = 0 })
 
 
 static g_fog_color:Vec4<f32> =Vec4{x:0.25,y:0.5,z:0.5,w:1.0};
@@ -781,9 +777,10 @@ static mut g_angle:f32=0.0f32;
 static mut g_frame:int=0;
 
 static g_num_torus:int = 256;
-/// render a load of meshes in a lissajous
+/// render a load of meshes in a lissajous curve
 
-pub fn	render_no_swap() 
+#[no_mangle]
+pub extern "C" fn	app_render(_:~App) 
 {
 	//logw("render noswap");
 
@@ -792,7 +789,6 @@ pub fn	render_no_swap()
 		assert!(g_resources_init==true)		//logi!("render_no_swap"); // once..
 		g_angle+=0.0025f32;
 
-//		glDrawBuffer(GL_BACK);
 		glClearColor(g_fog_color.x+sin(g_angle*2.0),g_fog_color.y,g_fog_color.z,g_fog_color.w);
 
 		glClearDepthf(1.0f32);
@@ -802,7 +798,6 @@ pub fn	render_no_swap()
 		glDepthFunc(GL_LEQUAL);
 
 		glEnable(GL_CULL_FACE);
-//		glFrontFace(GL_CCW);
 		let matI = Matrix4::<Vec4>::identity();
 		let matP = matrix::projection_frustum(-0.5f32,0.5f32,-0.5f32,0.5f32, 90.0f32, 1.0f32, 0.5f32,5.0f32);
 
@@ -901,21 +896,6 @@ fn debug_draw_cross(s:f32) {
 	}
 }
 
-/*
-	glDrawLine(&(-s,-s,-s), &(s,-s,-s), 0xc0c0c0);
-	glDrawLine(&(-s,-s,-s), &(-s,s,-s), 0xc0c0c0);
-	glDrawLine(&(-s,-s,-s), &(-s,-s,s), 0xc0c0c0);
-*/
-
-
-
-fn idle() 
-{
-	unsafe {
-		glutPostRedisplay();
-	}
-}
-
 fn	create_textures() {
 //	static_assert(sizeof(GLuint)==sizeof(int));
 	unsafe {
@@ -950,13 +930,10 @@ fn	create_textures() {
 }
 
 
-// todo - turn this into lazy init.
-pub fn create_static_resources() {
-	::std::io::println("dummy create, its done lazy now");
-}
 static mut g_resources_init:bool=false;
-pub fn create_resources() {
-	
+
+#[no_mangle]
+pub extern "C" fn app_display_create(_:&mut App) {
 	unsafe {
 		logi!("shadertest Create Resources \n");
 		create_shaders();
@@ -965,43 +942,20 @@ pub fn create_resources() {
 		g_resources_init=true;
 	}
 }
-pub fn destroy_resources() {
+#[no_mangle]
+pub extern "C" fn app_display_destroy(_:&mut App) {
 	unsafe {
 		g_resources_init=false;
 	}
 }
 
-// standalone draw inner loop
-pub fn render_and_swap() {
-	render_no_swap();
-	unsafe {
-		glFlush();
-		glutSwapBuffers();
-	}
+#[no_mangle]
+pub extern "C" fn app_destroy(_:~App) {
 }
 
 
-
-#[cfg(not(target_os = "android"))]
-pub fn shadertest_main()
-{
-	unsafe {
-		let mut argc:c_int=0;
-		glutInit((&mut argc) as *mut c_int,0 as **c_char );
-		//::macros::test();
-
-		glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
-		let win=verify!(glutCreateWindow(c_str("Rust ShaderTest")) isnt 0);
-//		glewInit(); //TODO- where the hell is glewInit. -lGLEW isn't found
-		create_resources();
-		glDrawBuffer(GL_BACK);
-		glutReshapeWindow(1024,1024);
-		glutDisplayFunc(render_and_swap as *u8);
-		glutIdleFunc(idle as *u8);
-		glEnable(GL_DEPTH_TEST);
-
-		glutMainLoop();
-	}
-
-	
+#[no_mangle]
+pub extern "C" fn app_create()->~App {
+	~App
 }
+

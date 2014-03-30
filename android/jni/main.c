@@ -362,6 +362,9 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
  * event loop for receiving input events and doing other things.
  */
  
+// todo: supposedly even this is junk that can be eliminated by using the 
+// "activity cycle"(?) directly ..(engine_handle_cmd, wherever android calls that..)
+
 void android_main(struct android_app* state) {
 	LOGI("******************************************");
 	LOGI("******************************************");

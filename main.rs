@@ -22,14 +22,13 @@ pub use std::libc;
 pub use std::libc::{c_int,c_char};
 use shadertest::c_str;
 use std::io;
+use shadertest::App;
 
-mod macros;	// must preceed others for macro visibility.
-mod r3d;
-mod shadertest;
+pub mod macros;	// must preceed others for macro visibility.
+pub mod r3d;
+pub mod shadertest;
 
-// TODO: This should be main, even for desktop.
 // framework can be: Android, Glut, (iOS,..)
-// TODO: its' really shadertest.rs that should supply these.
 
 #[cfg(target_os = "android")]
 extern { fn android_log_print(lvl:c_int,  s:*c_char);}
@@ -46,39 +45,6 @@ fn log_print(level:int, s:&str) {
 	io::println(s);
 }
 
- 
-#[cfg(not(target_os = "android"))]
-fn main() {
-	shadertest::shadertest_main();
-}
-
-//////////////////////////////////////////////////
-// crossplatform framework (android) hooks
-// These functions are statically linked by the
-// modified sample code main loop giving various entry points
-// for rust
-// no rendering is done there, just surface creation and swap.
-
-struct App { i:int}
-#[no_mangle]
-#[cfg(target_os = "android")]
-pub extern fn   app_create()->~App {
-	logi!("init app");
-	~App{i:0}
-}
-
-#[cfg(target_os = "android")]
-#[no_mangle]
-pub extern fn   app_display_create(_:&mut App) {
-	logi!("init display");
-	shadertest::create_resources();
-}
-#[no_mangle]
-pub extern fn   app_display_destroy(_:&mut App) {
-	logi!("terminate display");
-}
-
-// todo - call to recreate resources. lazy init isn't the right way! it must always init when called.
 
 static MAX_TOUCH_POINTERS:u32=12;
 
@@ -97,30 +63,40 @@ struct AndroidInput {
 extern { fn android_get_inputs()->AndroidInput; }
 
 
-#[cfg(target_os = "android")]
-#[no_mangle]
-pub extern fn   app_render(_:&mut App) {
 
-	// Struct holding accumulated input state
-	let inp=unsafe {android_get_inputs()};
 
-//	logi!("input={:?}",inp);
 
-	shadertest::render_no_swap();
+// Desktop glut main loop, uses the app_create/display_create/render/display_destroy/destroy hooks; on android (iOS..) these same functions are just called by platform specific app loops
+// It might be nice to make a rust trait object for all this, 
+// however this is language independant. One can glue any other framework specifics ontop.
+
+#[cfg(not(target_os = "android"))]
+pub fn main()
+{
+	unsafe {
+		let mut argc:c_int=0;
+		glutInit((&mut argc) as *mut c_int,0 as **c_char );
+
+		glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+		glutInitWindowSize(1280,800);
+		let win=verify!(glutCreateWindow(c_str("Rust ShaderTest")) isnt 0);
+
+		let app = ::app_create();
+		::app_display_create(app);
+		glDrawBuffer(GL_BACK);
+		glutReshapeWindow(1024,1024);
+		glEnable(GL_DEPTH_TEST);
+
+		while true {
+			glutMainLoopEvent();
+			::app_render(app);
+			glFlush();
+			glutSwapBuffers();
+		}
+		::app_display_destroy(app);
+		::app_destroy(app);
+	}
 }
-
-#[cfg(target_os = "android")]
-#[no_mangle]
-pub extern fn   app_destroy(_:~App) {
-	logi!("terminate app");
-}
-
-
-
-
-
-
-
 
 
 
