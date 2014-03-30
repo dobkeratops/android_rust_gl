@@ -108,7 +108,7 @@ const char* g_FixedFunctionPS=
 "	float inva=(v_color.w),a=(1.0-v_color.w);\n"
 "	vec4 t0=texture2D(s_Tex0, v_tex0);\n"
 "	vec4 t1=texture2D(s_Tex1, v_tex1);\n"
-"	gl_FragColor =vec4(0.0,1.0,0.0,1.0);\n"
+"	gl_FragColor =v_color;\n"
 "}\n";
 
 
@@ -178,6 +178,10 @@ void InitState() {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 }
+typedef enum VertexAttrib {
+	A_POS=0,A_COL,A_NORM,A_TEX0,A_TEX1
+}
+VertexAttrib_t;
 
 void CreateShaders() {
 	InitState();
@@ -192,11 +196,11 @@ void CreateShaders() {
 	ShaderCompileSource(vs, g_FixedFunctionVS);
 	ShaderCompileSource(ps, g_FixedFunctionPS);
 
-	glBindAttribLocation(prog, 0, "a_pos");
-	glBindAttribLocation(prog, 1, "a_col");
-	glBindAttribLocation(prog, 2, "a_norm");
-	glBindAttribLocation(prog, 3, "a_tex0");
-	glBindAttribLocation(prog, 4, "a_tex1");
+	glBindAttribLocation(prog, A_POS, "a_pos");
+	glBindAttribLocation(prog, A_COL, "a_col");
+	glBindAttribLocation(prog, A_NORM, "a_norm");
+	glBindAttribLocation(prog, A_TEX0, "a_tex0");
+	glBindAttribLocation(prog, A_TEX1, "a_tex1");
 
 	glAttachShader(prog,ps);
 	glAttachShader(prog,vs);
@@ -234,11 +238,11 @@ void FlushPrim() {
 	glBufferData(GL_ARRAY_BUFFER, sizeof(struct TmpVertex)* s->index, s->vertices, GL_DYNAMIC_DRAW);
 	GLsizei stride=sizeof(struct TmpVertex);
 
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, stride, (void*)&((struct TmpVertex*)0)->x);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, stride, (void*)&((struct TmpVertex*)0)->r);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, stride, (void*)&((struct TmpVertex*)0)->nx);
-	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, stride, (void*)&((struct TmpVertex*)0)->u0);
-	glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, stride, (void*)&((struct TmpVertex*)0)->u1);
+	glVertexAttribPointer(A_POS, 4, GL_FLOAT, GL_FALSE, stride, (void*)&(((struct TmpVertex*)0)->x) );
+	glVertexAttribPointer(A_COL, 4, GL_FLOAT, GL_FALSE, stride, (void*)&(((struct TmpVertex*)0)->r) );
+	glVertexAttribPointer(A_NORM, 3, GL_FLOAT, GL_FALSE, stride, (void*)&(((struct TmpVertex*)0)->nx) );
+	glVertexAttribPointer(A_TEX0, 2, GL_FLOAT, GL_FALSE, stride, (void*)&(((struct TmpVertex*)0)->u0));
+	glVertexAttribPointer(A_TEX1, 2, GL_FLOAT, GL_FALSE, stride, (void*)&(((struct TmpVertex*)0)->u1));
 	glDrawArrays(s->prim, 0, s->index);
 	s->index=0;
 }
@@ -248,6 +252,12 @@ void glBegin(GLint a) {
 	FlushPrim();
 	s->prim=a;
 	s->index=0;
+}
+void color_unpack(float color[4], GLuint c) {
+	color[0]=(c&255)*(float)(1.0f/255.f);
+	color[1]=((c>>8)&255)*(float)(1.0f/255.f);
+	color[2]=((c>>16)&255)*(float)(1.0f/255.f);
+	color[3]=((c>>24)&255)*(float)(1.0f/255.f);
 }
 
 void glEnd() {
@@ -277,6 +287,7 @@ void glColor3f(GLfloat r,GLfloat g,GLfloat b) {
 	struct TmpVertex* vt=GetVertex();
 	vt->r = r; vt->g=g; vt->b = b; vt->a=1.0;
 }
+
 void glNormal3f(GLfloat x,GLfloat y,GLfloat z) {
 	struct TmpVertex* vt=GetVertex();
 	vt->nx = x; vt->ny=y; vt->nz = z; 
@@ -311,6 +322,38 @@ void glVertex4f(GLfloat x,GLfloat y ,GLfloat z,GLfloat w) {
 	struct TmpVertex* vt=GetNextVertex();
 	vt->x = x; vt->y=y; vt->z = z; vt->w=w;
 }
+// for tuple interface
+
+void glVertex3fv(GLfloat* c) {
+	struct TmpVertex* vt=GetNextVertex();
+	vt->x =c[0]; vt->y=c[1]; vt->z = c[2]; vt->w=1.0f;
+}
+void glVertex4fv(GLfloat* c) {
+	struct TmpVertex* vt=GetNextVertex();
+	vt->x =c[0]; vt->y=c[1]; vt->z = c[2]; vt->w=c[3];
+}
+
+void glColor4fv(GLfloat* c) {
+	struct TmpVertex* vt=GetVertex();
+	vt->r =c[0]; vt->g=c[1]; vt->b = c[2]; vt->a=c[3];
+}
+void glNormal3fv(GLfloat* c) {
+	struct TmpVertex* vt=GetVertex();
+	vt->nx =c[0]; vt->ny=c[1]; vt->nz = c[2];;
+}
+void glTexCoord2fv(GLfloat* c) {
+	struct TmpVertex* vt=GetVertex();
+	vt->u0 =c[0]; vt->v0=c[1];
+}
+void glMultiTexCoord2fv(GLenum target, GLfloat* c) {
+	struct TmpVertex* vt=GetVertex();
+	if (target==GL_TEXTURE0) {
+		vt->u0 =c[0]; vt->v0=c[1];
+	} else {
+		vt->u1 =c[0]; vt->v1=c[1];
+	}
+}
+
 
 typedef struct Vec2f { float x,y;} Vec2f;
 typedef struct Vec3f { float x,y,z;} Vec3f;
@@ -406,5 +449,10 @@ void glDisableClientState(GLenum index) {
 }
 void glUniformMatrix4fvARB(GLint uniform, GLsizei count, GLboolean transpose, const GLfloat* values) {
 	glUniformMatrix4fv(uniform, count, transpose, values);
+}
+
+void glSetTextureLayer(GLint l, GLint tx) {
+	glActiveTexture( l+GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tx);
 }
 

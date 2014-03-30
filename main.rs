@@ -27,7 +27,9 @@ mod macros;	// must preceed others for macro visibility.
 mod r3d;
 mod shadertest;
 
-
+// TODO: This should be main, even for desktop.
+// framework can be: Android, Glut, (iOS,..)
+// TODO: its' really shadertest.rs that should supply these.
 
 #[cfg(target_os = "android")]
 extern { fn android_log_print(lvl:c_int,  s:*c_char);}
@@ -51,27 +53,28 @@ fn main() {
 }
 
 //////////////////////////////////////////////////
-// android hooks
+// crossplatform framework (android) hooks
 // These functions are statically linked by the
 // modified sample code main loop giving various entry points
 // for rust
 // no rendering is done there, just surface creation and swap.
 
-
+struct App { i:int}
 #[no_mangle]
 #[cfg(target_os = "android")]
-pub extern fn   rust_android_init_app() {
+pub extern fn   app_create()->~App {
 	logi!("init app");
+	~App{i:0}
 }
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub extern fn   rust_android_init_display() {
+pub extern fn   app_display_create(_:&mut App) {
 	logi!("init display");
 	shadertest::create_resources();
 }
 #[no_mangle]
-pub extern fn   rust_android_term_display() {
+pub extern fn   app_display_destroy(_:&mut App) {
 	logi!("terminate display");
 }
 
@@ -79,6 +82,8 @@ pub extern fn   rust_android_term_display() {
 
 static MAX_TOUCH_POINTERS:u32=12;
 
+// TODO: These can be renamed away from android
+// Its' really to be a superset of Android,iOS,Windows8,game-consoles,PC
 struct AndroidInputSub {
 	pointers:[((f32,f32,f32),u32),..12],
 	accelerometer:(f32,f32,f32),
@@ -94,7 +99,7 @@ extern { fn android_get_inputs()->AndroidInput; }
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub extern fn   rust_android_render() {
+pub extern fn   app_render(_:&mut App) {
 
 	// Struct holding accumulated input state
 	let inp=unsafe {android_get_inputs()};
@@ -104,8 +109,9 @@ pub extern fn   rust_android_render() {
 	shadertest::render_no_swap();
 }
 
+#[cfg(target_os = "android")]
 #[no_mangle]
-pub extern fn   rust_android_term_app() {
+pub extern fn   app_destroy(_:~App) {
 	logi!("terminate app");
 }
 

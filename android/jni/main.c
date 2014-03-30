@@ -37,13 +37,17 @@
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
 
 
-// statically linked hooks for the main application to interact with the activity cycle..
-extern void rust_android_init_app();
-extern void rust_android_init_display();	// creating display
+// statically linked hooks for the main application to interact with the activity cycle.
+// user of this framework passes an application object.
+typedef void App_t;
+App_t* g_pApp;
+
+extern App_t* app_create();
+extern void app_display_create(App_t* borrowed_app_ref);	// creating display
 //extern void rust_android_event();			// IO events ?
-extern void rust_android_render();
-extern void rust_android_term_display();	// losing display
-extern void rust_android_term_app();
+extern void app_render(App_t* borrowed_app_ref);
+extern void app_display_destroy(App_t* borrowed_app_ref);	// losing display
+extern void app_destroy(App_t* owned_app_ptr);
 
 /**
  * Our saved state data.
@@ -206,7 +210,7 @@ static int engine_init_display(struct engine* engine) {
     engine->state.angle = 0;
     engine->animating=1;
 
-	rust_android_init_display();
+	app_display_create(g_pApp);
     return 0;
 }
 
@@ -220,7 +224,7 @@ static void engine_draw_frame(struct engine* engine)
         // No display.
         return;
     }
-	rust_android_render();
+	app_render(g_pApp);
 	AndroidInput_Update(&engine->inputs);	// cache previous controller states for next time..
     eglSwapBuffers(engine->display, engine->surface);
 }
@@ -243,7 +247,7 @@ static void engine_term_display(struct engine* engine) {
     engine->display = EGL_NO_DISPLAY;
     engine->context = EGL_NO_CONTEXT;
     engine->surface = EGL_NO_SURFACE;
-	rust_android_term_display();
+	app_display_destroy(g_pApp);
 }
 
 /**
@@ -368,7 +372,7 @@ void android_main(struct android_app* state) {
     // Make sure glue isn't stripped.
     app_dummy();
 
-	rust_android_init_app();
+	g_pApp=app_create();
     memset(&engine, 0, sizeof(engine));
     state->userData = &engine;
     state->onAppCmd = engine_handle_cmd;
@@ -439,7 +443,7 @@ void android_main(struct android_app* state) {
     }
 quit:
 	engine_term_display(&engine);
-	rust_android_term_app();
+	app_destroy(g_pApp);
 }
 
 //END_INCLUDE(all)

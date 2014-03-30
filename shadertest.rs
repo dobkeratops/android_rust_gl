@@ -1,6 +1,5 @@
 #[macro_escape];
 
-
 pub use std::num;
 pub use std::vec;
 pub use std::mem;
@@ -395,8 +394,8 @@ void main() { \n\
 	diff+=pointlight(v_pos.xyz,v_norm.xyz, vec3(lx,-ly,-1.0), 	vec4(0.0,1.0,0.0,0.0),vec4(1.0,0.0,0.0,0.0));\n\
 	diff+=pointlight(v_pos.xyz,v_norm.xyz, vec3(-lx,-ly,-1.0),	vec4(0.0,0.0,1.0,0.0),vec4(1.0,0.0,0.0,0.0));\n\
 	diff+=pointlight(v_pos.xyz,v_norm.xyz, vec3(-lx,ly,-1.0), 	vec4(0.5,0.0,0.5,0.0),vec4(1.0,0.0,0.0,0.0));\n\
-//	gl_FragColor =applyFog(v_pos.xyz,surfaceColor*diff*vec4(v_color.xyz,0.0)*2.0+spec);\n\
-	gl_FragColor =vec4(v_norm.xyz,0.0)*0.5+vec4(0.5,0.5,0.5,1.0);\n\
+	gl_FragColor =applyFog(v_pos.xyz,surfaceColor*diff*vec4(v_color.xyz,0.0)*2.0+spec);\n\
+//	gl_FragColor =vec4(v_norm.xyz,0.0)*0.5+vec4(0.5,0.5,0.5,1.0);\n\
 }";
 
 
@@ -445,8 +444,8 @@ void main() { \n\
 	diff+=pointlight(v_pos.xyz,v_norm.xyz, vec3(lx,-ly,-1.0), 	vec4(0.0,1.0,0.0,0.0),vec4(1.0,0.0,0.0,0.0));\n\
 	diff+=pointlight(v_pos.xyz,v_norm.xyz, vec3(-lx,-ly,-1.0),	vec4(0.0,0.0,1.0,0.0),vec4(1.0,0.0,0.0,0.0));\n\
 	diff+=pointlight(v_pos.xyz,v_norm.xyz, vec3(-lx,ly,-1.0), 	vec4(0.5,0.0,0.5,0.0),vec4(1.0,0.0,0.0,0.0));\n\
-//	gl_FragColor =applyFog(v_pos.xyz,surfaceColor*diff*vec4(v_color.xyz,0.0)*2.0+spec);\n\
-	gl_FragColor =vec4(v_norm.xyz,0.0)*0.5+vec4(0.5,0.5,0.5,1.0);\n\
+	gl_FragColor =applyFog(v_pos.xyz,surfaceColor*diff*vec4(v_color.xyz,0.0)*2.0+spec);\n\
+//	gl_FragColor =vec4(v_norm.xyz,0.0)*0.5+vec4(0.5,0.5,0.5,1.0);\n\
 }";
 
 // debug shader
@@ -728,7 +727,7 @@ fn safe_set_uniform1i(loc:GLint, value:GLint) {
 fn safe_set_uniform(loc:GLint, pvalue:&Vec4<f32>) {
 	// todo - validate
 	unsafe {	
-		glUniform4fv(loc, 1, &pvalue.x as *GLfloat);
+		glUniform4fv(loc, 1, &pvalue.x);
 	}
 }
 
@@ -842,10 +841,8 @@ pub fn	render_no_swap()
 			//io::println(format!("{:?}", g_shader_program));
 
 			// fixed function pipeline view, for debug.
-			glMatrixMode(GL_PROJECTION);
-			glLoadMatrixf(&matP.ax.x as *_);
-			glMatrixMode(GL_MODELVIEW);
-			glLoadMatrixf(&rot_trans.ax.x as *_);
+			glMatrixMode(GL_PROJECTION);glLoadMatrixf(&matP.ax.x);
+			glMatrixMode(GL_MODELVIEW);	glLoadMatrixf(&rot_trans.ax.x);
 
 			glUseProgram(g_shader_program);
 			match g_uniform_table {
@@ -873,7 +870,7 @@ fn debug_draw_cross(s:f32) {
 	unsafe {
 		glBegin(GL_LINES);
 
-		glColor4f(0.0,0.0,0.0,1.0);
+		glColor4f(1.0,0.0,0.0,1.0);
 		glNormal3f(-1.0,-1.0,-1.0);
 		glVertex3f(-s,-s,-s);
 		glColor4f(0.0,0.0,0.0,1.0);
@@ -904,6 +901,12 @@ fn debug_draw_cross(s:f32) {
 	}
 }
 
+/*
+	glDrawLine(&(-s,-s,-s), &(s,-s,-s), 0xc0c0c0);
+	glDrawLine(&(-s,-s,-s), &(-s,s,-s), 0xc0c0c0);
+	glDrawLine(&(-s,-s,-s), &(-s,-s,s), 0xc0c0c0);
+*/
+
 
 
 fn idle() 
@@ -932,9 +935,12 @@ fn	create_textures() {
 				(i+j*256+255*256*256) as u32
 			});
 		for i in range(0 as GLint,8 as GLint) {
-			glTexImage2D(GL_TEXTURE_2D, i, GL_RGB as GLint, usize as GLint,vsize as GLint, 0, GL_RGB, GL_UNSIGNED_BYTE, as_void_ptr(buffer.get(0)));
+			glTexImage2D(GL_TEXTURE_2D, i, GL_RGB as GLint, usize as GLint,vsize as GLint, 0, GL_RGB, GL_UNSIGNED_BYTE, buffer.get(0)as*_ as*c_void);
+			glGenerateMipmap(GL_TEXTURE_2D);
 		}
 		glBindTexture(GL_TEXTURE_2D,0);
+		for i in range(1,5) { g_textures[i]=g_textures[0]}
+//		g_textures[0]=
 	
 //		g_textures[1] = get_texture(&"data/rocktile.tga");
 //		g_textures[4] = get_texture(&"data/pebbles_texture.tga");
@@ -975,12 +981,12 @@ pub fn render_and_swap() {
 }
 
 
+
 #[cfg(not(target_os = "android"))]
 pub fn shadertest_main()
 {
 	unsafe {
 		let mut argc:c_int=0;
-		let argv:Vec<*c_char> =Vec::new();
 		glutInit((&mut argc) as *mut c_int,0 as **c_char );
 		//::macros::test();
 

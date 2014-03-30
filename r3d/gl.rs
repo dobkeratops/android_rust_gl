@@ -164,6 +164,7 @@ extern
                                     width:GLsizei, height:GLsizei ,
                                     border:GLint , format:GLenum , _type:GLenum,
                                     pixels: *GLvoid );
+	pub fn glGenerateMipmap(target:GLenum);
 
 	pub fn glGetTexImage( target:GLenum, level:GLint,
                                      format:GLenum, _type:GLenum,
@@ -197,6 +198,18 @@ extern
 	// convieniences in C
 	pub fn glLoadMatrixAt(mat:*f32, e: GLenum);
 	pub fn glCompileShaderSources(sh:GLint, src0:*c_char,opt_src1:*c_char,opt_src2:*c_char,opt_src3:*c_char, buffersize:GLsizei, err_text:*c_char  )->GLint;
+	pub fn glSetTexutreLayer(l:GLint, texid:GLint);
 
+	pub fn glColor4fv(_:&(f32,f32,f32,f32));
+	pub fn glVertex4fv(_:&(f32,f32,f32,f32));
+	pub fn glVertex3fv(_:&(f32,f32,f32));
+	pub fn glNormal3fv(_:&(f32,f32,f32));
+	pub fn glTexCoord2fv(_:&(f32,f32));
+	pub fn glMultiTexCoord2fv(_:&(f32,f32));
+}
+
+
+pub fn glDrawLine(v0:&(f32,f32,f32),v1:&(f32,f32,f32), c:u32) {
+	unsafe {glBegin(GL_LINES); glVertex3fv(v0);glVertex3fv(v1); glEnd();}
 }
 

@@ -1,8 +1,12 @@
-RUST_LINK_GL=-C link-args="-lGL -lGLU -lglut -LXext"
+RUST_LINK_GL=-C link-args="foo.o -lrusty  -lGL -lGLU -lglut -lXext -lstdc++"
 RUSTC=rustc $(RUST_LINK_GL) 
 
-main : main.rs *.rs TAGS
+main : main.rs *.rs foo.o TAGS 
+	rustc rusty.rs --crate-type=staticlib -o librusty.a
 	$(RUSTC) main.rs
+
+foo.o:foo.cpp
+	g++ -c foo.cpp  -std=c++11 -fno-exceptions -fno-rtti
 
 run: main
 	echo "make run"
