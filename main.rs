@@ -49,6 +49,7 @@ fn log_print(level:int, s:&str) {
 }
 
 
+
 static MAX_TOUCH_POINTERS:u32=12;
 
 // TODO: These can be renamed away from android
@@ -64,6 +65,26 @@ struct AndroidInput {
 	prev:AndroidInputSub
 }
 extern { fn android_get_inputs()->AndroidInput; }
+
+
+//(add-to-list 'ac-sources 'ac-source-etags)
+
+//(print ac-sources)
+//(set 'ac-sources nil)
+//(setq ac-sources '(ac-source-words-in-same-mode-buffers ac-source-etags))
+//
+//(ac-define-source mysource '((candidates . (list "FooBar" "AppleBar" "BazBanana"))))
+
+//(add-to-list 'ac-sources 'mysource)
+
+// (setq auto-complete-mode t)
+
+
+
+
+
+
+
 
 
 
