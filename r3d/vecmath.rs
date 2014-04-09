@@ -2,20 +2,23 @@
 use std::cmp;
 
 pub use std::num;
+pub use std::f32::*;
 pub use std::num::*;
+pub use std::num::Float;
+pub use std::num::Float;
 
 
 /// Generic maths classes
 /// member functions prefixed with 'v' for easier life without code-completion, and to distinguish from operator overloads (official langauge level "add") etc
 
 #[deriving(Clone,Show)]
-pub struct Vec2<T=f32> {x:T, y:T}
+pub struct Vec2<T=f32> {pub x:T, pub y:T}
 
 #[deriving(Clone,Show)]
-pub struct Vec3<T=f32> {x:T, y:T, z:T}
+pub struct Vec3<T=f32> {pub x:T, pub y:T, pub z:T}
 
 #[deriving(Clone,Show)]
-pub struct Vec4<T=f32> {x:T, y:T, z:T, w:T}
+pub struct Vec4<T=f32> {pub x:T, pub y:T, pub z:T, pub w:T}
 
 pub trait MyOrd : Num+Ord+Clone {	// relaxed handling of floats compared to s
 	fn cmp(self, other:Self)->cmp::Ordering;
@@ -171,7 +174,7 @@ pub trait VecOps<T:Float>:Clone+VecAccessors<T>+VecPermute<T>+VecConsts<T>+Zero+
 	fn vlength(&self)->T { self.vsqr().sqrt()}
 	fn vinvLength(&self)->T { one::<T>()/self.vsqr().sqrt()}
 	fn vtoLength(&self,length:T)->Self { self.vscale(length/self.vsqr().sqrt()) }
-	fn vnormalize(&self)->Self { self.vscale(one::<T>()/sqrt(self.vsqr())) }
+	fn vnormalize(&self)->Self { self.vscale(one::<T>()/self.vsqr().sqrt()) }
 	fn vperp(&self,axis:&Self)->Self { let vpara =self.vpara(axis); self.vsub(&vpara)}
 	fn vcross_norm(&self, b:&Self)->Self { self.vcross(b).vnormalize() }
 	fn vsub_norm(&self,b:&Self)->Self { self.vsub(b).vnormalize() }

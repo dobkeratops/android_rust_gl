@@ -77,7 +77,7 @@ macro_rules! def_new{
 	( struct $struct_name:ident($($arg_name:ident:$arg_type:ident),*) {$($field_name:ident:$field_type:ident=$field_init_expr:expr),*} )=>(
 		mod $struct_name {
 			pub struct $struct_name {
-			$( $field_name: $field_type,)*
+			$( pub $field_name: $field_type,)*
 			}
 			pub fn dump() {
 				$(::std::io::println(stringify!($field_name)+":"+stringify!($field_type)); )*

@@ -1,11 +1,11 @@
 #[macro_escape];
-
+use common::*;
 pub use std::num;
 pub use std::vec;
 pub use std::mem;
 pub use std::cmp;
 pub use std::c_str;
-pub use std::libc;
+pub use libc::c_void;
 pub use std::vec::Vec;
 use macros::*;
 
@@ -35,7 +35,7 @@ macro_rules! def_vertex_format{
 					use r3d::gl::{GLuint,GLfloat,GLsizei,glVertexAttribPointer,glEnableVertexAttribArray};
 					use r3d::gl_h_consts::{GL_FLOAT,GL_FALSE};
 					use std::intrinsics::size_of;
-					use std::libc::c_void;
+					use libc::c_void;
 					$( unsafe {
 							let base_vertex = 0 as *$layout_name;
 							glEnableVertexAttribArray($elem_index as GLuint);
@@ -114,13 +114,30 @@ unsafe fn get_uniform_location(shader_prog:GLuint, name:&str)->GLint {
 
 unsafe fn	create_and_compile_shader(shader_type:GLenum, source:&Vec<&str>) ->GLuint
 {
+	use std::iter::Range;
+
 	logi!("create_and_compile_shader")
 	let	shader_id = glCreateShader(shader_type );
 	dump!(shader_id);
 
 	let sources_as_c_str=Vec::from_fn(source.len(), |x|c_str(*source.get(x)) );
-	let length = Vec::from_fn(source.len() , |x|source.get(x).len() as c_int );
-	for i in range(0,source.len()) { logi!("source adr={:?} source len={:?} ",*sources_as_c_str.get(i),*length.get(i)) };
+	let length:Vec<c_int> = Vec::from_fn(source.len() , |x|source.get(x).len() as c_int );
+	let src_len:uint=source.len();
+	let mut iter_len: ::std::iter::Range<uint> =::std::iter::range(0u,src_len as uint);
+
+	let mut it = range(0,src_len); let x: Option<uint> = it.next(); println!("{}", x);
+
+//	for i in iter_len { 
+	while true {
+		match iter_len.next() {
+			Some(i)=>{
+				let s=*sources_as_c_str.get(i);
+				let len=*length.get(i);
+				logi!("source adr={} source len={} ",s,len) 
+			},
+			None=> break
+		}
+	};
 	
 	glShaderSource(shader_id, source.len() as GLsizei, sources_as_c_str.get(0), 0 as *c_int/*(&length[0])*/);
 	glCompileShader(shader_id);
@@ -609,8 +626,8 @@ fn generate_torus_vertex(ij:uint, num_u:uint, num_v:uint)->TestVertex {
 	let ry=rx*0.33f32;
 	let pi=3.14159265f32;
 	let tau=pi*2.0f32;
-	let (sx,cx)=num::sin_cos(fi*tau);
-	let (sy,cy)=num::sin_cos(fj*tau);
+	let (sx,cx)=(fi*tau).sin_cos();
+	let (sy,cy)=(fj*tau).sin_cos();
 
 	TestVertex{
 		pos:[(rx+sy*ry)*cx, (rx+sy*ry)*sx, ry*cy],
@@ -789,7 +806,7 @@ pub extern "C" fn	app_render(_:&mut App)
 		assert!(g_resources_init==true)		//logi!("render_no_swap"); // once..
 		g_angle+=0.0025f32;
 
-		glClearColor(g_fog_color.x+sin(g_angle*2.0),g_fog_color.y,g_fog_color.z,g_fog_color.w);
+		glClearColor(g_fog_color.x+(g_angle*2.0).sin(),g_fog_color.y,g_fog_color.z,g_fog_color.w);
 
 		glClearDepthf(1.0f32);
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -823,9 +840,9 @@ pub extern "C" fn	app_render(_:&mut App)
 		for i in range(0,g_num_torus) {
 
 			let matT = matrix::translate_xyz(
-				num::cos(a0)*r0+num::cos(a3)*r1, 
-				num::cos(a1)*r0+num::cos(a4)*r1, 
-				num::cos(a2)*r0+num::cos(a5)*r1 -2.0*r0);
+				a0.cos()*r0+a3.cos()*r1, 
+				a1.cos()*r0+a4.cos()*r1, 
+				a2.cos()*r0+a5.cos()*r1 -2.0*r0);
 
 			let rot_x = matrix::rotate_x(a0);
 			let rot_y = matrix::rotate_x(a1*0.245f32);
@@ -919,7 +936,7 @@ fn	create_textures() {
 			glGenerateMipmap(GL_TEXTURE_2D);
 		}
 		glBindTexture(GL_TEXTURE_2D,0);
-		for i in range(1,5) { g_textures[i]=g_textures[0]}
+		for i in range(1u,5u) { g_textures[i as uint]=g_textures[0]}
 //		g_textures[0]=
 	
 //		g_textures[1] = get_texture(&"data/rocktile.tga");
@@ -955,7 +972,7 @@ pub extern "C" fn app_destroy(_:~App) {
 
 
 #[no_mangle]
-pub extern "C" fn app_create(argc:c_int, argv:**libc::c_char, w:libc::c_int,h:libc::c_int)->~App {
+pub extern "C" fn app_create(argc:c_int, argv:**c_char, w:c_int,h:c_int)->~App {
 	~App
 }
 

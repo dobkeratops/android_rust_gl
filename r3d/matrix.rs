@@ -3,12 +3,12 @@ pub use std::cmp::*;
 
 #[deriving(Clone,Show)]
 pub struct Matrix4<AXISVEC=Vec3<f32>,POSVEC=AXISVEC> {
-	ax:AXISVEC,ay:AXISVEC,az:AXISVEC,pos:POSVEC
+	pub ax:AXISVEC,pub ay:AXISVEC,pub az:AXISVEC,pub pos:POSVEC
 }
 
 #[deriving(Clone,Show)]
 pub struct Matrix3<AXIS=Vec3<f32>> {
-	ax:AXIS,ay:AXIS,az:AXIS
+	pub ax:AXIS,pub ay:AXIS,pub az:AXIS
 }
 impl<T,V:VecOps<T>> Matrix3<V> {
 	fn new(ax:&V,ay:&V,az:&V)->Matrix3<V> {
@@ -26,9 +26,9 @@ impl<T,V:VecOps<T>> Matrix4<V> {
 // various concrete datastructures could expose a matrix
 
 pub struct Scaling<T>{
-	sx:T,
-	sy:T,
-	sz:T
+	pub sx:T,
+	pub sy:T,
+	pub sz:T
 }
 
 
@@ -169,7 +169,7 @@ impl<V:VecOps<T>,T:Float+MyOrd=f32> Matrix4<V> {
 
 //impl<F:Num+Zero+One> Matrix4<Vec4<F>> {
 pub fn projection<F:Float+MyOrd=f32>(fov_radians:F, aspect:F, znear:F, zfar:F)->Matrix4<Vec4<F>> {
-	let xymax=znear * num::tan(fov_radians );
+	let xymax=znear * fov_radians.tan();
 	let ymin=-xymax;
 	let xmin=-xymax;
 	let width=xymax-xmin;
@@ -192,7 +192,7 @@ pub fn projection<F:Float+MyOrd=f32>(fov_radians:F, aspect:F, znear:F, zfar:F)->
 }
 
 pub fn rotate_x<F:Float+MyOrd=f32>(a:F)->Matrix4<Vec4<F>> {
-	let (s,c)=num::sin_cos(a); let one=one::<F>(); let zero=zero::<F>();
+	let (s,c)=a.sin_cos(); let one=one::<F>(); let zero=zero::<F>();
 	Matrix4::new(
 		&Vec4::<F>::new(one,	zero,	zero,	zero),
 		&Vec4::<F>::new(zero,	c,		s,	zero),
@@ -200,7 +200,7 @@ pub fn rotate_x<F:Float+MyOrd=f32>(a:F)->Matrix4<Vec4<F>> {
 		&Vec4::<F>::new(zero,	zero,	zero,	one))
 }
 pub fn rotate_y<F:Float+MyOrd=f32>(a:F)->Matrix4<Vec4<F>> {
-	let (s,c)=num::sin_cos(a); let one=one::<F>(); let zero=zero::<F>();
+	let (s,c)=a.sin_cos(); let one=one::<F>(); let zero=zero::<F>();
 	Matrix4::new(
 		&Vec4::<F>::new(c,		zero,	s,	zero),
 		&Vec4::<F>::new(zero,	one,	zero,	zero),
@@ -208,7 +208,7 @@ pub fn rotate_y<F:Float+MyOrd=f32>(a:F)->Matrix4<Vec4<F>> {
 		&Vec4::<F>::new(zero,	zero,	zero,	one))
 }
 pub fn rotate_z<F:Float+MyOrd=f32>(a:F)->Matrix4<Vec4<F>> {
-	let (s,c)=num::sin_cos(a); let one=one::<F>(); let zero=zero::<F>();
+	let (s,c)=a.sin_cos(); let one=one::<F>(); let zero=zero::<F>();
 	Matrix4::new(
 		&Vec4::<F>::new(c,		s,	zero,	zero),
 		&Vec4::<F>::new(-s,		c,	zero,	zero),

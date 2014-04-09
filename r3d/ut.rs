@@ -1,6 +1,5 @@
-use std::libc;
 use std::vec::Vec;
-use std::libc::c_void;
+use libc::c_void;
 
 /*new file*/  
 

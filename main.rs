@@ -1,7 +1,7 @@
 //pub use r3d::landscape::*;
 //pub use r3d::mesh::*;
 
-#[feature(globs)];
+#![feature(globs)]
 #[feature(macro_rules)];
 #[feature(default_type_params)];
 #[allow(unused_imports)];
@@ -14,27 +14,35 @@
 #[macro_escape];
 
 
+
+extern crate libc;
 extern crate collections;
+
 pub use std::str::raw::*;
 pub use r3d::vecmath::*;
-pub use std::vec;
-pub use std::libc;
-pub use std::libc::{c_int,c_char};
-use shadertest::c_str;
+pub use libc::*;
+pub use libc::{c_int,c_char};
+use std::c_str;
 use std::io;
 use shadertest::*;
 use r3d::gl::*;
 use r3d::glut::*;
-
+pub use common::*;
 
 pub mod macros;	// must preceed others for macro visibility.
 pub mod r3d;
 pub mod shadertest;
 
+
 // framework can be: Android, Glut, (iOS,..)
 
 #[cfg(target_os = "android")]
 extern { fn android_log_print(lvl:c_int,  s:*c_char);}
+
+mod common {
+	pub use std::vec;
+}
+
 
 #[cfg(target_os = "android")]
 fn log_print(level:int, s:&str) {
@@ -47,8 +55,6 @@ fn log_print(level:int, s:&str) {
 fn log_print(level:int, s:&str) {
 	io::println(s);
 }
-
-
 
 static MAX_TOUCH_POINTERS:u32=12;
 
@@ -67,28 +73,6 @@ struct AndroidInput {
 extern { fn android_get_inputs()->AndroidInput; }
 
 
-//(add-to-list 'ac-sources 'ac-source-etags)
-
-//(print ac-sources)
-//(set 'ac-sources nil)
-//(setq ac-sources '(ac-source-words-in-same-mode-buffers ac-source-etags))
-//
-//(ac-define-source mysource '((candidates . (list "FooBar" "AppleBar" "BazBanana"))))
-
-//(add-to-list 'ac-sources 'mysource)
-
-// (setq auto-complete-mode t)
-
-
-
-
-
-
-
-
-
-
-
 
 // Desktop glut main loop, uses the app_create/display_create/render/display_destroy/destroy hooks; on android (iOS..) these same functions are just called by platform specific app loops
 // It might be nice to make a rust trait object for all this, 
@@ -99,13 +83,13 @@ pub fn main()
 {
 	unsafe {
 		let mut argc:c_int=0;
-		glutInit((&mut argc) as *mut std::libc::c_int,0 as **libc::c_char );
+		glutInit((&mut argc) as *mut c_int,0 as **c_char );
 
 		glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 		glutInitWindowSize(1280,800);
 		let win=verify!(glutCreateWindow(c_str("Rust ShaderTest")) isnt 0);
 
-		let mut app = app_create(0,0 as **std::libc::c_char,1280,800);
+		let mut app = app_create(0,0 as **c_char,1280,800);
 		app_display_create(app);
 		glDrawBuffer(GL_BACK);
 		glutReshapeWindow(1024,1024);
