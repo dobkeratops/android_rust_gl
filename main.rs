@@ -2,16 +2,16 @@
 //pub use r3d::mesh::*;
 
 #![feature(globs)]
-#[feature(macro_rules)];
-#[feature(default_type_params)];
-#[allow(unused_imports)];
-#[allow(unused_variable)];
-#[allow(dead_code)];
-#[allow(unreachable_code)];
-#[allow(unused_unsafe)];
-#[allow(unused_mut)];
-#[allow(non_camel_case_types)];
-#[macro_escape];
+#![feature(macro_rules)]
+#![feature(default_type_params)]
+#![allow(unused_imports)]
+#![allow(unused_variable)]
+#![allow(dead_code)]
+#![allow(unreachable_code)]
+#![allow(unused_unsafe)]
+#![allow(unused_mut)]
+#![allow(non_camel_case_types)]
+#![macro_escape]
 
 
 
@@ -72,8 +72,6 @@ struct AndroidInput {
 }
 extern { fn android_get_inputs()->AndroidInput; }
 
-
-
 // Desktop glut main loop, uses the app_create/display_create/render/display_destroy/destroy hooks; on android (iOS..) these same functions are just called by platform specific app loops
 // It might be nice to make a rust trait object for all this, 
 // however this is language independant. One can glue any other framework specifics ontop.
@@ -95,7 +93,7 @@ pub fn main()
 		glutReshapeWindow(1024,1024);
 		glEnable(GL_DEPTH_TEST);
 
-		while true {
+		loop {
 			glutMainLoopEvent();
 			app_render(app);
 			glFlush();

@@ -1,30 +1,30 @@
-#[macro_escape];
+#![macro_escape]
 
 /*new file*/  
 
 
-#[macro_export]
+
 macro_rules! logi{
 	($($arg:tt)*)=>( ::log_print(5, format!("{:s}:{:u}: ",file!(),line!())+format!($($arg)*)))
 }
-#[macro_export]
+
 macro_rules! logw{
 	($($arg:tt)*)=>( ::log_print(6, format!("{:s}:{:u}: ",file!(),line!())+format!($($arg)*)))
 }
 
 
 // debug macro: just print the value of an expression, at a specific location
-#[macro_export]
+
 macro_rules! logi{
 	($($arg:tt)*)=>( ::log_print(5, format!("{:s}:{:u}: ",file!(),line!())+format!($($arg)*)))
 }
-#[macro_export]
+
 macro_rules! logw{
 	($($arg:tt)*)=>( ::log_print(6, format!("{:s}:{:u}: ",file!(),line!())+format!($($arg)*)))
 }
 
 // debug macro: just print the value of an expression, at a specific location
-#[macro_export]
+
 macro_rules! dump{ ($($a:expr),*)=>
     (   {   let mut txt=format!("{:s}:{:u}: ",file!(), line!());
             $( { txt=txt.append(
@@ -44,7 +44,7 @@ examples
 	ptr=verify!(malloc(1024) isnt 0 as *void)  ptr = result of allocation, fails if nullptr
 
 */
-#[macro_export]
+
 macro_rules! verify{
 	// no expect value given - just verify its non zero
 	( $main_expr:expr)=>(

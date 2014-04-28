@@ -1,4 +1,4 @@
-#[macro_escape];
+#![macro_escape]
 use common::*;
 pub use std::num;
 pub use std::vec;
@@ -128,7 +128,7 @@ unsafe fn	create_and_compile_shader(shader_type:GLenum, source:&Vec<&str>) ->GLu
 	let mut it = range(0,src_len); let x: Option<uint> = it.next(); println!("{}", x);
 
 //	for i in iter_len { 
-	while true {
+	loop {
 		match iter_len.next() {
 			Some(i)=>{
 				let s=*sources_as_c_str.get(i);
