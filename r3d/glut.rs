@@ -26,7 +26,6 @@ extern
 
 	pub fn glutPostWindowRedisplay(  window:c_int );
     pub fn glutSwapBuffers();
-    pub fn glutMainLoopEvent(); /* for user loop to poll messages*/
     pub fn glutMainLoop(); /* for user loop to poll messages*/
 
 /*
@@ -71,4 +70,16 @@ extern
 */
 	pub fn glutStrokeCharacter(c:*c_void, c:c_char);
 }
+
+#[cfg(not(target_os = "macos"))]
+extern {
+    pub fn glutMainLoopEvent(); /* for user loop to poll messages*/
+}
+#[cfg(target_os = "macos")]
+extern {
+    pub fn glutCheckLoop(); /* for user loop to poll messages*/
+}
+
+#[cfg(target_os = "macos")]
+pub fn glutMainLoopEvent(){ unsafe {glutCheckLoop();} }
 

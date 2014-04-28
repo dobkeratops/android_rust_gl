@@ -76,6 +76,9 @@ extern { fn android_get_inputs()->AndroidInput; }
 // It might be nice to make a rust trait object for all this, 
 // however this is language independant. One can glue any other framework specifics ontop.
 
+extern "C" fn null_func() {
+}
+
 #[cfg(not(target_os = "android"))]
 pub fn main()
 {
@@ -90,6 +93,8 @@ pub fn main()
 		let mut app = app_create(0,0 as **c_char,1280,800);
 		app_display_create(app);
 		glDrawBuffer(GL_BACK);
+		glutIdleFunc(null_func as *u8);
+        glutDisplayFunc(null_func as *u8); // osx impl requires some callback, even though we render manually here. for cleaner window handling, we should ensure this shows the backbuffer without redraw?
 		glutReshapeWindow(1024,1024);
 		glEnable(GL_DEPTH_TEST);
 
@@ -103,6 +108,5 @@ pub fn main()
 		app_destroy(app);
 	}
 }
-
 
 
