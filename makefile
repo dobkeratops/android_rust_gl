@@ -1,5 +1,4 @@
 UNAME=$(shell uname)
-
 ifeq ($(UNAME), Darwin)
 	RUST_LINK_GL=-C link-args=" -framework Carbon -framework OpenGL -framework GLUT "
 else

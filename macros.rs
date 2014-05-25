@@ -5,33 +5,32 @@
 
 
 macro_rules! logi{
-	($($arg:tt)*)=>( ::log_print(5, format!("{:s}:{:u}: ",file!(),line!())+format!($($arg)*)))
+	($($arg:tt)*)=>( ::log_print(5, format!("{:s}:{:u}:\t{:s}",file!(),line!(),format!($($arg)*).as_slice()).as_slice()))
 }
 
 macro_rules! logw{
-	($($arg:tt)*)=>( ::log_print(6, format!("{:s}:{:u}: ",file!(),line!())+format!($($arg)*)))
+	($($arg:tt)*)=>( ::log_print(6, format!("{:s}:{:u}:\t{:s}",file!(),line!(),format!($($arg)*).as_slice())).as_slice())
 }
 
 
 // debug macro: just print the value of an expression, at a specific location
 
 macro_rules! logi{
-	($($arg:tt)*)=>( ::log_print(5, format!("{:s}:{:u}: ",file!(),line!())+format!($($arg)*)))
+	($($arg:tt)*)=>( ::log_print(5, format!("{:s}:{:u}:\t{:s}",file!(),line!(),format!($($arg)*).as_slice()).as_slice()))
 }
 
 macro_rules! logw{
-	($($arg:tt)*)=>( ::log_print(6, format!("{:s}:{:u}: ",file!(),line!())+format!($($arg)*)))
+	($($arg:tt)*)=>( ::log_print(6, format!("{:s}:{:u}:\t{:s}",file!()  ,line!(),format!($($arg)*).as_slice()).as_slice()))
 }
 
 // debug macro: just print the value of an expression, at a specific location
 
 macro_rules! dump{ ($($a:expr),*)=>
-    (   {   let mut txt=format!("{:s}:{:u}: ",file!(), line!());
+    (   {   let mut txt=format!("{:s}:{:u}:\t",file!(), line!());
             $( { txt=txt.append(
-                 format!(" {:s}={:?}",  stringify!($a),$a)+";")
-                }
-            );*;
-            ::log_print(5, txt);
+                 format!(" {:s}={:?};",  stringify!($a),$a).as_slice() )
+                }               );*;
+            ::log_print(5, txt.as_slice());
         }
     )
 }
@@ -58,7 +57,7 @@ macro_rules! verify{
 	( $main_expr:expr is $($expected_results:expr),*)=>(
 		{
 			let val=$main_expr;
-			assert!($(val==$expected_results ||)* false, stringify!($main_expr)+"=="+val.to_str());
+			assert!($(val==$expected_results ||)* false, stringify!($main_expr).append("==").append(val.to_str()));
 			val
 		}
 	);
@@ -66,7 +65,7 @@ macro_rules! verify{
 	( $main_expr:expr isnt $($unwanted_result:expr),*)=>(
 		{
 			let val=$main_expr;
-			$(assert!(val!=$unwanted_result, stringify!($main_expr)+"=="+stringify!($unwanted_result)))+;
+			$(assert!(val!=$unwanted_result, format!("{}{}{}",stringify!($main_expr),"==",stringify!($unwanted_result)) ))+;
 			val
 		}
 	)
@@ -80,7 +79,7 @@ macro_rules! def_new{
 			$( pub $field_name: $field_type,)*
 			}
 			pub fn dump() {
-				$(::std::io::println(stringify!($field_name)+":"+stringify!($field_type)); )*
+				$(::std::io::println(format!("{}{}{}",stringify!($field_name),":",stringify!($field_type)).as_slice()); )*
 			}
 			pub fn new($($arg_name:$arg_type),*)->$struct_name {
 				$struct_name {

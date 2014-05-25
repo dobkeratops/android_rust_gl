@@ -168,7 +168,7 @@ impl<V:VecOps<T>,T:Float+MyOrd=f32> Matrix4<V> {
 }
 
 //impl<F:Num+Zero+One> Matrix4<Vec4<F>> {
-pub fn projection<F:Float+MyOrd=f32>(fov_radians:F, aspect:F, znear:F, zfar:F)->Matrix4<Vec4<F>> {
+pub fn projection<F:FloatMath+MyOrd=f32>(fov_radians:F, aspect:F, znear:F, zfar:F)->Matrix4<Vec4<F>> {
 	let xymax=znear * fov_radians.tan();
 	let ymin=-xymax;
 	let xmin=-xymax;
@@ -191,7 +191,7 @@ pub fn projection<F:Float+MyOrd=f32>(fov_radians:F, aspect:F, znear:F, zfar:F)->
 	)
 }
 
-pub fn rotate_x<F:Float+MyOrd=f32>(a:F)->Matrix4<Vec4<F>> {
+pub fn rotate_x<F:FloatMath+MyOrd=f32>(a:F)->Matrix4<Vec4<F>> {
 	let (s,c)=a.sin_cos(); let one=one::<F>(); let zero=zero::<F>();
 	Matrix4::new(
 		&Vec4::<F>::new(one,	zero,	zero,	zero),
@@ -199,7 +199,7 @@ pub fn rotate_x<F:Float+MyOrd=f32>(a:F)->Matrix4<Vec4<F>> {
 		&Vec4::<F>::new(zero,	-s,		c,	zero),
 		&Vec4::<F>::new(zero,	zero,	zero,	one))
 }
-pub fn rotate_y<F:Float+MyOrd=f32>(a:F)->Matrix4<Vec4<F>> {
+pub fn rotate_y<F:FloatMath+MyOrd=f32>(a:F)->Matrix4<Vec4<F>> {
 	let (s,c)=a.sin_cos(); let one=one::<F>(); let zero=zero::<F>();
 	Matrix4::new(
 		&Vec4::<F>::new(c,		zero,	s,	zero),
@@ -207,7 +207,7 @@ pub fn rotate_y<F:Float+MyOrd=f32>(a:F)->Matrix4<Vec4<F>> {
 		&Vec4::<F>::new(-s,		zero,	c,	zero),
 		&Vec4::<F>::new(zero,	zero,	zero,	one))
 }
-pub fn rotate_z<F:Float+MyOrd=f32>(a:F)->Matrix4<Vec4<F>> {
+pub fn rotate_z<F:FloatMath+MyOrd=f32>(a:F)->Matrix4<Vec4<F>> {
 	let (s,c)=a.sin_cos(); let one=one::<F>(); let zero=zero::<F>();
 	Matrix4::new(
 		&Vec4::<F>::new(c,		s,	zero,	zero),
@@ -215,7 +215,7 @@ pub fn rotate_z<F:Float+MyOrd=f32>(a:F)->Matrix4<Vec4<F>> {
 		&Vec4::<F>::new(zero,	zero,	one,	zero),
 		&Vec4::<F>::new(zero,	zero,	zero,	one))
 }
-pub fn translate_xyz<F:Float+MyOrd=f32>(x:F,y:F,z:F)->Matrix4<Vec4<F>> {
+pub fn translate_xyz<F:FloatMath+MyOrd=f32>(x:F,y:F,z:F)->Matrix4<Vec4<F>> {
 	let one=one::<F>(); let zero=zero::<F>();
 	Matrix4::new(
 		&Vec4::<F>::new(one,	zero,	zero,	zero),
@@ -223,7 +223,7 @@ pub fn translate_xyz<F:Float+MyOrd=f32>(x:F,y:F,z:F)->Matrix4<Vec4<F>> {
 		&Vec4::<F>::new(zero,	zero,	one,	zero),
 		&Vec4::<F>::new(x,	y,	z,	one))
 }
-pub fn translate_vec4<F:Float+MyOrd=f32>(trans:&Vec4<F>)->Matrix4<Vec4<F>> {
+pub fn translate_vec4<F:FloatMath+MyOrd=f32>(trans:&Vec4<F>)->Matrix4<Vec4<F>> {
 	let one=one::<F>(); let zero=zero::<F>();
 	Matrix4::new(
 		&Vec4::<F>::new(one,	zero,	zero,	zero),

@@ -13,21 +13,15 @@
 #![allow(non_camel_case_types)]
 #![macro_escape]
 
-
-
 extern crate libc;
 extern crate collections;
 
 pub use std::str::raw::*;
-pub use r3d::vecmath::*;
-pub use libc::*;
-pub use libc::{c_int,c_char};
 use std::c_str;
 use std::io;
 use shadertest::*;
-use r3d::gl::*;
-use r3d::glut::*;
 pub use common::*;
+use libc::*;
 
 pub mod macros;	// must preceed others for macro visibility.
 pub mod r3d;
@@ -41,6 +35,10 @@ extern { fn android_log_print(lvl:c_int,  s:*c_char);}
 
 mod common {
 	pub use std::vec;
+	pub use libc::{c_int,c_char};
+	pub use r3d::vecmath::*;
+	pub use r3d::gl::*;
+	pub use r3d::glut::*;
 }
 
 
@@ -55,7 +53,7 @@ fn log_print(level:int, s:&str) {
 fn log_print(level:int, s:&str) {
 	io::println(s);
 }
-
+// (setq mouse-autoselect-window t)
 static MAX_TOUCH_POINTERS:u32=12;
 
 // TODO: These can be renamed away from android
@@ -82,6 +80,9 @@ extern "C" fn null_func() {
 #[cfg(not(target_os = "android"))]
 pub fn main()
 {
+	let x={let y=10;};
+	println!("{}",x);
+
 	unsafe {
 		let mut argc:c_int=0;
 		glutInit((&mut argc) as *mut c_int,0 as **c_char );
@@ -93,10 +94,12 @@ pub fn main()
 		let mut app = app_create(0,0 as **c_char,1280,800);
 		app_display_create(app);
 		glDrawBuffer(GL_BACK);
+
 		glutIdleFunc(null_func as *u8);
         glutDisplayFunc(null_func as *u8); // osx impl requires some callback, even though we render manually here. for cleaner window handling, we should ensure this shows the backbuffer without redraw?
 		glutReshapeWindow(1024,1024);
 		glEnable(GL_DEPTH_TEST);
+		dump!(argc);
 
 		loop {
 			glutMainLoopEvent();
@@ -108,5 +111,4 @@ pub fn main()
 		app_destroy(app);
 	}
 }
-
 

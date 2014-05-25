@@ -246,7 +246,7 @@ unsafe fn	create_shader_program(
 }
 
 // TODO [cfg OPENGL_ES ..]
-static shader_prefix_desktop:&'static str=&"\
+static shader_prefix_desktop:&'static str="\
 #version 120	\n\
 #define highp	\n\
 #define mediump	\n\
@@ -254,19 +254,19 @@ static shader_prefix_desktop:&'static str=&"\
 ";
 
 
-static vertex_shader_prefix_gles:&'static str=&"\
+static vertex_shader_prefix_gles:&'static str="\
 #version 100			\n\
 precision highp float;	\n\
 ";
 
 //#version 100			\n\
-static pixel_shader_prefix_gles:&'static str=&"\
+static pixel_shader_prefix_gles:&'static str="\
 precision mediump float;	\n\
 ";
 
 
 //#define PS_VS_INTERFACE0
-static ps_vs_interface0:&'static str=&"\n\
+static ps_vs_interface0:&'static str="\n\
 varying	highp vec4 v_pos;\n\
 varying	highp vec4 v_color;\n\
 varying	highp vec3 v_norm;\n\
@@ -278,14 +278,14 @@ varying	highp vec4 v_binormal;\n\
 
 
 //#define PS_VERTEX_FORMAT0
-static ps_vertex_format0:&'static str=&"\n\
+static ps_vertex_format0:&'static str="\n\
 attribute vec3 a_pos;\n\
 attribute vec2 a_tex0;\n\
 attribute vec4 a_color;\n\
 attribute vec3 a_norm;\n\
 \n";
 
-static g_VS_Default:&'static str=&"\n\
+static g_VS_Default:&'static str="\n\
 uniform mat4 uMatProj;\n\
 uniform mat4 uMatModelView;\n\
 void main() {\n\
@@ -302,7 +302,7 @@ void main() {\n\
 }";
 
 /// replacement debug vertex shader - dont apply transformations, just view vertices..
-static g_VS_PassThru:&'static str=&"\n\
+static g_VS_PassThru:&'static str="\n\
 uniform mat4 uMatProj;\n\
 uniform mat4 uMatModelView;\n\
 void main() {\n\
@@ -318,7 +318,7 @@ void main() {\n\
 	v_norm = enorm;\n\
 }";
 /// replacement debug vertex shader - dont apply perspective, just view translated models
-static g_VS_Translate2d:&'static str=&"\n\
+static g_VS_Translate2d:&'static str="\n\
 uniform mat4 uMatProj;\n\
 uniform mat4 uMatModelView;\n\
 void main() {\n\
@@ -333,7 +333,7 @@ void main() {\n\
 	v_tex1 = a_pos.xyz;\n\
 	v_norm = enorm;\n\
 }";
-static g_VS_Persp:&'static str=&"\n\
+static g_VS_Persp:&'static str="\n\
 uniform mat4 uMatProj;\n\
 uniform mat4 uMatModelView;\n\
 void main() {\n\
@@ -361,7 +361,7 @@ PS:
  */
 
 // sanity check debug, checking that the andoir build does this ok..
-static g_PS_ConcatForAndroid:&'static str= &"
+static g_PS_ConcatForAndroid:&'static str= "
 precision mediump float; \n\
 varying	highp vec4 v_pos;\n\
 varying	highp vec4 v_color;\n\
@@ -417,7 +417,7 @@ void main() { \n\
 }";
 
 
-static g_PS_Alpha:&'static str= &
+static g_PS_Alpha:&'static str= 
 //SHADER_PREFIX
 //PS_VS_INTERFACE0
 "uniform sampler2D uTex0;\n\
@@ -467,7 +467,7 @@ void main() { \n\
 }";
 
 // debug shader
-static g_PS_Add:&'static str= &
+static g_PS_Add:&'static str= 
 //SHADER_PREFIX
 //PS_VS_INTERFACE0
 "uniform sampler2D s_Tex0;\n\
@@ -494,13 +494,13 @@ void main() { \n\
 	gl_FragColor =surfaceColor*diff*vec4(v_color.xyz,0.0)*2.0+spec;\n\
 }";
 
-static g_PS_Flat:&'static str=&"\
+static g_PS_Flat:&'static str="\
 void main {\n\
 	gl_FragColor= mediump vec4(0.0, 1.0, 0.0, 1.0);\n\
 }\n\
 ";
 
-static g_PS_MinimumDebugAndroidCompiler:&'static str= &"\
+static g_PS_MinimumDebugAndroidCompiler:&'static str= "\
 precision mediump float; \n\
 void main() \n\
 { \n\
@@ -508,7 +508,7 @@ void main() \n\
 } \n\
 ";
 
-static g_PS_Tex3_AlphaMul:&'static str=&"\
+static g_PS_Tex3_AlphaMul:&'static str="\
 uniform sampler2D s_tex0;\n\
 uniform sampler2D s_tex1;\n\
 uniform sampler2D s_tex2;\n\
@@ -637,6 +637,7 @@ fn generate_torus_vertex(ij:uint, num_u:uint, num_v:uint)->TestVertex {
 	}	
 }
 
+
 unsafe fn create_buffer(size:GLsizei, data:*c_void, buffer_type:GLenum)->GLuint {
 	let mut id:GLuint=0;
 	glGenBuffers(1,&mut id);
@@ -749,9 +750,7 @@ fn safe_set_uniform(loc:GLint, pvalue:&Vec4<f32>) {
 
 unsafe fn as_void_ptr<T>(ptr:&T)->*c_void {
 	ptr as *T as *c_void
-}
-
-
+}              
 
 static g_fog_color:Vec4<f32> =Vec4{x:0.25,y:0.5,z:0.5,w:1.0};
 impl Mesh {
@@ -967,12 +966,11 @@ pub extern "C" fn app_display_destroy(_:&mut App) {
 }
 
 #[no_mangle]
-pub extern "C" fn app_destroy(_:~App) {
+pub extern "C" fn app_destroy(_:Box<App>) {
 }
 
 
 #[no_mangle]
-pub extern "C" fn app_create(argc:c_int, argv:**c_char, w:c_int,h:c_int)->~App {
-	~App
+pub extern "C" fn app_create(argc:c_int, argv:**c_char, w:c_int,h:c_int)->Box<App> {
+	box App
 }
-

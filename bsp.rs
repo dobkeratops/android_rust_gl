@@ -439,7 +439,6 @@ pub struct BspLeaf {
 	min:Point3s,
 	max:Point3s,
 	firstmarksurface:u16,
-	nummarksurfaces:u16,
 	ambient_level:[u8,..AmbientNum]
 }
 
