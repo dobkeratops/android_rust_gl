@@ -1,5 +1,6 @@
 pub mod vecmath;
 pub mod matrix;
+pub mod formats;
 pub mod gl;
 pub mod glut;
 pub mod gl_constants;

@@ -1,3 +1,5 @@
+#![allow(non_snake_case_functions)]
+
 pub use libc::{c_char,c_void,c_int,c_uint,c_uchar};
 pub use r3d::gl_constants::*;
 pub use r3d::gl_h_consts::*;

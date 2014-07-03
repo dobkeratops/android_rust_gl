@@ -6,7 +6,7 @@ else
 endif
 RUSTC=rustc $(RUST_LINK_GL) 
 
-main : main.rs *.rs  
+main : main.rs *.rs r3d/*.rs 
 	$(RUSTC) main.rs
 
 

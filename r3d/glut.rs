@@ -1,4 +1,4 @@
-/*new file*/  
+#![allow(non_snake_case_functions)]
 pub use super::gl::*;
 extern
 {

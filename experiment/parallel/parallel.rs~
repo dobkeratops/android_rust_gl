@@ -1,0 +1,126 @@
+extern crate rustrt;
+extern crate core;
+extern crate sync;
+
+use std::task;
+use std::io;
+use rustrt::thread;
+use rustrt::thread::Thread;
+use std::io::timer::Timer;
+use core::atomics;
+use sync::{Mutex,Arc};
+
+//Pump these through data-parallel workers.
+
+mod par {
+	// high priority data-parallel iterators
+	// wakes up or creates worker threads-one per core.
+	// puts them to sleep once complete.
+
+	/// map a collection 'in place'.
+	pub fn update<T>(
+			data:&mut Vec<T>, 
+			func:|T|){
+		fail!("todo");
+	}
+
+	/// filter/map a collection ''
+	pub fn filter_update<T,X,U>(
+				data:&mut Vec<T>,
+				pred:|T|->(bool,X),
+				func:|T,X|->U){
+	}
+
+	/// apply function to each element, generating new collection
+	pub fn map<T,U>(src:&Vec<T>, f:|T|->U)->Vec<U>{
+		fail!("todo");
+		Vec::new()
+	}
+
+	/// filter-map into preallocating buffer; can avoid allocation
+	pub fn filter_map_into<T,U,X>(
+				src:&Vec<T>,
+				dst:&mut Vec<U>, 
+				pred:|T|->(bool,X),
+				f:|T,X|->U){
+		fail!("todo");
+	}
+
+	pub fn filter_map
+			<T,U,X>(
+			src:&mut Vec<T>,
+			pred:|T|->(bool,X),
+			func:|T,X|->U)
+			->Vec<U> {
+		fail!("todo");
+		Vec::new()
+	}
+
+	pub fn filter<T>(src:&mut Vec<T>, f:|T|->bool)->Vec<T> {
+		fail!("todo");
+		Vec::new()
+	}
+
+	fn enable_thread_pool() {
+	}
+}
+
+struct JobList<'a> {
+	index:int,
+	job_fn:Option< |int|:'a->()>
+}
+fn spawn_worker_threads()->Arc<Mutex<JobList>> {
+	let mut job_index = Arc::new(Mutex::new(JobList{index:0,job_fn:None}));
+	for i in range(0,4) {	
+		let mut my_job_index=job_index.clone();
+		task::spawn(proc(){
+			loop {
+				loop unsafe {
+					let (job,f)=
+					{
+						let mut ji=my_job_index.lock(); 
+						let index=ji.index;
+						if index>0{ji.index-=1;};
+						(index,ji.job_fn.unwrap() as *_)
+					};
+					if job<=0{break;}
+					println!("thread {} has job {}",i,job);
+					f(job);
+//					match *f{
+//						Some(f)=>f(job),
+//						None=>{},
+//					}
+					io::timer::sleep(500);
+					break;
+				}
+	   			Thread::yield_now();
+			}
+		});
+	}
+	return job_index;
+}
+
+fn main() {
+	std::io::println("parallel test");
+	let mut timer=io::timer::Timer::new().unwrap();
+
+	let job_index=spawn_worker_threads();
+	task::spawn(proc(){
+		loop {
+			io::println("render\n");
+			//todo: block until the job is done
+			//todo:todo: sequential jobs
+			// todo: add to joblist q;
+			let x=JobList{
+				index:10,
+				job_fn:Some(|i:int|->(){println!("doing job {}",i);})
+			};
+/*
+			*job_index.lock()=
+*/
+			io::timer::sleep(1200);
+		}
+	});
+	io::timer::sleep(12000);
+//	io::exit(0);
+}

@@ -3,6 +3,7 @@
 
 #![feature(globs)]
 #![feature(macro_rules)]
+#![allow(unused_attribute)]
 #![feature(default_type_params)]
 #![allow(unused_imports)]
 #![allow(unused_variable)]
@@ -13,6 +14,7 @@
 #![allow(non_camel_case_types)]
 #![macro_escape]
 
+extern crate debug;
 extern crate libc;
 extern crate collections;
 
@@ -42,17 +44,19 @@ mod common {
 }
 
 
+
 #[cfg(target_os = "android")]
 fn log_print(level:int, s:&str) {
 	unsafe {
-		android_log_print(level as c_int, c_str(s));
+		::android_log_print(level as c_int, c_str(s));
 	}
 }
 
 #[cfg(not(target_os = "android"))]
 fn log_print(level:int, s:&str) {
-	io::println(s);
+	std::io::println(s);
 }
+
 // (setq mouse-autoselect-window t)
 static MAX_TOUCH_POINTERS:u32=12;
 
@@ -76,10 +80,32 @@ extern { fn android_get_inputs()->AndroidInput; }
 
 extern "C" fn null_func() {
 }
+trait Foo {
+	fn foo(&self)->() {
+	}
+}
+struct Baz {
+	i:int
+}
+struct Foz {i:int}
+impl Foo for Baz {
+	fn foo(&self)->() {
+		std::io::println("foobarbaz\n");
+	}
+}
+impl Foo for (Baz,Foz) {
+	fn foo(&self) {
+		let &(ref a,ref b)=self;
+	}
+}
+
+
 
 #[cfg(not(target_os = "android"))]
 pub fn main()
 {
+	let b=Baz{i:0};
+	b.foo();
 	let x={let y=10;};
 	println!("{}",x);
 

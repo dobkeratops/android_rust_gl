@@ -1,9 +1,5 @@
 #![macro_escape]
 
-/*new file*/  
-
-
-
 macro_rules! logi{
 	($($arg:tt)*)=>( ::log_print(5, format!("{:s}:{:u}:\t{:s}",file!(),line!(),format!($($arg)*).as_slice()).as_slice()))
 }
@@ -18,6 +14,7 @@ macro_rules! logw{
 macro_rules! logi{
 	($($arg:tt)*)=>( ::log_print(5, format!("{:s}:{:u}:\t{:s}",file!(),line!(),format!($($arg)*).as_slice()).as_slice()))
 }
+
 
 macro_rules! logw{
 	($($arg:tt)*)=>( ::log_print(6, format!("{:s}:{:u}:\t{:s}",file!()  ,line!(),format!($($arg)*).as_slice()).as_slice()))

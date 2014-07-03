@@ -196,7 +196,7 @@ def_vertex_attrib!{
 	}
 }
 
-unsafe fn create_texture(filename:~str)->GLuint {
+unsafe fn create_texture(filename:String)->GLuint {
 	return g_textures[0]
 }
 
@@ -974,3 +974,6 @@ pub extern "C" fn app_destroy(_:Box<App>) {
 pub extern "C" fn app_create(argc:c_int, argv:**c_char, w:c_int,h:c_int)->Box<App> {
 	box App
 }
+
+
+
