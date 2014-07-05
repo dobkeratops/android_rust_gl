@@ -149,14 +149,15 @@ impl<F:Float> Mul<Vec2<F>,Vec2<F>> for Vec2<F> {
 		Vec2::<F>::new(self.x*b.x,self.y*b.y)
 	}
 }
-impl<F:Float> Mul<Vec3<F>,Vec3<F>> for Vec3<F> {
-	fn mul(&self,b:&Vec3<F>)->Vec3<F> {
-		Vec3::<F>::new(self.x*b.x,self.y*b.y,self.z*b.z)
+impl<T:Float+Clone,OUT,RHS:PreMulVec3<T,OUT>> Mul<RHS,OUT> for Vec3<T> {
+	fn mul(&self,b:&RHS)->OUT {
+		b.pre_mul_vec3(self)
 	}
 }
-impl<F:Float> Mul<Vec4<F>,Vec4<F>> for Vec4<F> {
-	fn mul(&self,b:&Vec4<F>)->Vec4<F> {
-		Vec4::<F>::new(self.x*b.x,self.y*b.y,self.z*b.z,self.w*b.w)
+
+impl<F:Float,OUT, RHS:PreMulVec4<F,OUT>> Mul<RHS,OUT> for Vec4<F> {
+	fn mul(&self,b:&RHS)->OUT {
+		b.pre_mul_vec4(self)
 	}
 }
 
@@ -168,6 +169,54 @@ pub trait Cross<T,V>{
 pub trait SumElems<T> {
 	fn sum_elems(&self)->T;
 }
+
+pub trait PreMulVec2<T,RESULT> {
+	fn pre_mul_vec2(&self,&Vec2<T>)->RESULT;
+}
+impl<T:Float+Clone> PreMulVec2<T,Vec2<T>> for Vec2<T> {
+	fn pre_mul_vec2(&self, lhs:&Vec2<T>)->Vec2<T> { Vec2::new(lhs.x*self.x,lhs.y*self.y) }
+}
+// TODO: At the minute, this tells us 'conflicting impl' if we do for generic T:Float
+impl PreMulVec2<f32,Vec2<f32>> for f32 {
+	fn pre_mul_vec2(&self, lhs:&Vec2<f32>)->Vec2<f32> { Vec2::new(lhs.x**self,lhs.y**self) }
+}
+// TODO: At the minute, this tells us 'conflicting impl' if we do for generic T:Float
+impl PreMulVec2<f64,Vec2<f64>> for f64 {
+	fn pre_mul_vec2(&self, lhs:&Vec2<f64>)->Vec2<f64> { Vec2::new(lhs.x**self,lhs.y**self) }
+}
+
+
+pub trait PreMulVec3<T,RESULT> {
+	fn pre_mul_vec3(&self,&Vec3<T>)->RESULT;
+}
+impl<T:Float+Clone> PreMulVec3<T,Vec3<T>> for Vec3<T> {
+	fn pre_mul_vec3(&self, lhs:&Vec3<T>)->Vec3<T> { Vec3::new(lhs.x*self.x,lhs.y*self.y,lhs.z*self.z) }
+}
+// TODO: At the minute, this tells us 'conflicting impl' if we do for generic T:Float
+impl PreMulVec3<f32,Vec3<f32>> for f32 {
+	fn pre_mul_vec3(&self, lhs:&Vec3<f32>)->Vec3<f32> { Vec3::new(lhs.x**self,lhs.y**self,lhs.z**self) }
+}
+// TODO: At the minute, this tells us 'conflicting impl' if we do for generic T:Float
+impl PreMulVec3<f64,Vec3<f64>> for f64 {
+	fn pre_mul_vec3(&self, lhs:&Vec3<f64>)->Vec3<f64> { Vec3::new(lhs.x**self,lhs.y**self,lhs.z**self) }
+}
+
+
+pub trait PreMulVec4<T,RESULT> {
+	fn pre_mul_vec4(&self,&Vec4<T>)->RESULT;
+}
+impl<T:Float+Clone> PreMulVec4<T,Vec4<T>> for Vec4<T> {
+	fn pre_mul_vec4(&self, lhs:&Vec4<T>)->Vec4<T> { Vec4::new(lhs.x*self.x,lhs.y*self.y,lhs.z*self.z,lhs.w*self.w) }
+}
+// TODO: At the minute, this tells us 'conflicting impl' if we do for generic T:Float
+impl PreMulVec4<f32,Vec4<f32>> for f32 {
+	fn pre_mul_vec4(&self, lhs:&Vec4<f32>)->Vec4<f32> { Vec4::new(lhs.x**self,lhs.y**self,lhs.z**self,lhs.w**self) }
+}
+// TODO: At the minute, this tells us 'conflicting impl' if we do for generic T:Float
+impl PreMulVec4<f64,Vec4<f64>> for f64 {
+	fn pre_mul_vec4(&self, lhs:&Vec4<f64>)->Vec4<f64> { Vec4::new(lhs.x**self,lhs.y**self,lhs.z**self,lhs.w**self) }
+}
+
 
 // vector maths gathers primitive operations and implements more in terms of them
 pub trait VecMath<T:Float=f32>:Clone+VecAccessors<T>+VecPermute<T>+VecConsts<T>+Zero+VecNum<T>+VecCmp<T>+Add<Self,Self>+Sub<Self,Self>+Scale<T>+Mul<Self,Self>+Cross<T,Self>+SumElems<T> {
@@ -534,6 +583,8 @@ pub fn vec4<T:Clone>(x:T,y:T,z:T,w:T)->Vec4<T>{ Vec4::new(x,y,z,w) }
 #[cfg(run)]
 fn main() {
 	io::println("Vec Math Test");
+	dump!(Vec3::new(1.0f32,2.0f32,3.0f32)*2.0f32);
+	dump!(Vec3::new(1.0f32,2.0f32,3.0f32)*Vec3::new(3.0f32,2.0f32,1.0f32));
 	dump!(1,2,3,4);
 }
 

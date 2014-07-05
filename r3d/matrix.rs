@@ -32,7 +32,6 @@ pub struct Scaling<T>{
 	pub sz:T
 }
 
-
 impl<T> Scaling<T>
 {
 	pub fn new(x:T,y:T,z:T)->Scaling<T> {Scaling{sx:x,sy:y,sz:z} }
