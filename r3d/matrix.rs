@@ -1,7 +1,6 @@
 pub use r3d::vecmath::*;
 pub use std::cmp::*;
 
-
 #[deriving(Clone,Show)]
 pub struct Matrix4<AXISVEC=Vec3<f32>,POSVEC=AXISVEC> {
 	pub ax:AXISVEC,pub ay:AXISVEC,pub az:AXISVEC,pub pos:POSVEC
@@ -119,6 +118,15 @@ impl<T,V:VecMath<T>> IMatrix4<V> for Matrix4<V> {
 
 impl<T:Float,V:VecMath<T>> Matrix4<V> {
 }
+
+// Indirection Traits via PreMulMatXX to get Matrix*Matrix and Matrix*Vector
+impl<T:Float, OUT, RHS:PreMulMat44<T,OUT> > Mul<RHS,OUT> for Matrix4<Vec4<T>> {
+	fn mul(&self, rhs:&RHS)->OUT { rhs.pre_mul_mat44(self) } 
+}
+impl<T:Float, OUT, RHS:PreMulMat33<T,OUT> > Mul<RHS,OUT> for Matrix3<Vec3<T>> {
+	fn mul(&self, rhs:&RHS)->OUT { rhs.pre_mul_mat33(self) } 
+}
+
 impl<V:VecMath<T>,T:Float=f32> Matrix4<V> {
 	pub fn identity()->Matrix4<V>{
 		Matrix4::new(
@@ -135,6 +143,10 @@ impl<V:VecMath<T>,T:Float=f32> Matrix4<V> {
 			&trans.clone())
 	}
 	
+	pub fn mat33(&self)->Matrix3<Vec3<T>> {
+		Matrix3::new(&self.ax.xyz(),&self.ay.xyz(),&self.az.xyz())
+	}
+
 	pub fn look_along(pos:&V,fwd:&V,up:&V)->Matrix4<V>{
 		let az=fwd.normalize();
 		let ax=az.cross(up).normalize();
@@ -164,6 +176,24 @@ impl<V:VecMath<T>,T:Float=f32> Matrix4<V> {
 			&self.mul_vec4(&other.ay),
 			&self.mul_vec4(&other.az),
 			&self.mul_vec4(&other.pos))
+	}
+}
+
+impl<T:Float> Matrix3<Vec3<T>> {
+	pub fn identity()->Matrix3<Vec3<T>>{
+		Matrix3::new(
+			&VecConsts::axis(0),
+			&VecConsts::axis(1),
+			&VecConsts::axis(2))
+	}
+	pub fn mul_vec3(&self,pt:&Vec3<T>)->Vec3<T>{
+		self.ax.scale(pt.x()).mad(&self.ay,pt.y()).mad(&self.az,pt.z())
+	}
+	pub fn mul_matrix(&self,other:&Matrix3<Vec3<T>>)->Matrix3<Vec3<T>> {
+		Matrix3::new(
+			&self.mul_vec3(&other.ax),
+			&self.mul_vec3(&other.ay),
+			&self.mul_vec3(&other.az))
 	}
 }
 
@@ -264,21 +294,27 @@ pub fn projection_frustum<F:Float=f32>(left:F,right:F, bottom:F, top:F, fov_radi
 }
 
 // combines vector operations with operations aware of a matrix..
-pub trait PreMulMat44<T> {
-	fn pre_mul_mat44(&self,mat:&Matrix4<Vec4<T>>)->Self;
+pub trait PreMulMat44<T,OUT> {
+	fn pre_mul_mat44(&self,mat:&Matrix4<Vec4<T>>)->OUT;
 }
-pub trait PreMulMat43<T> {
-	fn pre_mul_mat43(&self,mat:&Matrix4<Vec3<T>>)->Self;
+pub trait PreMulMat43<T,OUT> {
+	fn pre_mul_mat43(&self,mat:&Matrix4<Vec3<T>>)->OUT;
 }
-pub trait PreMulMat33<T> {
-	fn pre_mul_mat33(&self,mat:&Matrix3<Vec3<T>>)->Self;
+pub trait PreMulMat33<T,OUT> {
+	fn pre_mul_mat33(&self,mat:&Matrix3<Vec3<T>>)->OUT;
 }
 
-impl<T:Float> PreMulMat43<T> for Vec3<T> {
+impl<T:Float> PreMulMat43<T,Vec3<T>> for Vec3<T> {
 	fn pre_mul_mat43(&self, mat:&Matrix4<Vec3<T>>)->Vec3<T> {mat.mul_vec3(self)}
 }
-impl<T:Float> PreMulMat44<T> for Vec4<T> {
+impl<T:Float> PreMulMat44<T,Vec4<T>> for Vec4<T> {
 	fn pre_mul_mat44(&self, mat:&Matrix4<Vec4<T>>)->Vec4<T> {mat.mul_vec4(self)}
+}
+impl<T:Float> PreMulMat44<T,Matrix4<Vec4<T>>> for Matrix4<Vec4<T>> {
+	fn pre_mul_mat44(&self, mat:&Matrix4<Vec4<T>>)->Matrix4<Vec4<T>> {mat.mul_matrix(self)}
+}
+impl<T:Float> PreMulMat33<T,Matrix3<Vec3<T>>> for Matrix3<Vec3<T>> {
+	fn pre_mul_mat33(&self, mat:&Matrix3<Vec3<T>>)->Matrix3<Vec3<T>> {mat.mul_matrix(self)}
 }
 
 /*
