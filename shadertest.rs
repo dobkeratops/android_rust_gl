@@ -164,7 +164,6 @@ unsafe fn	create_and_compile_shader(shader_type:GLenum, source:&Vec<&str>) ->GLu
 			}
 		);
 		loop{}
-
 	}	
 	else {
 		logi!("create shader{:?} - compile suceeded\n",  shader_id);

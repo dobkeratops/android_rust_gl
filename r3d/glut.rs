@@ -80,6 +80,8 @@ extern {
     pub fn glutCheckLoop(); /* for user loop to poll messages*/
 }
 
+
+
 #[cfg(target_os = "macos")]
 pub fn glutMainLoopEvent(){ unsafe {glutCheckLoop();} }
 

@@ -141,6 +141,11 @@ pub trait VecPermute<T:Clone+One+Zero> : VecAccessors<T> {
 	fn zzzz(&self)->Vec4<T>	{ Vec4::new(self.z(),self.z(),self.z(),self.z())}
 	fn wwww(&self)->Vec4<T>	{ Vec4::new(self.w(),self.w(),self.w(),self.w())}
 
+	// Synonyms
+	fn to_vec4_w1(&self,w:T) { self.xyz1()}
+	fn to_vec4(&self) { self.xyzw()}
+	fn to_vec3(&self) { self.xyz()}
+	fn to_vec2(&self) { self.xy()}
 }
 
 pub trait VecNum<T:Num> {

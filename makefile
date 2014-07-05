@@ -4,6 +4,7 @@ ifeq ($(UNAME), Darwin)
 else
 	RUST_LINK_GL=-C link-args=" -lGL -lGLU -lglut -lXext -lstdc++"
 endif
+
 RUSTC=rustc $(RUST_LINK_GL) 
 
 main : main.rs *.rs r3d/*.rs 

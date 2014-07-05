@@ -23,7 +23,7 @@ pub fn v3mad(v0:&V3,v1:&V3,f:f32)->V3 { v3add(v0,&v3scale(v1,f))}
 pub fn v3lerp(v0:&V3,v1:&V3,f:f32)->V3 { v3add(v0,&v3scale(&v3sub(v1,v0),f))}
 pub fn v3dot(&(x0,y0,z0):&V3,&(x1,y1,z1):&V3)->f32 {	x0*x1+y0*y1+z0*z1 }
 pub fn v3cross(&(x0,y0,z0):&V3,&(x1,y1,z1):&V3)->V3 { ((y0*z1-z0*y1),(z0*x1-z1*x0),(x0*y1-x1*y0)) }
-pub fn v3norm(v0:&V3)->V3{ v3scale(v0,1.0/f32::sqrt(v3dot(v0,v0))) }
+pub fn v3norm(v0:&V3)->V3{ v3scale(v0,1.0/(v3dot(v0,v0).sqrt())) }
 pub fn v3sub_norm(v0:&V3,v1:&V3)->V3{ v3norm(&v3sub(v0,v1))}
 pub fn v3perp(v0:&V3,axis:&V3)->V3{ v3mad(v0, axis, -v3dot(v0,axis))}
 pub fn v3para_perp(v0:&V3,axis:&V3)->(V3,V3){ let para=v3scale(axis, v3dot(v0,axis)); (para, v3sub(v0,&para)) }
@@ -43,7 +43,7 @@ pub fn	draw_image(size:(u32,u32),image:&Vec<u32>, pos:(f32,f32)) {
 //		let (tx,image)= self.get_texture_image(i);
 
 		glRasterPos2f(pos.val0(),pos.val1());
-		glDrawPixels(size.val0() as GLsizei,size.val1() as GLsizei, GL_RGBA, GL_UNSIGNED_BYTE, image.as_ptr() as *c_void);
+		glDrawPixels(size.val0() as GLsizei,size.val1() as GLsizei, GL_RGBA, GL_UNSIGNED_BYTE, image.as_ptr() as *const  c_void);
 		glFlush();
 	}
 }
@@ -73,7 +73,7 @@ pub fn create_texture<Texel>((w,h):(u32,u32), raw_pixels:&Vec<Texel>, alpha_bits
 		glBindTexture(GL_TEXTURE_2D,tx[0]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR as GLint);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR as GLint);
-		glTexImage2D(GL_TEXTURE_2D, 0, fmt as GLint, w as GLsizei,h as GLsizei, 0, fmt, fmt2, raw_pixels.as_ptr() as *c_void); 
+		glTexImage2D(GL_TEXTURE_2D, 0, fmt as GLint, w as GLsizei,h as GLsizei, 0, fmt, fmt2, raw_pixels.as_ptr() as *const c_void); 
 		tx[0]
 	}
 }
@@ -146,8 +146,8 @@ pub fn draw_tri_iso_tex(
 
 pub unsafe fn draw_init() {
 	let mut argc:c_int=0;
-	let argv:Vec<*c_char> =Vec::new();
-	glutInit((&mut argc) as *mut c_int,0 as **c_char );
+	let argv:Vec<*const c_char> =Vec::new();
+	glutInit((&mut argc) as *mut c_int,0 as *const *const c_char );
 		//::macros::test();
 
 	glutInitDisplayMode(GLUT_RGBA);

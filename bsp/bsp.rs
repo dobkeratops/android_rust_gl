@@ -1,10 +1,16 @@
-#[feature(globs)];
-#[feature(macro_rules)];
-#[feature(default_type_params)];
-#[allow(dead_code)];
+#![feature(globs)]
+#![feature(macro_rules)]
+#![feature(default_type_params)]
+#![allow(dead_code)]
 
 #[cfg(testbed)]
 extern crate collections;
+
+#[cfg(testbed)]
+extern crate libc;
+
+#[cfg(testbed)]
+extern crate debug;
 
 #[cfg(testbed)]
 use debugdraw::*;
@@ -14,10 +20,10 @@ use r3d::gl::*;
 use std::vec::Vec;
 use std::io;
 use std::intrinsics::{size_of,offset};
-use std::libc::*;
+//use libc::*;
 use std::c_str::CString;
 use std::f32;
-use collections::hashmap::HashSet;
+use std::collections::hashmap::HashSet;
 
 // compile opt  --cfg testbed
 #[cfg(testbed)]
@@ -28,12 +34,16 @@ mod r3d;
 mod debugdraw;
 
 #[cfg(testbed)]
+fn log_print(i:int, s:&str){std::io::println(s);}
+
+
+#[cfg(testbed)]
 pub fn main()
 {
 	unsafe {
 		draw_init();
 		let bsp=Blob::<BspHeader>::read(&Path::new("../data/e1m1.bsp"));
-		let mut a=0.0;
+		let mut a=0.0f32;
 
 		let mut tex_array=Vec::<GLuint>::new();
 		// Load textures to GL
@@ -47,7 +57,7 @@ pub fn main()
 		);
 		// show the map, isometric.
 		bsp.visit_triangles(
-			&|_,(v0,v1,v2),(_,txinfo),(_,plane),(face_id,_)| {
+			&mut |_,(v0,v1,v2),(_,txinfo),(_,plane),(face_id,_)| {
 				let txi=txinfo.miptex as uint;
 				draw_set_texture(0,*tex_array.get(txi));
 			
@@ -63,12 +73,12 @@ pub fn main()
 }
 
 struct Blob<HEADER> {
-	data:~[u8],
+	data:Vec<u8>,
 }
 
 impl<T> std::ops::Deref<T> for Blob<T> {
 	fn deref<'s>(&'s self)->&'s T {
-		unsafe {	&*(&self.data[0]as*_ as*T)
+		unsafe {	&*(&self.data.get(0)as*const _ as*const T)
 		}
 	}
 }
@@ -87,7 +97,7 @@ impl<T> Blob<T> {
 					println!("failed to read {}", path.as_str().unwrap_or("")); 
 					//~[0,..intrinsics::size_of::<Header>()]		// still returns an empty object, hmmm.
 					//vec::from_elem(0,intrinsics::size_of::<Header>())
-					~[]
+					Vec::new()
 				}
 			};
 		Blob::<T>  {data:data}
@@ -171,11 +181,11 @@ impl BspHeader {
 	fn visit_triangles<'a,'b,R>(
 			&'a self,
 			fn_apply_to_tri:
-				&'b|	tri_indices:(uint,uint,uint),
+				&mut |	tri_indices:(uint,uint,uint),
 						tri_vertices:(&'a BspVec3,&'a BspVec3,&'a BspVec3),
 						texinfo:(uint,&'a TexInfo),
 						plane:(uint,&'a Plane),
-						face_id:(uint,&'a Face)|->R
+						face_id:(uint,&'a Face)|:'b->R
 			)->Vec<R>
 	{
 		let mut return_val:Vec<R> =Vec::new();	// todo: reserve
@@ -213,7 +223,7 @@ impl BspHeader {
 		}
 		return_val
 	}
-	fn visit_faces<'a>(&'a self, f:&mut 'a |i:uint, f:&Face |) {
+	fn visit_faces<'a>(&'a self, f:&mut |i:uint, f:&Face |:'a) {
 		for i in range(0, self.faces.len()) {
 			(*f)(i, get!{self.faces[i]} );
 		}
@@ -228,12 +238,12 @@ impl BspHeader {
 	fn get_texture<'a>(&'a self, i:uint)->&'a MipTex {
 		let txh=self.miptex.get(self,0);
 		let tx = unsafe {&*(
-			(txh as *_ as *u8).offset(*txh.miptex_offset.unsafe_ref(i as uint) as int) as *MipTex
+			(txh as *const _ as *const u8).offset(*txh.miptex_offset.unsafe_ref(i as uint) as int) as *const MipTex
 		)};
 		tx
 	}
 
-	fn visit_textures<'a>(&'a self, mut tex_fn:&'a|i:uint,tx:&MipTex|) {
+	fn visit_textures<'a>(&'a self, mut tex_fn:&mut|i:uint,tx:&MipTex|:'a) {
 		let txh =self.miptex.get(self,0);
 		for i in range(0,txh.numtex) {
 			let tx=self.get_texture(i as uint);
@@ -264,7 +274,7 @@ impl BspHeader {
 	fn draw_faces(&self) {
 		let scale=1.0f32/3000.0f32;
 		self.visit_triangles(
-			&|(i0,i1,i2),(v0,v1,v2),(_,txinfo),_,(face_id,_)| draw_tri_iso(v0,v1,v2, random_color(face_id), scale)
+			&mut |(i0,i1,i2),(v0,v1,v2),(_,txinfo),_,(face_id,_)| draw_tri_iso(v0,v1,v2, random_color(face_id), scale)
 		);
 		
 	}
@@ -302,8 +312,8 @@ pub struct MipHeader {
 	miptex_offset:[u32,..0]	// actual size is..
 }
 impl MipHeader {
-	pub unsafe fn tex_offsets(&self)->*u32 {
-		(self as *_).offset(1) as *u32
+	pub unsafe fn tex_offsets(&self)->*const u32 {
+		(self as *const _).offset(1) as *const u32
 	}
 	pub unsafe fn tex_offset(&self, i:int)->int {
 		let ofs=self.tex_offsets();
@@ -311,7 +321,7 @@ impl MipHeader {
 	}
 	pub fn get_texture(&self, i:int)->&MipTex {
 		unsafe {
-			&*((self as*_ as*u8).offset( self.tex_offset(i)) as*MipTex)
+			&*((self as*const _ as*const u8).offset( self.tex_offset(i)) as*const MipTex)
 		}
 	}
 }
@@ -321,7 +331,7 @@ pub type BspVec2=(f32,f32);
 pub struct VisiList;
 pub struct BspNode {
 	plane_id:u32,
-	priv children:[i16,..2],
+	children:[i16,..2],
 	bbox:BBox,
 	firstface:u16,
 	numfaces:u16
@@ -331,9 +341,9 @@ enum BspNodeChild {
 }
 impl BspNode {
 	pub fn child_node(&self, i:int)->BspNodeChild {
-		match self.children[i] {
+		match self.children[i as uint] {
 			x if x>=0 => ChildNode(x),
-			x  =>ChildLeaf(-(self.children[i]+1))
+			x  =>ChildLeaf(-(self.children[i as uint]+1))
 		}
 	}
 }
@@ -398,12 +408,12 @@ unsafe fn byte_ofs_ref<'a,X,Y=X,I:Int=int>(base:&'a X, ofs:I)->&'a Y {
 	&*byte_ofs_ptr(base,ofs)
 }
 /// return a raw ptr to a different type at a byte offset from the given base object reference
-unsafe fn byte_ofs_ptr<'a,FROM,TO=u8,I:Int=int>(base:&'a FROM, ofs:I)->*TO {
-	byte_ofs(base as *_, ofs)
+unsafe fn byte_ofs_ptr<'a,FROM,TO=u8,I:Int=int>(base:&'a FROM, ofs:I)->*const TO {
+	byte_ofs(base as *const _, ofs)
 }
 /// offsets a raw pointer by a byte amount, and changes type based on return value inference.
-unsafe fn byte_ofs<'a,FROM,TO=u8,I:Int=int>(base:*FROM, ofs:I)->*TO {
-	(base as *u8).offset( ofs.to_int().unwrap() ) as *TO
+unsafe fn byte_ofs<'a,FROM,TO=u8,I:Int=int>(base:*const FROM, ofs:I)->*const TO {
+	(base as *const u8).offset( ofs.to_int().unwrap() ) as *const TO
 }
 
 static g_palette:&'static [u8]=include_bin!("palette.lmp");
@@ -412,7 +422,7 @@ impl BspHeader {
 	fn get_texture_image<'a>(&'a self, i:uint)->(&'a MipTex, Vec<u32>) {
 		unsafe {
 			let tx=self.get_texture(i);
-			let mip0:*u8=byte_ofs_ptr(tx, tx.offset1);
+			let mip0:*const u8=byte_ofs_ptr(tx, tx.offset1);
 
 			println!("size={}x{} miptex offsets {} {} {} {}",
 				tx.width, tx.height, 

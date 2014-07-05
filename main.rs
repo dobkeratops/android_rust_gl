@@ -100,8 +100,6 @@ impl Foo for (Baz,Foz) {
 	}
 }
 
-
-
 #[cfg(not(target_os = "android"))]
 pub fn main()
 {
