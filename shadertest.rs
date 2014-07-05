@@ -7,7 +7,7 @@ pub use std::cmp;
 pub use std::c_str;
 pub use libc::c_void;
 pub use std::vec::Vec;
-use macros::*;
+use r3d::macros::*;
 
 pub use r3d::*;
 pub use r3d::matrix::*;

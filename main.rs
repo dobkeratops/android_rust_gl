@@ -27,7 +27,6 @@ use libc::*;
 use r3d::matrix;
 use r3d::vecmath;
 
-pub mod macros;	// must preceed others for macro visibility.
 pub mod r3d;
 pub mod shadertest;
 

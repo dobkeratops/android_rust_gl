@@ -1,3 +1,5 @@
+#![macro_escape]
+pub mod macros;
 pub mod vecmath;
 pub mod matrix;
 pub mod formats;

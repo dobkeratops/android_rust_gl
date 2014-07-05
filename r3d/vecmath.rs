@@ -19,9 +19,8 @@ pub use std::num::Float;
 pub use std::num::Float;
 use std::io;
 
-#[cfg(run)]
-#[path="../macros.rs"]
-mod macros;
+//#[cfg(run)]
+//mod macros;
 
 #[cfg(run)]
 fn log_print(i:int, s:&str){std::io::println(s);}
