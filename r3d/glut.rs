@@ -4,16 +4,16 @@ extern
 {
 
 
-	pub fn glutInit(argc:*mut c_int,argc:**c_char);
+	pub fn glutInit(argc:*mut c_int,argc:*const *const c_char);
 	pub fn glutInitDisplayMode(mode:GLenum);
 
-	pub fn glutCreateWindow(x:*c_char)->c_int;
-	pub fn glutCreateSubWindow(x:*c_char)->c_int;
+	pub fn glutCreateWindow(x:*const c_char)->c_int;
+	pub fn glutCreateSubWindow(x:*const c_char)->c_int;
 	pub fn glutDestroyWindow(x:c_int);
 	pub fn glutSetWindow(win:c_int);
 	pub fn glutGetWindow()->c_int;
-	pub fn glutSetWindowTitle(x:*c_char);
-	pub fn glutSetIconTitle(x:*c_char);
+	pub fn glutSetWindowTitle(x:*const c_char);
+	pub fn glutSetIconTitle(x:*const c_char);
 	pub fn glutReshapeWindow(x:GLint, y:GLint);
 	pub fn glutPositionWindow(x:c_int,y:c_int);
 	pub fn glutIconifyWindow();
@@ -42,7 +42,7 @@ extern
 	pub fn glutIdleFunc(f:RustTempCFunc);// f:&fn() );
 	pub fn glutDisplayFunc(f:RustTempCFunc);// f:&fn() );
 
-	pub fn glutGameModeString(s:*c_char );
+	pub fn glutGameModeString(s:*const c_char );
 	pub fn glutEnterGameMode( );
 	pub fn glutLeaveGameMode( );
 	pub fn glutGameModeGet( query:GLenum  );
@@ -68,7 +68,7 @@ extern
 /*
 	Text functions
 */
-	pub fn glutStrokeCharacter(c:*c_void, c:c_char);
+	pub fn glutStrokeCharacter(c:*const c_void, c:c_char);
 }
 
 #[cfg(not(target_os = "macos"))]

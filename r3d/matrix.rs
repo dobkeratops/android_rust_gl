@@ -1,4 +1,4 @@
-pub use r3d::vecmath::*;
+pub use super::vecmath::*;
 pub use std::cmp::*;
 
 #[deriving(Clone,Show)]

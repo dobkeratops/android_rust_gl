@@ -37,7 +37,7 @@ macro_rules! def_vertex_format{
 					use std::intrinsics::size_of;
 					use libc::c_void;
 					$( unsafe {
-							let base_vertex = 0 as *$layout_name;
+							let base_vertex = 0 as *const $layout_name;
 							glEnableVertexAttribArray($elem_index as GLuint);
 							glVertexAttribPointer(
 								$elem_index as GLuint, 
@@ -45,7 +45,7 @@ macro_rules! def_vertex_format{
 								$elem_enum,	// todo: type -> GL type.
 								GL_FALSE, 
 								size_of::<$layout_name>() as GLsizei,
-								&(*base_vertex).$element as *GLfloat as *c_void,
+								&(*base_vertex).$element as *const GLfloat as *const c_void,
 							);
 						}
 					);*
@@ -139,18 +139,18 @@ unsafe fn	create_and_compile_shader(shader_type:GLenum, source:&Vec<&str>) ->GLu
 		}
 	};
 	
-	glShaderSource(shader_id, source.len() as GLsizei, sources_as_c_str.get(0), 0 as *c_int/*(&length[0])*/);
+	glShaderSource(shader_id, source.len() as GLsizei, sources_as_c_str.get(0), 0 as *const c_int/*(&length[0])*/);
 	glCompileShader(shader_id);
-	let	sh_status:c_int=0;
-	glGetShaderiv(shader_id,GL_COMPILE_STATUS,&sh_status);
+	let	mut sh_status:c_int=0;
+	glGetShaderiv(shader_id,GL_COMPILE_STATUS,&mut sh_status);
 	dump!(sh_status);
 	if sh_status==GL_FALSE as GLint
 	{
 		logi!("failed, getting log..");
-		let compile_log:[c_char,..512]=[0 as c_char,..512]; //int len;
+		let mut compile_log:[c_char,..512]=[0 as c_char,..512]; //int len;
 	
-		let log_len:c_int=0;
-		glGetShaderInfoLog(shader_id, 512,&log_len as *c_int, &compile_log[0]);
+		let mut log_len:c_int=0;
+		glGetShaderInfoLog(shader_id, 512,&mut log_len as *mut c_int, &mut compile_log[0]);
 		logi!("Compile Shader Failed: logsize={:?}",
 				log_len);
 		logi!("compile shader {:?} failed: \n{:?}\n", shader_id, 
@@ -200,7 +200,7 @@ unsafe fn create_texture(filename:String)->GLuint {
 	return g_textures[0]
 }
 
-pub unsafe fn c_str(s:&str)->*c_char {
+pub unsafe fn c_str(s:&str)->*const c_char {
 	s.to_c_str().unwrap()
 }
 //extern {pub fn bind_attrib_locations(prog:c_uint);}
@@ -226,7 +226,7 @@ unsafe fn	create_shader_program(
 	logi!("linking verteshader{:?}, pixelshader{:?} to program{:?}\n", vertex_shader, pixel_shader, prog);
 	glLinkProgram(prog);
 	let mut err:GLint=0;
-	glGetProgramiv(prog,GL_LINK_STATUS,(&err) as *GLint);
+	glGetProgramiv(prog,GL_LINK_STATUS,(&mut err) as *mut GLint);
 
 	let x=glGetAttribLocation(prog,c_str("a_color"));
 	logi!("write,read attrib location in prog {:?} a_color={:?}", prog, x);
@@ -235,7 +235,7 @@ unsafe fn	create_shader_program(
 	if err as GLenum==GL_INVALID_VALUE || err as GLenum==GL_INVALID_OPERATION {
 		let mut buffer=[0 as GLchar,..1024];
 		let mut len:GLint=0;
-		glGetProgramInfoLog(prog,1024,&len,&buffer[0]);
+		glGetProgramInfoLog(prog,1024,&mut len,&mut buffer[0]);
 		logi!("link program failed: {:?}",err);
 		logi!("{:?}",c_str::CString::new(&buffer[0],false).as_str().unwrap());
 	} else {
@@ -638,7 +638,7 @@ fn generate_torus_vertex(ij:uint, num_u:uint, num_v:uint)->TestVertex {
 }
 
 
-unsafe fn create_buffer(size:GLsizei, data:*c_void, buffer_type:GLenum)->GLuint {
+unsafe fn create_buffer(size:GLsizei, data:*const c_void, buffer_type:GLenum)->GLuint {
 	let mut id:GLuint=0;
 	glGenBuffers(1,&mut id);
 	glBindBuffer(buffer_type,id);
@@ -651,10 +651,10 @@ unsafe fn create_buffer(size:GLsizei, data:*c_void, buffer_type:GLenum)->GLuint 
 
 // Foo bar baz
 
-unsafe fn create_vertex_buffer_from_ptr(size:GLsizei, data:*c_void)->GLuint {
+unsafe fn create_vertex_buffer_from_ptr(size:GLsizei, data:*const c_void)->GLuint {
 	create_buffer(size,data,GL_ARRAY_BUFFER)
 }
-unsafe fn create_index_buffer_from_ptr(size:GLsizei, data:*c_void)->GLuint {
+unsafe fn create_index_buffer_from_ptr(size:GLsizei, data:*const c_void)->GLuint {
 	create_buffer(size,data,GL_ELEMENT_ARRAY_BUFFER)
 }
 
@@ -724,13 +724,13 @@ impl Mesh {
 			glBindBuffer(GL_ARRAY_BUFFER, self.vbo);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.ibo);
 
-			let baseVertex=0 as *TestVertex;
+			let baseVertex=0 as *const TestVertex;
 			let	stride=mem::size_of_val(&*baseVertex) as GLsizei;
 
-			glVertexPointer(3, GL_FLOAT, stride,  0 as *c_void);//(&(*baseVertex).pos[0]) as *f32 as *c_void);
-			glColorPointer(4,GL_FLOAT, stride, 12 as *c_void);//(&(*baseVertex).color[0]) as *f32 as *c_void);
-			glTexCoordPointer(2, GL_FLOAT, stride, (12+16) as *c_void);//(&(*baseVertex).tex0[0]) as *f32 as *c_void);
-			glDrawElements(GL_TRIANGLE_STRIP, self.num_indices as GLsizei, GL_UNSIGNED_INT,0 as *c_void);
+			glVertexPointer(3, GL_FLOAT, stride,  0u as *const c_void);//(&(*baseVertex).pos[0]) as *f32 as *c_void);
+			glColorPointer(4,GL_FLOAT, stride, 12u as *const c_void);//(&(*baseVertex).color[0]) as *f32 as *c_void);
+			glTexCoordPointer(2, GL_FLOAT, stride, (12u+16u) as *const c_void);//(&(*baseVertex).tex0[0]) as *f32 as *c_void);
+			glDrawElements(GL_TRIANGLE_STRIP, self.num_indices as GLsizei, GL_UNSIGNED_INT,0 as *const c_void);
 
 			for &x in client_state.iter() {glDisableClientState(x);};
 		}
@@ -750,8 +750,8 @@ fn safe_set_uniform(loc:GLint, pvalue:&Vec4<f32>) {
 	}
 }
 
-unsafe fn as_void_ptr<T>(ptr:&T)->*c_void {
-	ptr as *T as *c_void
+unsafe fn as_void_ptr<T>(ptr:&T)->*const c_void {
+	ptr as *const T as *const c_void
 }              
 
 static g_fog_color:Vec4<f32> =Vec4{x:0.25,y:0.5,z:0.5,w:1.0};
@@ -787,7 +787,7 @@ impl Mesh {
 
 		TestVertex::set_vertex_attrib();
 
-		glDrawElements(GL_TRIANGLE_STRIP, self.num_indices as GLsizei, GL_UNSIGNED_INT,0 as *c_void);
+		glDrawElements(GL_TRIANGLE_STRIP, self.num_indices as GLsizei, GL_UNSIGNED_INT,0 as *const c_void);
 	}
 }
 
@@ -933,7 +933,7 @@ fn	create_textures() {
 				(i+j*256+255*256*256) as u32
 			});
 		for i in range(0 as GLint,8 as GLint) {
-			glTexImage2D(GL_TEXTURE_2D, i, GL_RGB as GLint, usize as GLint,vsize as GLint, 0, GL_RGB, GL_UNSIGNED_BYTE, buffer.get(0)as*_ as*c_void);
+			glTexImage2D(GL_TEXTURE_2D, i, GL_RGB as GLint, usize as GLint,vsize as GLint, 0, GL_RGB, GL_UNSIGNED_BYTE, buffer.get(0)as*const _ as*const c_void);
 			glGenerateMipmap(GL_TEXTURE_2D);
 		}
 		glBindTexture(GL_TEXTURE_2D,0);
@@ -973,7 +973,7 @@ pub extern "C" fn app_destroy(_:Box<App>) {
 
 
 #[no_mangle]
-pub extern "C" fn app_create(argc:c_int, argv:**c_char, w:c_int,h:c_int)->Box<App> {
+pub extern "C" fn app_create(argc:c_int, argv:*const *const c_char, w:c_int,h:c_int)->Box<App> {
 	box App
 }
 

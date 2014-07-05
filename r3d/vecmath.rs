@@ -153,6 +153,14 @@ pub trait VecCmp<T:PartialOrd> {
 pub trait Scale<F> {
 	fn scale(&self,f:F)->Self;
 }
+// indirection trait for premul by scalar.
+trait PreMulFloat<T:Float>:Scale<T> {
+	fn pre_mul_float(&self,f:T)->Self{self.scale(f)}
+}
+impl<T:Float> PreMulFloat<T> for Vec3<T> {}
+impl<T:Float> PreMulFloat<T> for Vec4<T> {}
+// todo- only possible if impl other trait/other type restriction is lifted.
+//impl Mul<Vec3<f32>,Vec3<f32>> for f32 { fn mul(&self,v:&Vec3<f32>)->Vec3<f32> { v.pre_mul_float(self)}}
 
 // componentwise multiplication operator for vectors
 impl<F:Float> Mul<Vec2<F>,Vec2<F>> for Vec2<F> {
@@ -230,7 +238,7 @@ impl PreMulVec4<f64,Vec4<f64>> for f64 {
 
 
 // vector maths gathers primitive operations and implements more in terms of them
-pub trait VecMath<T:Float=f32>:Clone+VecAccessors<T>+VecPermute<T>+VecConsts<T>+Zero+VecNum<T>+VecCmp<T>+Add<Self,Self>+Sub<Self,Self>+Scale<T>+Mul<Self,Self>+Cross<T,Self>+SumElems<T> {
+pub trait VecMath<T:Float=f32>:Clone+VecAccessors<T>+VecPermute<T>+VecConsts<T>+Zero+VecNum<T>+VecCmp<T>+Add<Self,Self>+Sub<Self,Self>+Scale<T>+Mul<Self,Self>+Cross<T,Self>+SumElems<T>+PreMulFloat<T> {
 	fn dot(&self,b:&Self)->T	{self.mul(b).sum_elems()}
 	fn para(&self,vaxis:&Self)->Self {  	let dotp=self.dot(vaxis); vaxis.scale(dotp) }
 
@@ -261,7 +269,7 @@ fn bilerp<F:Float,V:VecMath<F>>(((v00,v01),(v10,v11)):((V,V),(V,V)),(s,t):(F,F))
 	(v00.lerp(&v01,s)).lerp(&v10.lerp(&v10,s), t)
 }
 
-impl<T:Float,V:Clone+VecAccessors<T>+VecPermute<T>+VecConsts<T>+Zero+VecNum<T>+VecCmp<T>+Add<V,V>+Sub<V,V>+Scale<T>+Mul<V,V>+Cross<T,V>+SumElems<T>
+impl<T:Float,V:Clone+VecAccessors<T>+VecPermute<T>+VecConsts<T>+Zero+VecNum<T>+VecCmp<T>+Add<V,V>+Sub<V,V>+Scale<T>+Mul<V,V>+Cross<T,V>+SumElems<T>+PreMulFloat<T>
 
 > VecMath<T> for V {} 
 

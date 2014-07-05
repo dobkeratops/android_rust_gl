@@ -34,7 +34,7 @@ pub mod shadertest;
 // framework can be: Android, Glut, (iOS,..)
 
 #[cfg(target_os = "android")]
-extern { fn android_log_print(lvl:c_int,  s:*c_char);}
+extern { fn android_log_print(lvl:c_int,  s:*const c_char);}
 
 mod common {
 	pub use std::vec;
@@ -107,8 +107,6 @@ pub fn main()
 {
 	let b=Baz{i:0};
 	b.foo();
-	let x={let y=10;};
-	println!("{}",x);
 	let m1 = matrix::Matrix4::<Vec4<f32>>::identity();
 	let m2 = matrix::Matrix4::<Vec4<f32>>::identity();
 	let v0= Vec4::new(0.0f32,1.0f32,2.0f32,0.0f32);
@@ -118,29 +116,29 @@ pub fn main()
 
 	unsafe {
 		let mut argc:c_int=0;
-		glutInit((&mut argc) as *mut c_int,0 as **c_char );
+		glutInit((&mut argc) as *mut c_int,0 as *const *const c_char );
 
 		glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 		glutInitWindowSize(1280,800);
 		let win=verify!(glutCreateWindow(c_str("Rust ShaderTest")) isnt 0);
 
-		let mut app = app_create(0,0 as **c_char,1280,800);
-		app_display_create(app);
+		let mut app = app_create(0,0 as *const *const c_char,1280,800);
+		app_display_create(&mut *app);
 		glDrawBuffer(GL_BACK);
 
-		glutIdleFunc(null_func as *u8);
-        glutDisplayFunc(null_func as *u8); // osx impl requires some callback, even though we render manually here. for cleaner window handling, we should ensure this shows the backbuffer without redraw?
+		glutIdleFunc(null_func as *const u8);
+        glutDisplayFunc(null_func as *const u8); // osx impl requires some callback, even though we render manually here. for cleaner window handling, we should ensure this shows the backbuffer without redraw?
 		glutReshapeWindow(1024,1024);
 		glEnable(GL_DEPTH_TEST);
 		dump!(argc);
 
 		loop {
 			glutMainLoopEvent();
-			app_render(app);
+			app_render(&mut *app);
 			glFlush();
 			glutSwapBuffers();
 		}
-		app_display_destroy(app);
+		app_display_destroy(&mut *app);
 		app_destroy(app);
 	}
 }
