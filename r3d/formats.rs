@@ -10,6 +10,24 @@ use super::vecmath::Vec4;
 use super::vecmath::Vec3;
 
 // todo: f32->f16 conversion, Vec3<f32>->Vec3<f16>  Vec4<f32> -> Vec4<f16>
+type rgba8888=u32;
+
+pub trait To8888 {
+	fn to_8888(&self)->u32;
+}
+impl To8888 for Vec4<f32> { fn to_8888(&self)->u32{ self.pack() }}
+impl To8888 for u32 { fn to_8888(&self)->u32{ *self }}
+impl To8888 for (int,int,int,int) {
+	fn to_8888(&self)->u32{
+		let (r,g,b,a)=*self;
+		(r|(g<<8)|(b<<16)|(a<<24)) as u32
+	}
+}
+impl To8888 for (f32,f32,f32,f32) {
+	fn to_8888(&self)->u32{
+		Vec4::<f32>::from_tuple(*self).to_8888()
+	}
+}
 
 pub trait Pack {
 	fn pack(&self)->u32 {self.pack8888()}

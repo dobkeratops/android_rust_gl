@@ -146,3 +146,43 @@ pub fn main()
 	}
 }
 
+
+
+trait Collide<T> { fn collide(&self, other:&T); }
+
+struct Spaceship;
+struct Asteroid;
+// dispatch-traits for 2nd param
+trait CollideSpaceship {
+	fn collide_spaceship(&self,s:&Spaceship);
+}
+trait CollideAsteroid {
+	fn collide_asteroid(&self,s:&Asteroid);
+}
+impl<T:CollideSpaceship>  Collide<T> for Spaceship {
+	fn collide(&self,other:&T){ 
+		other.collide_spaceship(self)
+	}
+}
+impl<T:CollideAsteroid> Collide<T> for Asteroid {
+	fn collide(&self,other:&T){ 
+		other.collide_asteroid(self)
+	}
+}
+
+fn ct<Y,X:Collide<Y>>(x:&X,y:&Y){
+	x.collide(y);
+	
+}
+
+// WELL THAT IS NOT ACTUALLY SO BAD, AT ALL.
+impl CollideSpaceship for Asteroid {
+	fn collide_spaceship(&self,other:&Spaceship) {
+	}
+}
+impl CollideSpaceship for Spaceship {
+	fn collide_spaceship(&self,other:&Spaceship) {
+	}
+}
+
+

@@ -123,6 +123,18 @@ pub trait VecPermute<T:Clone+One+Zero> : VecAccessors<T> {
 	fn xzy(&self)->Vec3<T>	{ Vec3::new(self.x(),self.z(),self.y())}
 	fn xzy0(&self)->Vec4<T>	{ Vec4::new(self.x(),self.z(),self.y(),zero())}
 	fn xzy1(&self)->Vec4<T>	{ Vec4::new(self.x(),self.z(),self.y(),one())}
+	// permutes for cross-product
+	// i  j   k
+	// x0 y0 z0
+	// x1 y1 z1
+
+	// x'=y0*z1 - z0*y1 ,  y'=z0*x1-x0*z1,  z'=x0*y1-y0*x1
+	fn yzx(&self)->Vec3<T> {Vec3::new(self.y(),self.z(),self.x())}
+	fn zxy(&self)->Vec3<T> {Vec3::new(self.z(),self.x(),self.y())}
+	fn yzxw(&self)->Vec4<T> {Vec4::new(self.y(),self.z(),self.x(),self.w())}
+	fn zxyw(&self)->Vec4<T> {Vec4::new(self.z(),self.x(),self.y(),self.w())}
+	fn yzx0(&self)->Vec4<T> {Vec4::new(self.y(),self.z(),self.x(),zero())}
+	fn zxy0(&self)->Vec4<T> {Vec4::new(self.z(),self.x(),self.y(),zero())}
 
 	// splats in permute syntax
 	fn xxxx(&self)->Vec4<T>	{ Vec4::new(self.x(),self.x(),self.x(),self.x())}
@@ -203,7 +215,7 @@ impl PreMulVec3<f64,Vec3<f64>> for f64 {
 
 
 pub trait PreMulVec4<T,RESULT> {
-	fn pre_mul_vec4(&self,&Vec4<T>)->RESULT;
+	fn pre_mul_vec4(&self,lhs:&Vec4<T>)->RESULT;
 }
 impl<T:Float+Clone> PreMulVec4<T,Vec4<T>> for Vec4<T> {
 	fn pre_mul_vec4(&self, lhs:&Vec4<T>)->Vec4<T> { Vec4::new(lhs.x*self.x,lhs.y*self.y,lhs.z*self.z,lhs.w*self.w) }
@@ -475,8 +487,8 @@ impl<T:Clone+Zero+One> VecConsts<T> for Vec4<T> {
 // Converting Vec2,Vec3,Vec4 to/from tuples.
 
 impl<T:Clone> Vec4<T> {
-	fn to_tuple(&self)->(T,T,T,T) { (self.x.clone(),self.y.clone(),self.z.clone(),self.w.clone()) }
-	fn from_tuple((x,y,z,w):(T,T,T,T))->Vec4<T> {
+	pub fn to_tuple(&self)->(T,T,T,T) { (self.x.clone(),self.y.clone(),self.z.clone(),self.w.clone()) }
+	pub fn from_tuple((x,y,z,w):(T,T,T,T))->Vec4<T> {
 		Vec4{x:x.clone(),y:y.clone(),z:z.clone(),w:w.clone()}
 	}
 }

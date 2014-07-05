@@ -649,19 +649,21 @@ unsafe fn create_buffer(size:GLsizei, data:*c_void, buffer_type:GLenum)->GLuint 
 	id
 }
 
+// Foo bar baz
+
 unsafe fn create_vertex_buffer_from_ptr(size:GLsizei, data:*c_void)->GLuint {
 	create_buffer(size,data,GL_ARRAY_BUFFER)
 }
 unsafe fn create_index_buffer_from_ptr(size:GLsizei, data:*c_void)->GLuint {
 	create_buffer(size,data,GL_ELEMENT_ARRAY_BUFFER)
 }
+
 unsafe fn create_vertex_buffer<T>(data:&Vec<T>)->GLuint {
 	create_buffer(data.len()as GLsizei *mem::size_of::<T>() as GLsizei, as_void_ptr(data.get(0)), GL_ARRAY_BUFFER)
 }
 unsafe fn create_index_buffer<T>(data:&Vec<T>)->GLuint {
 	create_buffer(data.len()as GLsizei *mem::size_of::<T>() as GLsizei, as_void_ptr(data.get(0)), GL_ELEMENT_ARRAY_BUFFER)
 }
-
 
 impl Mesh {
 	/// create a grid mesh , TODO - take a vertex generator

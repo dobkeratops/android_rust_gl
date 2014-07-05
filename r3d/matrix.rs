@@ -2,14 +2,26 @@ pub use r3d::vecmath::*;
 pub use std::cmp::*;
 
 #[deriving(Clone,Show)]
-pub struct Matrix4<AXISVEC=Vec3<f32>,POSVEC=AXISVEC> {
-	pub ax:AXISVEC,pub ay:AXISVEC,pub az:AXISVEC,pub pos:POSVEC
+pub struct Matrix2<AXIS=Vec2<f32>> {
+	pub ax:AXIS,pub ay:AXIS
 }
 
 #[deriving(Clone,Show)]
 pub struct Matrix3<AXIS=Vec3<f32>> {
 	pub ax:AXIS,pub ay:AXIS,pub az:AXIS
 }
+
+#[deriving(Clone,Show)]
+pub struct Matrix4<AXISVEC=Vec4<f32>,POSVEC=AXISVEC> {
+	pub ax:AXISVEC,pub ay:AXISVEC,pub az:AXISVEC,pub pos:POSVEC
+}
+
+impl<T,V:VecMath<T>> Matrix2<V> {
+	fn new(ax:&V,ay:&V)->Matrix2<V> {
+		Matrix2{ax:ax.clone(),ay:ay.clone()}
+	}
+}
+
 impl<T,V:VecMath<T>> Matrix3<V> {
 	fn new(ax:&V,ay:&V,az:&V)->Matrix3<V> {
 		Matrix3{ax:ax.clone(),ay:ay.clone(),az:az.clone()}
@@ -31,9 +43,14 @@ pub struct Scaling<T>{
 	pub sz:T
 }
 
-impl<T> Scaling<T>
+impl<T:Float> Scaling<T>
 {
+	pub fn identity()->Scaling<T> { Scaling{sx:one(),sy:one(),sz:one()}}
 	pub fn new(x:T,y:T,z:T)->Scaling<T> {Scaling{sx:x,sy:y,sz:z} }
+	pub fn from_vec3(v:&Vec3<T>)->Scaling<T> {Scaling{sx:v.x(),sy:v.y(),sz:v.z()}}
+	pub fn from_xyz<V:VecAccessors<T>>(v:&V)->Scaling<T> {Scaling{sx:v.x(),sy:v.y(),sz:v.z()}}
+	pub fn to_vec3(&self, v:&Vec3<T>)->Vec3<T> { Vec3::<T>::new(self.sx,self.sy,self.sz)}
+	pub fn to_vec4(&self, v:&Vec3<T>)->Vec3<T> { Vec3::<T>::new(self.sx,self.sy,self.sz)}
 }
 
 struct RotateX<T>(T);
@@ -50,6 +67,10 @@ pub trait IMatrix3<V> {
 pub trait IMatrix4<V> {
 	fn axis_w(&self)->V;
 	fn pos(&self)->V;
+}
+
+pub trait Transpose<OUT> {
+	fn transpose(&self)->OUT;
 }
 /*
 impl<T:Float> IMatrix3<Vec3<T>> for RotateX<T> {
@@ -127,6 +148,28 @@ impl<T:Float, OUT, RHS:PreMulMat33<T,OUT> > Mul<RHS,OUT> for Matrix3<Vec3<T>> {
 	fn mul(&self, rhs:&RHS)->OUT { rhs.pre_mul_mat33(self) } 
 }
 
+impl<T:Clone+Float> Transpose<Matrix4<Vec4<T>,Vec4<T>>> for Matrix4<Vec4<T>> {
+	fn transpose(&self)->Matrix4<Vec4<T>> {
+		// todo-SIMD..
+		Matrix4::new(
+			&Vec4::<T>::new(self.ax.x(), self.ay.x(), self.az.x(), self.pos.x()),
+			&Vec4::<T>::new(self.ax.y(), self.ay.y(), self.az.y(), self.pos.y()),
+			&Vec4::<T>::new(self.ax.z(), self.ay.z(), self.az.z(), self.pos.z()),
+			&Vec4::<T>::new(self.ax.w(), self.ay.w(), self.az.w(), self.pos.w())
+		)
+	}
+}
+impl<T:Float> Transpose<Matrix3<Vec3<T>>> for Matrix3<Vec3<T>> {
+	fn transpose(&self)->Matrix3<Vec3<T>> {
+		// todo-SIMD..
+		Matrix3::new(
+			&Vec3::new(self.ax.x(), self.ay.x(), self.az.x()),
+			&Vec3::new(self.ax.y(), self.ay.y(), self.az.y()),
+			&Vec3::new(self.ax.z(), self.ay.z(), self.az.z()),
+		)
+	}
+}
+
 impl<V:VecMath<T>,T:Float=f32> Matrix4<V> {
 	pub fn identity()->Matrix4<V>{
 		Matrix4::new(
@@ -157,12 +200,18 @@ impl<V:VecMath<T>,T:Float=f32> Matrix4<V> {
 	pub fn orthonormalize_zyx(self)->Matrix4<V> {
 		Matrix4::look_along(&self.pos,&self.az,&self.ay)
 	}
-	pub fn mul_point(&self,pt:&V)->V{
+	pub fn mul_point(&self,pt:&Vec3<T>)->V{	// 'point'=x,y,z,1
 		self.pos.mad(&self.ax,pt.x()).mad(&self.ay,pt.y()).mad(&self.az,pt.z())
+	}
+	pub fn mul_axis(&self,pt:&Vec3<T>)->V{	// 'axis'=x,y,z,0
+		self.ax.scale(pt.x()).mad(&self.ay,pt.y()).mad(&self.az,pt.z())
 	}
 	pub fn inv_mul_point(&self,pt:&V)->V{
 		let ofs=pt.sub(&self.pos);
 		VecNum::from_xyz(ofs.dot(&self.ax),ofs.dot(&self.ay),ofs.dot(&self.az))
+	}
+	pub fn inv_mul_axis(&self,axis:&V)->V{
+		VecNum::from_xyz(axis.dot(&self.ax),axis.dot(&self.ay),axis.dot(&self.az))
 	}
 	pub fn mul_vec3(&self,pt:&V)->V{
 		self.ax.scale(pt.x()).mad(&self.ay,pt.y()).mad(&self.az,pt.z())
@@ -195,6 +244,22 @@ impl<T:Float> Matrix3<Vec3<T>> {
 			&self.mul_vec3(&other.ay),
 			&self.mul_vec3(&other.az))
 	}
+}
+
+// operator overload: vector*matrix - assumes vec is transposed
+
+impl<T:Float> PreMulVec4<T,Vec4<T>> for Matrix4<Vec4<T>> {
+	fn pre_mul_vec4(&self,v: &Vec4<T>)->Vec4<T> {
+		Vec4::<T>::new(
+			v.dot(&self.ax),
+			v.dot(&self.ay),
+			v.dot(&self.az),
+			v.dot(&self.pos))
+	}
+}
+
+pub fn identity()->Matrix4<Vec4<f32>> {
+	Matrix4::<Vec4<f32>>::identity()
 }
 
 //impl<F:Num+Zero+One> Matrix4<Vec4<F>> {
@@ -307,6 +372,8 @@ pub trait PreMulMat33<T,OUT> {
 impl<T:Float> PreMulMat43<T,Vec3<T>> for Vec3<T> {
 	fn pre_mul_mat43(&self, mat:&Matrix4<Vec3<T>>)->Vec3<T> {mat.mul_vec3(self)}
 }
+// Multiplying a Matrix44 ..
+
 impl<T:Float> PreMulMat44<T,Vec4<T>> for Vec4<T> {
 	fn pre_mul_mat44(&self, mat:&Matrix4<Vec4<T>>)->Vec4<T> {mat.mul_vec4(self)}
 }
