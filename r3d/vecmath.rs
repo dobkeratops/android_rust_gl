@@ -112,6 +112,7 @@ pub trait VecPermute<T:Clone+One+Zero> : VecAccessors<T> {
 	fn xyz(&self)->Vec3<T>	{ Vec3::new(self.x(),self.y(),self.z())}
 	fn xyz1(&self)->Vec4<T>	{ Vec4::new(self.x(),self.y(),self.z(),one())}	// vec3 to homogeneous point
 	fn xyz0(&self)->Vec4<T>	{ Vec4::new(self.x(),self.y(),self.z(),zero())}	// vec3 to homogeneous offset
+	fn xyzw(&self)->Vec4<T>	{ Vec4::new(self.x(),self.y(),self.z(),self.w())}
 
 	// permutes useful for swapping rgb/bgr
 	fn zyx(&self)->Vec3<T>	{ Vec3::new(self.z(),self.y(),self.x())}
@@ -141,11 +142,13 @@ pub trait VecPermute<T:Clone+One+Zero> : VecAccessors<T> {
 	fn zzzz(&self)->Vec4<T>	{ Vec4::new(self.z(),self.z(),self.z(),self.z())}
 	fn wwww(&self)->Vec4<T>	{ Vec4::new(self.w(),self.w(),self.w(),self.w())}
 
+
 	// Synonyms
-	fn to_vec4_w1(&self,w:T) { self.xyz1()}
-	fn to_vec4(&self) { self.xyzw()}
-	fn to_vec3(&self) { self.xyz()}
-	fn to_vec2(&self) { self.xy()}
+	fn to_vec4_w1(&self,w:T)->Vec4<T> { self.xyz1()}
+	fn to_vec4_w0(&self,w:T)->Vec4<T> { self.xyz0()}
+	fn to_vec4(&self)->Vec4<T> { self.xyzw()}
+	fn to_vec3(&self)->Vec3<T> { self.xyz()}
+	fn to_vec2(&self)->Vec2<T> { self.xy()}
 }
 
 pub trait VecNum<T:Num> {
