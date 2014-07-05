@@ -170,7 +170,7 @@ impl<T:CollideAsteroid> Collide<T> for Asteroid {
 	}
 }
 
-fn ct<Y,X:Collide<Y>>(x:&X,y:&Y){
+fn ct<X:Collide<Y>,Y:Collide<X>>(x:&X,y:&Y){
 	x.collide(y);
 	
 }
