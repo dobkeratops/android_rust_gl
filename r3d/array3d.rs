@@ -142,7 +142,7 @@ impl<'a, T> Vec3d<T> {
 		}		
 	}
 }
-
+								   
 impl<T:Clone> Vec3d<T> {
 	fn set_val(&mut self,ijk:(int,int,int),v:&T) {
 		*self.get_mut(ijk)=v.clone();
@@ -174,30 +174,35 @@ impl<T:Clone> Vec3d<T> {
 			)
 		}
 	}
-	fn for_each<R>(&self,
+	fn map<Y:Clone=T>(&self, f:|(int,int,int),&T|->Y)->Vec3d<Y> {
+		Vec3d::from_fn((self.size.i,self.size.j,self.size.k),
+				|ijk|f(ijk,self.get(ijk)))
+	}
+
+	fn fold<R=()>(&self,
 						initial_val:R,
-						f:|R,(int,int,int),&T|->R
+						f:|(int,int,int),&T,R|->R
 						)->R {
 		let mut acc=initial_val;
 		for k in range(0,self.size.k) {
 			for j in range(0,self.size.j) {
 				for i in range(0,self.size.i) {
-					acc=f(acc, (i,j,k), self.get((i,j,k)))
+					acc=f((i,j,k), self.get((i,j,k)),acc)
 				}
 			}
 		}
 		acc
 	}
 
-	fn for_each_mut<R>(&mut self,
+	fn fold_mut<R=()>(&mut self,
 						initial_val:R,
-						f:|R,(int,int,int),&mut T|->R
+						f:|(int,int,int),&mut T,R|->R
 						)->R {
 		let mut acc=initial_val;
 		for k in range(0,self.size.k) {
 			for j in range(0,self.size.j) {
 				for i in range(0,self.size.i) {
-					acc=f(acc, (i,j,k), self.get_mut((i,j,k)))
+					acc=f((i,j,k), self.get_mut((i,j,k)),acc)
 				}
 			}
 		}
@@ -208,6 +213,7 @@ impl<T:Clone> Vec3d<T> {
 
 #[cfg(run)]
 fn main() {
+	
 	std::io::println("Array3d Test\n");	
 	let foo=Vec3d::from_fn((4,3,2), |(i,j,k)|i+j*10+k*100);
 	println!("3d array iterator")
@@ -221,7 +227,7 @@ fn main() {
 		}
 	}
 	println!("foreach ...")
-	foo.for_each(0u32,
+	foo.fold(0u32,
 		|acc,(i,j,k),val|{
 			println!("array[{},{},{}]={}",i,j,k,val);
 			acc

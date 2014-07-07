@@ -6,12 +6,8 @@
 #![allow(unused_variable)]
 #![allow(unreachable_code)]
 
-#[cfg(run)]
-extern crate debug;
-
 use std::cmp;
-
-
+use super::to::To;
 pub use std::num;
 pub use std::f32::*;
 pub use std::num::*;
@@ -19,11 +15,6 @@ pub use std::num::Float;
 pub use std::num::Float;
 use std::io;
 
-//#[cfg(run)]
-//mod macros;
-
-#[cfg(run)]
-fn log_print(i:int, s:&str){std::io::println(s);}
 
 /// Generic maths classes
 /// member functions prefixed with 'v' for easier life without code-completion, and to distinguish from operator overloads (official langauge level "add") etc
@@ -607,13 +598,36 @@ pub fn vec2<T:Clone+Zero>(x:T,y:T)->Vec2<T>{ Vec2(x,y) }
 pub fn vec3<T:Clone+Zero>(x:T,y:T,z:T)->Vec3<T>{ Vec3::new(x,y,z) }
 pub fn vec4<T:Clone+Zero>(x:T,y:T,z:T,w:T)->Vec4<T>{ Vec4::new(x,y,z,w) }
 
+trait ToVec3<T> {
+	fn to_vec3(&self)->Vec3<T>;
+}
+trait ToVec4<T> {
+	fn to_vec4(&self)->Vec4<T>;
+}
+
+impl<T:Clone+Zero> ToVec3<T> for (T,T,T){
+	fn to_vec3(&self)->Vec3<T>{Vec3::new(self.ref0().clone(),self.ref1().clone(),self.ref2().clone())}
+}
+impl<T:Clone+Zero> ToVec4<T> for (T,T,T,T){
+	fn to_vec4(&self)->Vec4<T>{Vec4::new(self.ref0().clone(),self.ref1().clone(),self.ref2().clone(),self.ref3().clone())}
+}
+
+// Componentwise conversion for vector
+impl<A:To<B>+Clone+Zero, B:Clone+Zero> To<Vec3<B>> for Vec3<A> {
+	fn to(&self)->Vec3<B> { Vec3::<B>::new( self.x().to(),	self.y().to(),  self.z().to() )}
+}
+impl<A:To<B>+Clone+Zero, B:Clone+Zero> To<Vec4<B>> for Vec4<A> {
+	fn to(&self)->Vec4<B> { Vec4::<B>::new( self.x().to(),	self.y().to(),  self.z().to(), self.w().to() )}
+}
 
 #[cfg(run)]
 fn main() {
 	io::println("Vec Math Test");
 	dump!(Vec3::new(1.0f32,2.0f32,3.0f32)*2.0f32);
 	dump!(Vec3::new(1.0f32,2.0f32,3.0f32)*Vec3::new(3.0f32,2.0f32,1.0f32));
-	dump!(1,2,3,4);
+	dump!(1i,2i,3i,4i);
+	let x:Vec4<i32>= Vec4::<u32>::new(0u32,1u32,2u32,3u32).to(); 
+	dump!(x);
 }
 
 

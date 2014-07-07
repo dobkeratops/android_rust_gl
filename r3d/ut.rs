@@ -1,6 +1,7 @@
 use std::vec::Vec;
 use libc::c_void;
 
+
 /*new file*/  
 
 /// return a reference to a different type at a byte offset from the given base object reference
@@ -15,7 +16,6 @@ unsafe fn byte_ofs_ptr<'a,FROM,TO=u8,I:Int=int>(base:&'a FROM, ofs:I)->*const TO
 unsafe fn byte_ofs<'a,FROM,TO=u8,I:Int=int>(base:*const FROM, ofs:I)->*const TO {
 	(base as *const u8).offset( ofs.to_int().unwrap() ) as *const TO
 }
-
 
 trait ToVoidPtr {
 	/// Get a void pointer for the contents of a collection

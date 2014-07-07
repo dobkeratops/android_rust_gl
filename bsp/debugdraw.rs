@@ -190,3 +190,11 @@ pub fn random_color3(a:uint,b:uint,c:uint)->u32 {
 pub fn random_color(a:uint)->u32 {
 	(a^(a<<3)^(a<<8)*(a<<2)^(a<<19)^(a<<22)*(a<<13) )as u32
 }
+
+
+
+
+
+
+
+
