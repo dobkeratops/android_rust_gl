@@ -107,7 +107,7 @@ pub fn main()
 	b.foo();
 	let m1 = matrix::Matrix4::<Vec4<f32>>::identity();
 	let m2 = matrix::Matrix4::<Vec4<f32>>::identity();
-	let v0= Vec4::new(0.0f32,1.0f32,2.0f32,0.0f32);
+	let v0= Vec4(0.0f32,1.0f32,2.0f32,0.0f32);
 	let m12=m1*m2;
 	let v10= m1*v0*2.0f32;
 	dump!(m12,v10);

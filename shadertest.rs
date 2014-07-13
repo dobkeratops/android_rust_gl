@@ -767,14 +767,14 @@ impl Mesh {
 			Some(ref ut)=>{
 				safe_set_uniform1i(ut.uTex0, 0);
 				safe_set_uniform1i(ut.uTex1, 1);
-				safe_set_uniform(ut.uSpecularDir, &Vec4::new(0.032,0.707f32,0.707f32,0.0f32));
-				safe_set_uniform(ut.uSpecularColor, &Vec4::new(1.0f32,0.75f32,0.5f32,0.0f32));
-				safe_set_uniform(ut.uAmbient, &Vec4::new(0.25f32,0.25f32,0.25f32,1.0f32));
-				safe_set_uniform(ut.uDiffuseDX, &Vec4::new(0.0f32,0.0f32,0.25f32,1.0f32));
-				safe_set_uniform(ut.uDiffuseDY, &Vec4::new(0.5f32,0.5f32,0.5f32,1.0f32));
-				safe_set_uniform(ut.uDiffuseDZ, &Vec4::new(0.25f32,0.0f32,0.0f32,1.0f32));
+				safe_set_uniform(ut.uSpecularDir, &Vec4(0.032,0.707f32,0.707f32,0.0f32));
+				safe_set_uniform(ut.uSpecularColor, &Vec4(1.0f32,0.75f32,0.5f32,0.0f32));
+				safe_set_uniform(ut.uAmbient, &Vec4(0.25f32,0.25f32,0.25f32,1.0f32));
+				safe_set_uniform(ut.uDiffuseDX, &Vec4(0.0f32,0.0f32,0.25f32,1.0f32));
+				safe_set_uniform(ut.uDiffuseDY, &Vec4(0.5f32,0.5f32,0.5f32,1.0f32));
+				safe_set_uniform(ut.uDiffuseDZ, &Vec4(0.25f32,0.0f32,0.0f32,1.0f32));
 				safe_set_uniform(ut.uFogColor, &g_fog_color);
-				safe_set_uniform(ut.uFogFalloff, &Vec4::new(0.5f32,0.25f32,0.0f32,0.0f32));
+				safe_set_uniform(ut.uFogFalloff, &Vec4(0.5f32,0.25f32,0.0f32,0.0f32));
 			},
 			None=>io::println("error no uniform table!\n")
 		}
@@ -853,14 +853,14 @@ pub extern "C" fn	app_render(_:&mut App)
 			//io::println(format!("{:?}", g_shader_program));
 
 			// fixed function pipeline view, for debug.
-			glMatrixMode(GL_PROJECTION);glLoadMatrixf(matP.ax.ref0());
-			glMatrixMode(GL_MODELVIEW);	glLoadMatrixf(rot_trans.ax.ref0());
+			glMatrixMode(GL_PROJECTION);glLoadMatrixf(matP.ax().ref0());
+			glMatrixMode(GL_MODELVIEW);	glLoadMatrixf(rot_trans.ax().ref0());
 
 			glUseProgram(g_shader_program);
 			match g_uniform_table {
 				Some(ref ut)=>{
-					glUniformMatrix4fvARB(ut.uMatProj, 1,  GL_FALSE, matP.ax.ref0());
-					glUniformMatrix4fvARB(ut.uMatModelView, 1, GL_FALSE, rot_trans.ax.ref0());
+					glUniformMatrix4fvARB(ut.uMatProj, 1,  GL_FALSE, matP.ax().ref0());
+					glUniformMatrix4fvARB(ut.uMatModelView, 1, GL_FALSE, rot_trans.ax().ref0());
 				},
 				None=>{assert!(false,"no shader uniforms")}
 			}
