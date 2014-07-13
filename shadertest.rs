@@ -864,7 +864,7 @@ pub extern "C" fn	app_render(_:&mut App)
 			a0+=da0;a1+=da1;a2+=da2;a3+=da3;a4+=da4;a5+=da5;
 
 			if (i & 15) == 0{
-				debug_draw_cross(0.2f32);
+				dbg_cross(0.2f32);
 			}
 		}
 
@@ -872,73 +872,6 @@ pub extern "C" fn	app_render(_:&mut App)
 	}
 }
 
-fn debug_draw_cross(s:f32) {
-	unsafe {
-		glBegin(GL_LINES);
-
-		glColor4f(1.0,0.0,0.0,1.0);
-		glNormal3f(-1.0,-1.0,-1.0);
-		glVertex3f(-s,-s,-s);
-		glColor4f(0.0,0.0,0.0,1.0);
-		glNormal3f(-1.0,-1.0,-1.0);
-		glVertex3f(s,s,s);
-
-		glColor4f(1.0,0.0,0.0,1.0);
-		glNormal3f(-1.0,-1.0,-1.0);
-		glVertex3f(s,-s,-s);
-		glColor4f(1.0,0.0,0.0,1.0);
-		glNormal3f(-1.0,-1.0,-1.0);
-		glVertex3f(-s,s,s);
-
-		glColor4f(0.0,0.0,1.0,1.0);
-		glNormal3f(-1.0,-1.0,-1.0);
-		glVertex3f(-s,s,-s);
-		glColor4f(0.0,0.0,1.0,1.0);
-		glNormal3f(-1.0,-1.0,-1.0);
-		glVertex3f(s,-s,s);
-
-		glColor4f(0.0,1.0,0.0,1.0);
-		glNormal3f(-1.0,-1.0,-1.0);
-		glVertex3f(s,s,-s);
-		glColor4f(0.0,1.0,0.0,1.0);
-		glNormal3f(-1.0,-1.0,-1.0);
-		glVertex3f(-s,-s,s);
-		glEnd();
-	}
-}
-fn glVertex(v:&Vec3<f32>) {
-	unsafe {glVertex3f(v.x(),v.y(),v.z())}
-}
-fn glVertex_vec4(v:&Vec4<f32>) {
-	unsafe {glVertex3f(v.x(),v.y(),v.z())}
-}
-fn glColor(v:&Vec4<f32>) {
-	unsafe{glColor4f(v.x(),v.y(),v.z(),v.w())}
-}
-fn debug_draw_line(a:&Vec3<f32>,b:&Vec3<f32>, rgba:u32) {
-	let color=rgba.unpack_8888();
-	unsafe {
-		glBegin(GL_LINES);
-		glColor(&color);
-		glNormal3f(-1.0,-1.0,-1.0);
-		glVertex(a);
-		glColor(&color);
-		glNormal3f(-1.0,-1.0,-1.0);
-		glVertex(b);
-	}
-}
-fn debug_draw_line_vec4(a:&Vec4<f32>,b:&Vec4<f32>, rgba:u32) {
-	let color=rgba.unpack_8888();
-	unsafe {
-		glBegin(GL_LINES);
-		glColor(&color);
-		glNormal3f(-1.0,-1.0,-1.0);
-		glVertex_vec4(a);
-		glColor(&color);
-		glNormal3f(-1.0,-1.0,-1.0);
-		glVertex_vec4(b);
-	}
-}
 
 fn	create_textures() {
 //	static_assert(sizeof(GLuint)==sizeof(int));
