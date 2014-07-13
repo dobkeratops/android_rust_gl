@@ -1,4 +1,3 @@
-#[cfg(testbed)]
 use r3d::glut::*;
 use r3d::*;
 use std::vec::Vec;
@@ -149,18 +148,18 @@ pub unsafe fn draw_init() {
 	dump!();
 	let mut argc:c_int=0;
 	let argv:Vec<*const c_char> =Vec::new();
-	glutDisplayFunc(draw_null as *const u8);
 	glutInit((&mut argc) as *mut c_int,0 as *const *const c_char );
-		//::macros::test();
 
-	glutInitDisplayMode(GLUT_RGBA);
+	glutInitDisplayMode(GLUT_RGBA|GLUT_SINGLE);
 	glutInitWindowSize(1024,1024);
-	let win=glutCreateWindow("testbed".to_c_str().unwrap()	
-);
-dump!();
+	let win=glutCreateWindow("testbed".to_c_str().unwrap());
+	glutDisplayFunc(draw_null as *const u8);
+	
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-dump!();}
+	dump!();
+}
 pub unsafe fn draw_null(){
+	glFlush();
 }
 pub unsafe fn draw_show() {
 	glFlush();

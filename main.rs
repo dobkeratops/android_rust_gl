@@ -31,7 +31,7 @@ use r3d::c_str;
 
 pub mod r3d;
 pub mod shadertest;
-
+pub mod bsp;
 
 // framework can be: Android, Glut, (iOS,.o.)
 

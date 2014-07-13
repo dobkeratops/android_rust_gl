@@ -864,7 +864,7 @@ pub extern "C" fn	app_render(_:&mut App)
 			a0+=da0;a1+=da1;a2+=da2;a3+=da3;a4+=da4;a5+=da5;
 
 			if (i & 15) == 0{
-				dbg_cross(0.2f32);
+				draw_cross(0.2f32);
 			}
 		}
 

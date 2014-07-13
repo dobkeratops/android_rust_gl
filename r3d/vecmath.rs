@@ -120,7 +120,7 @@ pub trait Y<T:Clone> {fn y(&self)->T;}
 pub trait Z<T:Clone> : XY<T> {fn z(&self)->T;}
 pub trait W<T:Clone> : XYZ<T>{fn w(&self)->T;}
 pub trait XY<T> : X<T>+Y<T>{}
-pub trait XYZ<T> : XY<T>{}
+pub trait XYZ<T> : X<T>+Y<T>+Z<T>{}
 pub trait XYZW<T> : X<T>+Y<T>+Z<T>+W<T>{}
 
 impl<V:X<T>+Y<T>,T:Clone> XY<T> for V{}
@@ -518,6 +518,19 @@ impl<T:Clone> X<T> for [T,..4] {fn x(&self)->T { self[0].clone() }}
 impl<T:Clone> Y<T> for [T,..4] {fn y(&self)->T { self[1].clone() }}
 impl<T:Clone> Z<T> for [T,..4] {fn z(&self)->T { self[2].clone() }}
 impl<T:Clone> W<T> for [T,..4] {fn w(&self)->T { self[3].clone() }}
+
+impl<T:Clone> X<T> for (T,T) {fn x(&self)->T { let(ref v,_)=*self; v.clone() }}
+impl<T:Clone> Y<T> for (T,T) {fn y(&self)->T { let(_,ref v)=*self;v.clone() }}
+
+impl<T:Clone> X<T> for (T,T,T) {fn x(&self)->T { let(ref v,_,_)=*self; v.clone() }}
+impl<T:Clone> Y<T> for (T,T,T) {fn y(&self)->T { let(_,ref v,_)=*self;v.clone() }}
+impl<T:Clone> Z<T> for (T,T,T) {fn z(&self)->T { let(_,_,ref v)=*self;v.clone() }}
+
+impl<T:Clone> X<T> for (T,T,T,T) {fn x(&self)->T { let(ref v,_,_,_)=*self; v.clone() }}
+impl<T:Clone> Y<T> for (T,T,T,T) {fn y(&self)->T { let(_,ref v,_,_)=*self;v.clone() }}
+impl<T:Clone> Z<T> for (T,T,T,T) {fn z(&self)->T { let(_,_,ref v,_)=*self;v.clone() }}
+impl<T:Clone> W<T> for (T,T,T,T) {fn w(&self)->T { let(_,_,_,ref v)=*self;v.clone() }}
+
 
 impl<T:Clone> Vec4<T> {
 	pub fn to_array(&self)->[T,..4] { [self.x(),self.y(),self.z(),self.w()] }

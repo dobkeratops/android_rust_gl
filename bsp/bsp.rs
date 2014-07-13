@@ -13,18 +13,19 @@ extern crate libc;
 extern crate debug;
 
 #[cfg(testbed)]
-use debugdraw::*;
-#[cfg(testbed)]
 use r3d::gl::*;
-
+use std::ops::Deref;
+use std::c_str::CString;
 use std::vec::Vec;
 use std::io;
 use std::intrinsics::{size_of,offset};
 //use libc::*;
-use std::c_str::CString;
 use std::f32;
 use std::collections::hashmap::HashSet;
 use r3d::macros::*;
+use libc::c_char;
+
+use r3d::debugdraw::*;
 
 // compile opt  --cfg testbed
 #[cfg(testbed)]
@@ -32,7 +33,7 @@ use r3d::macros::*;
 mod r3d;
 
 #[cfg(testbed)]
-mod debugdraw;
+//mod debugdraw;
 
 #[cfg(testbed)]
 fn log_print(i:int, s:&str){std::io::println(s);}
@@ -48,10 +49,8 @@ pub fn main()
 		let mut tex_array=Vec::<GLuint>::new();
 		// Load textures to GL
 		bsp.visit_textures( &mut |i,_|{ // we miss do notation :(
-				println!("tex:{}",i);
 				let (tx,img)=bsp.get_texture_image(i); 
 				let txsize=(tx.width as u32,tx.height as u32);
-				println!("tex:{}x{}",tx.width, tx.height);
 				draw_image(txsize,&img, (((i&7)as f32)*(1.0/4.0)-1.0, (((i>>3)&7)as f32)*(1.0/4.0)-1.0) );
 				let txi=create_texture((tx.width,tx.height), &img,8);
 				tex_array.push(txi);
@@ -79,7 +78,7 @@ struct Blob<HEADER> {
 	data:Vec<u8>,
 }
 
-impl<T> std::ops::Deref<T> for Blob<T> {
+impl<T> Deref<T> for Blob<T> {
 	fn deref<'s>(&'s self)->&'s T {
 		unsafe {	&*(self.data.get(0)as*const _ as*const T)
 		}
@@ -96,7 +95,7 @@ impl<T> Blob<T> {
 					println!("read {} {} bytes", /*path_to_str*/path.as_str().unwrap_or(""), data.len());	
 					data
 				},
-				Err(E)=>{
+				Err(e)=>{
 					println!("failed to read {}", path.as_str().unwrap_or("")); 
 					//~[0,..intrinsics::size_of::<Header>()]		// still returns an empty object, hmmm.
 					//vec::from_elem(0,intrinsics::size_of::<Header>())
@@ -125,7 +124,6 @@ impl<Header,T> DEntry<Header,T> {
 		// TODO: to REALLY be safe, the sub-elements need to check safety from the blob 'owner'
 		// unfortunately 'bspheader' doesn't seem to have that, although the last elements' ofs & size could be used
 		// for an assert?
-		println!("dirent: offset={} size={}", self.offset, self.size);
 		unsafe {
 			&*(((owner as *const Header as *const u8).offset(self.offset as int) as *const T).offset(i as int))
 //			&*(byte_ofs_ptr(owner, self.offset).offset(i as int))
@@ -268,9 +266,9 @@ impl BspHeader {
 			println!("{}/{}",i,txh.numtex);
 			let tx=self.get_texture(i as uint);
 			unsafe {
-				println!("tx: {} {} {}",
+				println!("tx: {} {} {} {}",
 					i,
-					// ::std::c_str::CString::new(&tx.name[0],false).as_str().unwrap_or(""), 
+					CString::new(&tx.name[0],false).as_str().unwrap_or(""), 
 					tx.width, tx.height);
 			}
 			(*tex_fn)( i as uint, tx );
@@ -356,7 +354,7 @@ pub struct BspNode {
 	firstface:u16,
 	numfaces:u16
 }
-enum BspNodeChild {
+pub enum BspNodeChild {
 	ChildNode(i16),ChildLeaf(i16)
 }
 impl BspNode {
