@@ -8,6 +8,9 @@ pub use self::formats::{Pack,UnPack};
 pub use self::macros::*;
 pub use self::debugdraw::*;
 pub use self::half::*;
+pub use self::render::*;
+pub use self::ut::*;
+pub use self::gl::*;
 
 pub mod macros;
 pub mod to;
@@ -23,7 +26,5 @@ pub mod ut;
 pub mod array3d;
 pub mod debugdraw;
 pub mod half;
+pub mod render;
 
-pub unsafe fn c_str(s:&str)->*const c_char {
-	s.to_c_str().unwrap()
-}

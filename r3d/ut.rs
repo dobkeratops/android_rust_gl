@@ -1,5 +1,7 @@
 use std::vec::Vec;
-use libc::c_void;
+pub use libc::{c_void,c_char};
+pub use std::mem;
+pub use std::c_str;
 
 
 /*new file*/  
@@ -50,6 +52,14 @@ impl ToVoidPtr for *const c_void {
 		// NOTE special handling of self, self here is &&T, we deref to get &T
 		(*self as *const u8).offset(ofs.to_int().unwrap()) as *const c_void
 	}
+}
+
+pub unsafe fn as_void_ptr<T>(ptr:&T)->*const c_void {
+	ptr as *const T as *const c_void
+}              
+
+pub unsafe fn c_str(s:&str)->*const c_char {
+	s.to_c_str().unwrap()
 }
 
 

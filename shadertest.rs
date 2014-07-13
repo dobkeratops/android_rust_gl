@@ -16,72 +16,6 @@ use r3d::*;
 //use super::mesh::*;
 
 pub struct App;
-/// Defines a vertex structure with embedded  attribute index annotations & GL type enums; 
-/// generates an corresponding function to set gl vertex attribute data.
-/// TODO: change that to create a data-table.
-macro_rules! def_vertex_format{
-	( struct $layout_name:ident {
-			$($element:ident : [$elem_type:ident($elem_enum:expr),..$elem_count:expr]( $elem_index:expr)  ),*  
-		}
-	)=>(
-//		mod $layout_name {
-			pub struct $layout_name {
-				$( $element: [$elem_type ,.. $elem_count],)*
-			}
-			impl $layout_name {
-				pub fn set_vertex_attrib() {
-					use r3d::gl::{GLuint,GLfloat,GLsizei,glVertexAttribPointer,glEnableVertexAttribArray};
-					use r3d::gl_h_consts::{GL_FLOAT,GL_FALSE};
-					use std::intrinsics::size_of;
-					use libc::c_void;
-					$( unsafe {
-							let base_vertex = 0 as *const $layout_name;
-							glEnableVertexAttribArray($elem_index as GLuint);
-							glVertexAttribPointer(
-								$elem_index as GLuint, 
-								$elem_count,
-								$elem_enum,	// todo: type -> GL type.
-								GL_FALSE, 
-								size_of::<$layout_name>() as GLsizei,
-								&(*base_vertex).$element as *const GLfloat as *const c_void,
-							);
-						}
-					);*
-				}
-			}
-//		}	
-	)
-}
-
-macro_rules! def_vertex_attrib(
-	( enum $attrib_group_name:ident { $($attr_name:ident),* } ) =>(
-		enum $attrib_group_name {
-			$($attr_name),*
-		}
-		impl $attrib_group_name {
-			fn bind_attribs(prog:GLuint) {
-				use r3d::gl::{GLuint,GLfloat,GLsizei,glBindAttribLocation};
-				unsafe {
-					$(glBindAttribLocation(prog, $attr_name as GLuint, c_str( stringify!($attr_name) ) );
-					)*
-				}
-			}
-		}
-	)
-)
-
-
-// todo, figure out the macro call passing those var args..
-
-def_vertex_format!{
-	struct TestVertex {
-		pos:	[f32(GL_FLOAT),..3](a_pos),
-		color:	[f32(GL_FLOAT),..4](a_color),
-		norm:	[f32(GL_FLOAT),..3](a_norm),
-		tex0:	[f32(GL_FLOAT),..2](a_tex0)
-	}
-}
-
 //type TestVertex = TestVertex::TestVertex;
 
 //typedef int IndexType;
@@ -100,75 +34,6 @@ static mut g_shader_program:GLuint=-1;
 static mut g_pixel_shader:GLuint=-1;
 static mut g_vertex_shader:GLuint=-1;
 
-unsafe fn get_attrib_location(shader_prog:GLuint, name:&str)->GLint {
-	let r=glGetAttribLocation(shader_prog, c_str(name));
-	println!("get attrib location {:?}={:?}", name, r);
-	r
-}
-unsafe fn get_uniform_location(shader_prog:GLuint, name:&str)->GLint {
-	let r=glGetUniformLocation(shader_prog, c_str(name));
-	r
-}
-
-unsafe fn	create_and_compile_shader(shader_type:GLenum, source:&Vec<&str>) ->GLuint
-{
-	use std::iter::Range;
-
-	logi!("create_and_compile_shader")
-	let	shader_id = glCreateShader(shader_type );
-	dump!(shader_id);
-
-	let sources_as_c_str=Vec::from_fn(source.len(), |x|c_str(*source.get(x)) );
-	let length:Vec<c_int> = Vec::from_fn(source.len() , |x|source.get(x).len() as c_int );
-	let src_len:uint=source.len();
-	let mut iter_len: ::std::iter::Range<uint> =::std::iter::range(0u,src_len as uint);
-
-	let mut it = range(0,src_len); let x: Option<uint> = it.next(); println!("{}", x);
-
-//	for i in iter_len { 
-	loop {
-		match iter_len.next() {
-			Some(i)=>{
-				let s=*sources_as_c_str.get(i);
-				let len=*length.get(i);
-				logi!("source adr={} source len={} ",s,len) 
-			},
-			None=> break
-		}
-	};
-	
-	glShaderSource(shader_id, source.len() as GLsizei, sources_as_c_str.get(0), 0 as *const c_int/*(&length[0])*/);
-	glCompileShader(shader_id);
-	let	mut sh_status:c_int=0;
-	glGetShaderiv(shader_id,GL_COMPILE_STATUS,&mut sh_status);
-	dump!(sh_status);
-	if sh_status==GL_FALSE as GLint
-	{
-		logi!("failed, getting log..");
-		let mut compile_log:[c_char,..512]=[0 as c_char,..512]; //int len;
-	
-		let mut log_len:c_int=0;
-		glGetShaderInfoLog(shader_id, 512,&mut log_len as *mut c_int, &mut compile_log[0]);
-		logi!("Compile Shader Failed: logsize={:?}",
-				log_len);
-		logi!("compile shader {:?} failed: \n{:?}\n", shader_id, 
-			c_str::CString::new(&compile_log[0],false).as_str());
-
-		for s in source.iter() { logi!("{:?}",*s) }
-		logi!("{:?}",
-			match c_str::CString::new(&compile_log[0],false).as_str() {
-				Some(s)=>s,
-				None=>"couldn't unwrap error lol",
-			}
-		);
-		loop{}
-	}	
-	else {
-		logi!("create shader{:?} - compile suceeded\n",  shader_id);
-	}
-	logi!("create shader-done");
-	shader_id
-}
 
 struct	VertexAttr {
 	pos:GLint,color:GLint,norm:GLint,tex0:GLint,tex1:GLint,joints:GLint,weights:GLint,tangent:GLint,binormal:GLint,
@@ -193,70 +58,27 @@ def_vertex_attrib!{
 	}
 }
 
+unsafe fn	compile_shader_program(
+			pixelShaderSource:&Vec<&str>,
+			vertexShaderSource:&Vec<&str>)->(PixelShader,VertexShader,ShaderProgram)
+{
+	let pixel_shader = create_and_compile_shader(GL_FRAGMENT_SHADER, pixelShaderSource);
+	let vertex_shader = create_and_compile_shader(GL_VERTEX_SHADER, vertexShaderSource);
+
+
+	let prog = create_shader_program(pixel_shader,vertex_shader,|prog|VertexAttrib::bind_attribs(prog));
+//	VertexAttrib::bind_attribs(prog);
+
+	(pixel_shader,vertex_shader,prog)
+}
+
+
 unsafe fn create_texture(filename:String)->GLuint {
 	return g_textures[0]
 }
 
 //extern {pub fn bind_attrib_locations(prog:c_uint);}
 
-unsafe fn	create_shader_program(
-			pixelShaderSource:&Vec<&str>,
-			vertexShaderSource:&Vec<&str>)->(PixelShader,VertexShader,ShaderProgram)
-{
-	// todo: we bind vertex attribs, but read uniforms. use one method for both, which is more convinient?
-	logi!("create_shader_program");
-
-	let pixel_shader = create_and_compile_shader(GL_FRAGMENT_SHADER, pixelShaderSource);
-	let vertex_shader = create_and_compile_shader(GL_VERTEX_SHADER, vertexShaderSource);
-	let	prog = glCreateProgram();
-	
-	logi!("bind attrib locations");
-
-	VertexAttrib::bind_attribs(prog);	
-
-	glAttachShader(prog, pixel_shader);
-	glAttachShader(prog, vertex_shader);
-
-	logi!("linking verteshader{:?}, pixelshader{:?} to program{:?}\n", vertex_shader, pixel_shader, prog);
-	glLinkProgram(prog);
-	let mut err:GLint=0;
-	glGetProgramiv(prog,GL_LINK_STATUS,(&mut err) as *mut GLint);
-
-	let x=glGetAttribLocation(prog,c_str("a_color"));
-	logi!("write,read attrib location in prog {:?} a_color={:?}", prog, x);
-
-	
-	if err as GLenum==GL_INVALID_VALUE || err as GLenum==GL_INVALID_OPERATION {
-		let mut buffer=[0 as GLchar,..1024];
-		let mut len:GLint=0;
-		glGetProgramInfoLog(prog,1024,&mut len,&mut buffer[0]);
-		logi!("link program failed: {:?}",err);
-		logi!("{:?}",c_str::CString::new(&buffer[0],false).as_str().unwrap());
-	} else {
-		logi!("link program status {:?}", err);
-	}
-
-	(pixel_shader,vertex_shader,prog)
-}
-
-// TODO [cfg OPENGL_ES ..]
-static shader_prefix_desktop:&'static str="\
-#version 120	\n\
-#define highp	\n\
-#define mediump	\n\
-#define lowp	\n\
-";
-
-
-static vertex_shader_prefix_gles:&'static str="\
-#version 100			\n\
-precision highp float;	\n\
-";
-
-//#version 100			\n\
-static pixel_shader_prefix_gles:&'static str="\
-precision mediump float;	\n\
-";
 
 
 //#define PS_VS_INTERFACE0
@@ -535,31 +357,6 @@ static mut g_uniform_table:Option<UniformTable> =None;
 /// TODO: create lazy state struct, allow user to set shader params in a struct and pass to GL..
 /// by embedding the type information here aswell.
 
-macro_rules! def_uniform_table {
-	(struct $uniform_table:ident { $($uniform_name:ident),* }) => (
-		struct $uniform_table {
-			$( $uniform_name : GLint),*
-		}
-
-		// TODO: this could be purely data-driven for data-linked shaders,
-		// but we want to expose it conviniently to rust code..
-
-		impl $uniform_table {
-			fn new(prog:GLuint)->$uniform_table {
-				$uniform_table {
-				$(
-					$uniform_name : {
-						
-						let x=unsafe{ get_uniform_location(prog,  stringify!($uniform_name))};
-						logi!("\t {}.{}={}",stringify!($uniform_table),stringify!($uniform_name),x); 
-						x 
-					}	
-				),*
-				}
-			}
-		}
-	)
-}
 
 def_uniform_table!{ 
 	struct UniformTable {
@@ -580,22 +377,13 @@ def_uniform_table!{
 	}
 }
 
-#[cfg(target_os = "android")]
-fn get_shader_prefix(is_ps:int)->&'static str {
-	if is_ps==0 {vertex_shader_prefix_gles} else {pixel_shader_prefix_gles}
-}
-
-#[cfg(not(target_os = "android"))]
-fn get_shader_prefix(is_ps:int)->&'static str {
-	shader_prefix_desktop
-}
 
 pub fn	create_shaders()
 {
 	
 	unsafe {
 		logi!("create shaders");
-		let (vsh,psh,prg)=create_shader_program( 
+		let (vsh,psh,prg)=compile_shader_program( 
 //						&~[g_PS_ConcatForAndroid], // this works!
 //						&~[g_PS_MinimumDebugAndroidCompiler],
 //						&~[get_shader_prefix(1),ps_vs_interface0,g_PS_Flat], //PS_Alpha
@@ -632,32 +420,6 @@ fn generate_torus_vertex(ij:uint, num_u:uint, num_v:uint)->TestVertex {
 }
 
 
-unsafe fn create_buffer(size:GLsizei, data:*const c_void, buffer_type:GLenum)->GLuint {
-	let mut id:GLuint=0;
-	glGenBuffers(1,&mut id);
-	glBindBuffer(buffer_type,id);
-	
-	glBufferData(buffer_type, size, data, GL_STATIC_DRAW);
-	// error..
-	glBindBuffer(buffer_type,0);
-	id
-}
-
-// Foo bar baz
-
-unsafe fn create_vertex_buffer_from_ptr(size:GLsizei, data:*const c_void)->GLuint {
-	create_buffer(size,data,GL_ARRAY_BUFFER)
-}
-unsafe fn create_index_buffer_from_ptr(size:GLsizei, data:*const c_void)->GLuint {
-	create_buffer(size,data,GL_ELEMENT_ARRAY_BUFFER)
-}
-
-unsafe fn create_vertex_buffer<T>(data:&Vec<T>)->GLuint {
-	create_buffer(data.len()as GLsizei *mem::size_of::<T>() as GLsizei, as_void_ptr(data.get(0)), GL_ARRAY_BUFFER)
-}
-unsafe fn create_index_buffer<T>(data:&Vec<T>)->GLuint {
-	create_buffer(data.len()as GLsizei *mem::size_of::<T>() as GLsizei, as_void_ptr(data.get(0)), GL_ELEMENT_ARRAY_BUFFER)
-}
 
 impl RMesh {
 	/// create a grid mesh , TODO - take a vertex generator
@@ -706,6 +468,16 @@ static mut g_grid_mesh:RMesh=RMesh{
 
 type UniformIndex=GLint;
 
+def_vertex_format!{
+	struct TestVertex {
+		pos:	[f32(GL_FLOAT),..3](a_pos),
+		color:	[f32(GL_FLOAT),..4](a_color),
+		norm:	[f32(GL_FLOAT),..3](a_norm),
+		tex0:	[f32(GL_FLOAT),..2](a_tex0)
+	}
+}
+
+
 impl RMesh {
 	fn	render_mesh_from_buffer(&self)
 	{
@@ -744,9 +516,6 @@ fn safe_set_uniform(loc:GLint, pvalue:&Vec4<f32>) {
 	}
 }
 
-unsafe fn as_void_ptr<T>(ptr:&T)->*const c_void {
-	ptr as *const T as *const c_void
-}              
 
 static g_fog_color:Vec4<f32> =Vec4(0.25,0.5,0.5,1.0);
 impl RMesh {
