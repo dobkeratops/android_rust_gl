@@ -1,26 +1,7 @@
 #![macro_escape]
-use common::*;
-pub use std::num;
-pub use std::vec;
-pub use std::mem;
-pub use std::cmp;
-pub use std::c_str;
-pub use libc::c_void;
-pub use std::vec::Vec;
-pub use std::io;
-
-//pub use r3d;
-use r3d::glut::*;
-use r3d::gl::*;
 use r3d::*;
-//use super::mesh::*;
 
 pub struct App;
-//type TestVertex = TestVertex::TestVertex;
-
-//typedef int IndexType;
-//	enum {IndexSize = sizeof(IndexType) };
-//typedef	::TestVertex Vertex;
 struct	RMesh 
 {
 	vertex_size:GLsizei,

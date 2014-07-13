@@ -48,11 +48,13 @@ impl<V> Matrix3<V> {
 	pub fn ay<'a>(&'a self)->&'a V { let Matrix3(_,ref r,_)=*self; r}
 	pub fn az<'a>(&'a self)->&'a V { let Matrix3(_,_,ref r)=*self; r}
 }
+// Accessor for axes, by value: may be efficeint to construct axes simultaneously.
+// individual acessors may be overriden if its' convenient
 pub trait Axes<V> {
 	fn axis_x(&self)->V {let (x,_,_)=self.axes(); x}
 	fn axis_y(&self)->V {let (_,y,_)=self.axes(); y}
 	fn axis_z(&self)->V {let (_,_,z)=self.axes(); z}
-	fn axes(&self)->(V,V,V) {(self.axis_x(),self.axis_y(),self.axis_z())}
+	fn axes(&self)->(V,V,V);
 }
 impl<V:Clone> Axes<V> for Matrix4<V> {
 	fn axes(&self)->(V,V,V) {

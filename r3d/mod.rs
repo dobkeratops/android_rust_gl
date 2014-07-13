@@ -2,15 +2,18 @@
 use std::c_str;
 use libc::c_char;
 
-pub use self::vecmath::{Vec3,Vec4};
-pub use self::matrix::{Matrix3,Matrix4,SRT,identity};
-pub use self::formats::{Pack,UnPack};	
+pub use self::vecmath::*;
+pub use self::matrix::*;
+pub use self::formats::*;	
 pub use self::macros::*;
 pub use self::debugdraw::*;
 pub use self::half::*;
 pub use self::render::*;
 pub use self::ut::*;
 pub use self::gl::*;
+pub use self::glut::*;
+pub use self::common::*;
+pub use self::debugdraw::*;
 
 pub mod macros;
 pub mod to;
@@ -27,4 +30,5 @@ pub mod array3d;
 pub mod debugdraw;
 pub mod half;
 pub mod render;
+pub mod common;
 

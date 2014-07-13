@@ -18,16 +18,8 @@ extern crate debug;
 extern crate libc;
 extern crate collections;
 
-pub use std::str::raw::*;
-use std::c_str;
-use std::io;
 use shadertest::*;
-pub use common::*;
-use libc::*;
-//use r3d::matrix;
-use r3d::vecmath;
-use r3d::matrix;
-use r3d::c_str;
+use r3d::*;
 
 pub mod r3d;
 pub mod shadertest;

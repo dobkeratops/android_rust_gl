@@ -12,31 +12,18 @@ extern crate libc;
 #[cfg(testbed)]
 extern crate debug;
 
-#[cfg(testbed)]
-use r3d::gl::*;
-use std::ops::Deref;
-use std::c_str::CString;
-use std::vec::Vec;
-use std::io;
-use std::intrinsics::{size_of,offset};
-//use libc::*;
-use std::f32;
-use std::collections::hashmap::HashSet;
-use r3d::macros::*;
-use libc::c_char;
+//#[cfg(testbed)]
 
-use r3d::debugdraw::*;
+use r3d::*;
+
+#[cfg(testbed)]
+pub fn log_print(i:int, s:&str){std::io::println(s);}
+
 
 // compile opt  --cfg testbed
 #[cfg(testbed)]
 #[path="../r3d/mod.rs"]
 mod r3d;
-
-#[cfg(testbed)]
-//mod debugdraw;
-
-#[cfg(testbed)]
-fn log_print(i:int, s:&str){std::io::println(s);}
 
 
 #[cfg(testbed)]
