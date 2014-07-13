@@ -60,18 +60,58 @@ impl<T:Clone+Num> Vec2<T> {
 	pub fn cross_to_scalar(&self,other:&Vec2<T>)->T {self.x()*other.y()-self.y()*other.x()}
 	pub fn cross_z(&self,z:T)->Vec2<T> { Vec2(-self.y()*z,self.x()*z)}
 	pub fn cross_one(&self)->Vec2<T> { Vec2(-self.y().clone(),self.x().clone())}
+	pub fn map<Y>(&self, f:|T|->Y)->Vec2<Y>{
+		let Vec2(ref x,ref y)=*self;
+		Vec2(f(x.clone()),f(y.clone()))
+	}
 }
 impl<T:Clone+Zero> Vec3<T> {
 	pub fn splat(v:T)->Vec3<T> { Vec3(v.clone(),v.clone(),v.clone())}
 
-	pub fn from_vec2(xy:Vec2<T>,z:T)->Vec3<T> {Vec3::<T>(xy.x().clone(),xy.y().clone(),z.clone())}
+	pub fn from_vec2(xy:&Vec2<T>,z:T)->Vec3<T> {Vec3::<T>(xy.x().clone(),xy.y().clone(),z.clone())}
+	pub fn map<Y>(&self, f:|T|->Y)->Vec3<Y>{
+		let Vec3(ref x,ref y,ref z)=*self;
+		Vec3(f(x.clone()),f(y.clone()),f(z.clone()))
+	}
+	pub fn foldr<Y>(&self, src:&Y,f:|&T,&Y|->Y)->Y{
+		let Vec3(ref x,ref y,ref z)=*self;
+		let f2=f(z,src);
+		let f3=f(y,&f2);
+		f(x,&f3)
+	}
+	pub fn foldl<Y>(&self, src:&Y,f:|&T,&Y|->Y)->Y{
+		let Vec3(ref x,ref y,ref z)=*self;
+		let f1=f(x,src);
+		let f2=f(y,&f1);
+		f(z,&f2)
+	}
+
 }
 impl<T:Clone+Zero> Vec4<T> {
 	pub fn splat(v:T)->Vec4<T> { Vec4(v.clone(),v.clone(),v.clone(),v.clone())}	// todo -move to elsewhere
 
-	pub fn from_vec3(xyz:Vec3<T>,w:T)->Vec4<T> {Vec4(xyz.x(),xyz.y(),xyz.z(),w.clone())}
-	pub fn from_vec2(xy:Vec2<T>,z:T,w:T)->Vec4<T> {Vec4(xy.x(),xy.y(),z.clone(),w.clone())}
-	pub fn from_vec2_vec2(xy:Vec2<T>,zw:Vec2<T>)->Vec4<T> {Vec4(xy.x(),xy.y(),zw.x(),zw.y())}
+	pub fn from_vec3(xyz:&Vec3<T>,w:T)->Vec4<T> {Vec4(xyz.x(),xyz.y(),xyz.z(),w.clone())}
+	pub fn from_vec2(xy:&Vec2<T>,z:T,w:T)->Vec4<T> {Vec4(xy.x(),xy.y(),z.clone(),w.clone())}
+	pub fn from_vec2_vec2(xy:&Vec2<T>,zw:&Vec2<T>)->Vec4<T> {Vec4(xy.x(),xy.y(),zw.x(),zw.y())}
+
+	pub fn map<Y>(&self, f:|T|->Y)->Vec4<Y>{
+		let Vec4(ref x,ref y,ref z, ref w)=*self;
+		Vec4(f(x.clone()),f(y.clone()),f(z.clone()),f(w.clone()))
+	}
+	pub fn foldr<Y>(&self, src:&Y,f:|&T,&Y|->Y)->Y{
+		let Vec4(ref x,ref y,ref z, ref w)=*self;
+		let f1=f(w,src);
+		let f2=f(z,&f1);
+		let f3=f(y,&f2);
+		f(x,&f3)
+	}
+	pub fn foldl<Y>(&self, src:&Y,f:|&T,&Y|->Y)->Y{
+		let Vec4(ref x,ref y,ref z, ref w)=*self;
+		let f1=f(x,src);
+		let f2=f(y,&f1);
+		let f3=f(z,&f2);
+		f(w,&f3)
+	}
 }
 
 pub trait VecAccessors<T:Clone> {
@@ -356,27 +396,32 @@ impl<T:Clone+Zero> VecAccessors<T> for Vec2<T>
 	fn w(&self)->T	{ zero::<T>()}
 	fn ref0<'a>(&'a self)->&'a T { let Vec2(ref x,ref y)=*self; x}
 }
+impl<T> Vec2<T> {
+	pub fn ref0<'a>(&'a self)->&'a T { let Vec2(ref x,ref y)=*self; x}
+	pub fn ref1<'a>(&'a self)->&'a T { let Vec2(ref x,ref y)=*self; y}
+}
+
 
 impl<T:Clone+Zero> Zero for Vec3<T> {
-	fn zero()->Vec3<T>{Vec3(zero::<T>(),zero::<T>(),zero::<T>())}
+	fn zero()->Vec3<T>{Vec3(zero(),zero(),zero())}
 	fn is_zero(&self)->bool  {fail!(); false/*self.x.is_zero() && self.y.is_zero() && self.z.is_zero()*/}
 }
 
 impl<T:Clone+Zero+One> VecConsts<T> for Vec3<T> {
-	fn one()->Vec3<T>	{Vec3(one::<T>(),one::<T>(),one::<T>())}
-	fn origin()->Vec3<T>	{Vec3(zero::<T>(),zero::<T>(),zero::<T>())}
+	fn one()->Vec3<T>	{Vec3(one(),one(),one())}
+	fn origin()->Vec3<T>	{Vec3(zero(),zero(),zero())}
 	fn axis(i:int)->Vec3<T>{
-		match i{ 0=>Vec3(one::<T>(),zero::<T>(),zero::<T>()),
-                1=>Vec3(zero::<T>(),one::<T>(),zero::<T>()),
-                2=>Vec3(zero::<T>(),zero::<T>(),one::<T>()),
-                _=>Vec3(zero::<T>(),zero::<T>(),zero::<T>())}
+		match i{ 0=>Vec3(one(),zero(),zero()),
+                1=>Vec3(zero(),one(),zero()),
+                2=>Vec3(zero(),zero(),one()),
+                _=>Vec3(zero(),zero(),zero())}
 	}
 }
 impl<T:Clone+Zero+One> VecConsts<T> for Vec2<T> {
-	fn one()->Vec2<T>	{Vec2(one::<T>(),one::<T>())}
-	fn origin()->Vec2<T>	{Vec2(zero::<T>(),zero::<T>())}
+	fn one()->Vec2<T>	{Vec2(one(),one())}
+	fn origin()->Vec2<T>	{Vec2(zero(),zero())}
 	fn axis(i:int)->Vec2<T>{
-		match i{ 0=>Vec2(one::<T>(),zero::<T>()),1=>Vec2(zero::<T>(),one::<T>()),_=>Vec2(zero::<T>(),zero::<T>())}
+		match i{ 0=>Vec2(one::<T>(),zero::<T>()),1=>Vec2(zero(),one()),_=>Vec2(zero(),zero())}
 	}
 }
 
@@ -418,25 +463,32 @@ impl<T:Clone+Zero> VecAccessors<T> for Vec3<T> {
 	fn x(&self)->T	{ self.x()}
 	fn y(&self)->T	{ self.y()}
 	fn z(&self)->T	{ self.z()}
-	fn w(&self)->T	{ zero::<T>()}
+	fn w(&self)->T	{ zero()}
 	fn ref0<'a>(&'a self)->&'a T { let Vec3(ref x,ref y,ref z)=*self; x}
-
 }
+impl<T>  Vec3<T> {
+	pub fn ref0<'a>(&'a self)->&'a T { let Vec3(ref x,ref y,ref z)=*self; x}
+	pub fn ref1<'a>(&'a self)->&'a T { let Vec3(ref x,ref y,ref z)=*self; y}
+	pub fn ref2<'a>(&'a self)->&'a T { let Vec3(ref x,ref y,ref z)=*self; z}
+}
+
+
+
 impl<T:Clone+Zero> Zero for Vec4<T> {
-	fn zero()->Vec4<T>{Vec4(zero::<T>(),zero::<T>(),zero::<T>(),zero::<T>())}
+	fn zero()->Vec4<T>{Vec4(zero(),zero(),zero(),zero())}
 	fn is_zero(&self)->bool  {fail!();false/*self.x.is_zero() && self.y.is_zero() && self.z.is_zero() && self.w.is_zero()*/}
 }
 impl<T:Clone+Zero+One> VecConsts<T> for Vec4<T> {
-	fn one()->Vec4<T>	{Vec4(one::<T>(),one::<T>(),one::<T>(),one::<T>())}
-	fn origin()->Vec4<T>	{Vec4(zero::<T>(),zero::<T>(),zero::<T>(),one::<T>())}
+	fn one()->Vec4<T>	{Vec4(one(),one(),one(),one())}
+	fn origin()->Vec4<T>	{Vec4(zero(),zero(),zero(),one())}
 
 	fn axis(i:int)->Vec4<T>{
 		match i{
-            0=>Vec4(one::<T>(),zero::<T>(),zero::<T>(),zero::<T>()),
-            1=>Vec4(zero::<T>(),one::<T>(),zero::<T>(),zero::<T>()),
-            2=>Vec4(zero::<T>(),zero::<T>(),one::<T>(),zero::<T>()),
-            3=>Vec4(zero::<T>(),zero::<T>(),zero::<T>(),one::<T>()),
-            _=>Vec4(zero::<T>(),zero::<T>(),zero::<T>(),zero::<T>())
+            0=>Vec4(one(),zero(),zero(),zero()),
+            1=>Vec4(zero(),one(),zero(),zero()),
+            2=>Vec4(zero(),zero(),one(),zero()),
+            3=>Vec4(zero(),zero(),zero(),one()),
+            _=>Vec4(zero(),zero(),zero(),zero())
         }
 	}
 
@@ -501,7 +553,12 @@ impl<T:Clone> VecAccessors<T> for Vec4<T>
 	fn w(&self)->T	{ let Vec4(ref x,ref y,ref z,ref w)=*self;w.clone()}
 	fn ref0<'a>(&'a self)->&'a T { let Vec4(ref x,ref y,ref z,ref w)=*self; x}
 }
-
+impl<T> Vec4<T> {
+	pub fn ref0<'a>(&'a self)->&'a T { let Vec4(ref x,ref y,ref z,ref w)=*self; x}
+	pub fn ref1<'a>(&'a self)->&'a T { let Vec4(ref x,ref y,ref z,ref w)=*self; y}
+	pub fn ref2<'a>(&'a self)->&'a T { let Vec4(ref x,ref y,ref z,ref w)=*self; z}
+	pub fn ref3<'a>(&'a self)->&'a T { let Vec4(ref x,ref y,ref z,ref w)=*self; w}
+}
 pub fn vec_normalize<T:Float,V:VecMath<T>>(v:&V)->V { v.scale(v.sqr().rsqrt()) }
 // TOOD - Zero for Vec3<T> , Vec4<T>
 

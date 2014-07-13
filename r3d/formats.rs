@@ -34,6 +34,7 @@ pub trait Pack {
 	fn pack(&self)->u32 {self.pack8888()}
 
 	fn pack8888(&self)->u32;
+	fn pack_s8s8s8s8(&self)->u32;
 	fn pack_u10u10u10u2(&self)->u32;
 	fn pack_s10s10s10s2(&self)->u32;
 
@@ -43,55 +44,56 @@ pub trait Pack {
 }
 
 // pixel formats
+fn pack_components_sub(vec:&Vec4<f32>,ox:f32,oy:f32,oz:f32,ow:f32,fx:f32,fy:f32,fz:f32,fw:f32, sx:uint,sy:uint,sz:uint,sw:uint)->u32 {
+	let Vec4(ref x,ref y,ref z,ref w)=*vec;
+	let xx=((*x+ox) * fx) as  u32;
+	let yy=((*y+oy) * fy) as  u32;
+	let zz=((*z+oz) * fz) as  u32;
+	let ww=((*w+ow) * fw) as  u32;
+	(xx<<sx)|(yy<<sy)|(zz<<sz)|(ww<<sw)
+}
+fn pack_components(vec:&Vec4<f32>,fx:f32,fy:f32,fz:f32,fw:f32, sx:uint,sy:uint,sz:uint,sw:uint)->u32 {
+	pack_components_sub(vec,0.0f32,0.0f32,0.0f32,0.0f32, fx,fy,fz,fw, sx,sy,sz,sw)
+}
+fn pack_components_signed_xyz(vec:&Vec4<f32>,fx:f32,fy:f32,fz:f32,fw:f32, sx:uint,sy:uint,sz:uint,sw:uint)->u32 {
+	pack_components_sub(vec,1.0f32,1.0f32,1.0f32,0.0f32, fx,fy,fz,fw, sx,sy,sz,sw)
+}
+fn pack_components_signed(vec:&Vec4<f32>,fx:f32,fy:f32,fz:f32,fw:f32, sx:uint,sy:uint,sz:uint,sw:uint)->u32 {
+	pack_components_sub(vec,1.0f32,1.0f32,1.0f32,1.0f32, fx,fy,fz,fw, sx,sy,sz,sw)
+}
+
 impl Pack for  Vec4<f32> {
 	fn pack8888(&self)->u32 {
 		let scale = 255.0f32;
-		let r=(self.x()*scale) as u32;
-		let g=(self.y()*scale) as u32;
-		let b=(self.z()*scale) as u32;
-		let a=(self.w()*scale) as u32;
-		return r|(g<<8)|(b<<16)|(a<<24);
+		return pack_components(self, scale,scale,scale,scale, 0,8,16,24);
+	}
+	fn pack_s8s8s8s8(&self)->u32 {
+		let scale = 127.0f32;
+		return pack_components_signed(self, scale,scale,scale,scale, 0,8,16,24);
 	}
 	fn pack_u10u10u10u2(&self)->u32 {
 		let scale = 1023.0f32;
-		let r=(self.x()*scale) as u32;
-		let g=(self.y()*scale) as u32;
-		let b=(self.z()*scale) as u32;
-		let a=(self.w()*3.0f32) as u32;
-		return r|(g<<10)|(b<<20)|(a<<30);
+		return pack_components(self, scale,scale,scale,3.0f32, 0,10,20,30);
 	}
 	fn pack_s10s10s10s2(&self)->u32 {
-		let scale = 511.0f32;
-		let r=((self.x()+1.0f32)*scale) as u32;
-		let g=((self.y()+1.0f32)*scale) as u32;
-		let b=((self.z()+1.0f32)*scale) as u32;
-		let a=(self.w()*3.0f32) as u32;
-		return r|(g<<10)|(b<<20)|(a<<30);
+		let s = 511.0f32;
+		return pack_components_signed_xyz(self, s,s,s,3.0f32, 0,10,20,30)
 	}
 	fn pack1555(&self)->u16 {
-		let scale = 31.0f32;
-		let r=(self.x()*scale) as u32;
-		let g=(self.y()*scale) as u32;
-		let b=(self.z()*scale) as u32;
-		let a=(self.w()) as u32;
-		return (r|(g<<5)|(b<<10)|(a<<15)) as u16;
+		let s = 31.0f32;
+		return pack_components(self, s,s,s,1.0f32, 0,5,10,15) as u16;
 	}
 	fn pack565(&self)->u16 {
 		let scale = 31.0f32;
-		let r=(self.x()*31.0f32) as u32;
-		let g=(self.y()*63.0f32) as u32;
-		let b=(self.z()*31.0f32) as u32;
-		return (r|(g<<5)|(b<<10)) as u16;
+		return pack_components(self, 31.0f32, 63.0f32, 31.0f32, 0.0f32, 0,5,10,16) as u16;
+
 	}
 	fn pack4444(&self)->u16 {
-		let scale = 15.0f32;
-		let r=(self.x()*scale) as u16;
-		let g=(self.y()*scale) as u16;
-		let b=(self.z()*scale) as u16;
-		let a=(self.w()*scale) as u16;
-		return r|(g<<4)|(b<<8)|(a<<12);
+		let s = 15.0f32;
+		return pack_components(self, s,s,s,s, 0,4,8,112) as u16;
 	}
 }
+// todo: less cut-paste
 //32bit packed values=default
 pub trait UnPack<V> {
 	fn unpack(self)->V{self.unpack8888()}

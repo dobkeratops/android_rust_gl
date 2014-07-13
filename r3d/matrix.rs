@@ -25,8 +25,8 @@ impl<T:Float> Scaling<T>
 	pub fn new(x:T,y:T,z:T)->Scaling<T> {Scaling{sx:x,sy:y,sz:z} }
 	pub fn from_vec3(v:&Vec3<T>)->Scaling<T> {Scaling{sx:v.x(),sy:v.y(),sz:v.z()}}
 	pub fn from_xyz<V:VecAccessors<T>>(v:&V)->Scaling<T> {Scaling{sx:v.x(),sy:v.y(),sz:v.z()}}
-	pub fn to_vec3(&self, v:&Vec3<T>)->Vec3<T> { Vec3::<T>(self.sx,self.sy,self.sz)}
-	pub fn to_vec4(&self, v:&Vec3<T>)->Vec3<T> { Vec3::<T>(self.sx,self.sy,self.sz)}
+	pub fn to_vec3(&self, v:&Vec3<T>)->Vec3<T> { Vec3(self.sx,self.sy,self.sz)}
+	pub fn to_vec4(&self, v:&Vec3<T>)->Vec3<T> { Vec3(self.sx,self.sy,self.sz)}
 }
 
 struct RotateX<T>(T);
@@ -55,6 +55,37 @@ impl<V> Matrix4<V> {
 	pub fn az<'a>(&'a self)->&'a V { let Matrix4( _,_,ref r,_)=*self; r}
 	pub fn aw<'a>(&'a self)->&'a V { let Matrix4( _,_,_,ref r)=*self; r}
 	pub fn pos<'a>(&'a self)->&'a V { let Matrix4( _,_,_,ref r)=*self; r}
+}
+impl<T:Zero+One+Clone> Matrix4<Vec4<T>> {
+	pub fn from_mat33(mat33:&Matrix3<Vec3<T>>)->Matrix4<Vec4<T>> {
+		Matrix4::from_mat33_pos(mat33,&Vec4(zero(),zero(),zero(),one()))
+	}
+	pub fn from_mat33_pos(mat33:&Matrix3<Vec3<T>>,pos:&Vec4<T>)->Matrix4<Vec4<T>> {
+		Matrix4(
+			Vec4::from_vec3(mat33.ax(),zero()),
+			Vec4::from_vec3(mat33.ay(),zero()),
+			Vec4::from_vec3(mat33.az(),zero()),
+			pos.clone())
+	}
+	pub fn from_mat43(mat33:&Matrix4<Vec3<T>>)->Matrix4<Vec4<T>> {
+		Matrix4(
+			Vec4::from_vec3(mat33.ax(),zero()),
+			Vec4::from_vec3(mat33.ay(),zero()),
+			Vec4::from_vec3(mat33.az(),zero()),
+			Vec4::from_vec3(mat33.aw(),one()))
+	}
+	pub fn from_mat34_pos(mat33:&Matrix3<Vec4<T>>,pos:&Vec4<T>)->Matrix4<Vec4<T>> {
+		Matrix4(mat33.ax().clone(),mat33.ay().clone(),mat33.az().clone(),pos.clone())
+	}
+	pub fn mat33(&self)->Matrix3<Vec3<T>> {
+		Matrix3(self.ax().xyz(),self.ay().xyz(),self.az().xyz())
+	}
+	pub fn mat43(&self)->Matrix4<Vec3<T>> {
+		Matrix4(self.ax().xyz(),self.ay().xyz(),self.az().xyz(),self.aw().xyz())
+	}
+	pub fn mat34(&self)->Matrix3<Vec4<T>> {
+		Matrix3(self.ax().clone(),self.ay().clone(),self.az().clone())
+	}
 }
 
 impl<T:Float,V:VecMath<T>> Matrix4<V> {
@@ -106,10 +137,6 @@ impl<V:VecMath<T>,T:Float=f32> Matrix4<V> {
 			trans.clone())
 	}
 	
-	pub fn mat33(&self)->Matrix3<Vec3<T>> {
-		Matrix3(self.ax().xyz(),self.ay().xyz(),self.az().xyz())
-	}
-
 	pub fn look_along(pos:&V,fwd:&V,up:&V)->Matrix4<V>{
 		let az=fwd.normalize();
 		let ax=az.cross(up).normalize();
@@ -199,23 +226,23 @@ pub fn projection<F:FloatMath=f32>(fov_radians:F, aspect:F, znear:F, zfar:F)->Ma
 	let h=two*znear/ height;
 	
 	Matrix4(
-		Vec4(w, zero::<F>(), zero::<F>(), zero::<F>()),
-		Vec4(zero::<F>(), h, zero::<F>(), zero::<F>()),
-		Vec4(zero::<F>(), zero::<F>(), q, -one::<F>()),
-		Vec4(zero::<F>(), zero::<F>(), qn, zero::<F>()),
+		Vec4(w, zero(), zero(), zero()),
+		Vec4(zero(), h, zero(), zero()),
+		Vec4(zero(), zero(), q, -one::<F>()),
+		Vec4(zero(), zero(), qn, zero()),
 	)
 }
 
 pub fn rotate_x<F:FloatMath=f32>(a:F)->Matrix4<Vec4<F>> {
-	let (s,c)=a.sin_cos(); let one=one::<F>(); let zero=zero::<F>();
+	let (s,c)=a.sin_cos(); let one=one(); let zero=zero();
 	Matrix4(
-		Vec4::<F>(one,	zero,	zero,	zero),
-		Vec4::<F>(zero,	c,		s,	zero),
-		Vec4::<F>(zero,	-s,		c,	zero),
-		Vec4::<F>(zero,	zero,	zero,	one))
+		Vec4(one,	zero,	zero,	zero),
+		Vec4(zero,	c,		s,	zero),
+		Vec4(zero,	-s,		c,	zero),
+		Vec4(zero,	zero,	zero,	one))
 }
 pub fn rotate_y<F:FloatMath=f32>(a:F)->Matrix4<Vec4<F>> {
-	let (s,c)=a.sin_cos(); let one=one::<F>(); let zero=zero::<F>();
+	let (s,c)=a.sin_cos(); let one=one(); let zero=zero();
 	Matrix4(
 		Vec4(c,		zero,	s,	zero),
 		Vec4(zero,	one,	zero,	zero),
@@ -223,36 +250,84 @@ pub fn rotate_y<F:FloatMath=f32>(a:F)->Matrix4<Vec4<F>> {
 		Vec4(zero,	zero,	zero,	one))
 }
 pub fn rotate_z<F:FloatMath=f32>(a:F)->Matrix4<Vec4<F>> {
-	let (s,c)=a.sin_cos(); let one=one::<F>(); let zero=zero::<F>();
+	let (s,c)=a.sin_cos(); let one=one(); let zero=zero();
 	Matrix4(
 		Vec4(c,		s,	zero,	zero),
 		Vec4(-s,		c,	zero,	zero),
 		Vec4(zero,	zero,	one,	zero),
 		Vec4(zero,	zero,	zero,	one))
 }
+pub fn rotate_xyz<V:VecAccessors<F>,F:FloatMath+Copy=f32>(r:&V)->Matrix4<Vec4<F>> {
+	rotate_x(r.x())*rotate_y(r.y())*rotate_z(r.z())
+}
+pub fn rotate_xzy<V:VecAccessors<F>,F:FloatMath+Copy=f32>(r:&V)->Matrix4<Vec4<F>> {
+	rotate_x(r.x())*rotate_z(r.z())*rotate_y(r.y())
+}
+pub fn rotate_zyx<V:VecAccessors<F>,F:FloatMath+Copy=f32>(r:&V)->Matrix4<Vec4<F>> {
+	rotate_z(r.z())*rotate_y(r.y())*rotate_x(r.x())
+}
+pub fn rotate_yzx<V:VecAccessors<F>,F:FloatMath+Copy=f32>(r:&V)->Matrix4<Vec4<F>> {
+	rotate_y(r.y())*rotate_z(r.z())*rotate_x(r.x())
+}
+
 pub fn translate_xyz<F:FloatMath=f32>(x:F,y:F,z:F)->Matrix4<Vec4<F>> {
-	let one=one::<F>(); let zero=zero::<F>();
+	let one=one(); let zero=zero();
 	Matrix4(
 		Vec4(one,	zero,	zero,	zero),
 		Vec4(zero,	one,	zero,	zero),
 		Vec4(zero,	zero,	one,	zero),
 		Vec4(x,	y,	z,	one))
 }
-pub fn translate_vec4<F:FloatMath=f32>(trans:&Vec4<F>)->Matrix4<Vec4<F>> {
-	let one=one::<F>(); let zero=zero::<F>();
+pub fn translate<V:VecAccessors<F>,F:FloatMath+One=f32>(trans:&V)->Matrix4<Vec4<F>> {
+	let one=one(); let zero=zero();
 	Matrix4(
 		Vec4(one,	zero,	zero,	zero),
 		Vec4(zero,	one,	zero,	zero),
 		Vec4(zero,	zero,	one,	zero),
-		*trans)
+		Vec4(trans.x(),trans.y(),trans.z(),one))
 }
-pub fn translate<F:Float=f32>(trans:&Vec3<F>)->Matrix4<Vec4<F>> {
-	let one=one::<F>(); let zero=zero::<F>();
+
+pub fn scale_x<V:VecAccessors<F>,F:FloatMath+One=f32>(scale:F)->Matrix4<Vec4<F>> {
+	let one=one(); let zero=zero();
+	Matrix4(
+		Vec4(scale,	zero,	zero,	zero),
+		Vec4(zero,	one,	zero,	zero),
+		Vec4(zero,	zero,	one,	zero),
+		Vec4(zero,zero,zero,one))
+}
+pub fn scale_y<V:VecAccessors<F>,F:FloatMath+One=f32>(scale:F)->Matrix4<Vec4<F>> {
+	let one=one(); let zero=zero();
+	Matrix4(
+		Vec4(one,	zero,	zero,	zero),
+		Vec4(zero,	scale,	zero,	zero),
+		Vec4(zero,	zero,	one,	zero),
+		Vec4(zero,zero,zero,one))
+}
+pub fn scale_z<V:VecAccessors<F>,F:FloatMath+One=f32>(scale:F)->Matrix4<Vec4<F>> {
+	let one=one(); let zero=zero();
 	Matrix4(
 		Vec4(one,	zero,	zero,	zero),
 		Vec4(zero,	one,	zero,	zero),
-		Vec4(zero,	zero,	one,	zero),
-		Vec4(trans.x(),trans.y(),trans.z(), one))
+		Vec4(zero,	zero,	scale,	zero),
+		Vec4(zero,zero,zero,one))
+}
+
+pub fn scale<F:FloatMath+One=f32>(scale:F)->Matrix4<Vec4<F>> {
+	let one=one(); let zero=zero();
+	Matrix4(
+		Vec4(scale,	zero,	zero,	zero),
+		Vec4(zero,	scale,	zero,	zero),
+		Vec4(zero,	zero,	scale,	zero),
+		Vec4(zero,zero,zero,one))
+}
+
+pub fn scale_vec<V:VecAccessors<F>,F:FloatMath+One=f32>(s:&V)->Matrix4<Vec4<F>> {
+	let one=one(); let zero=zero();
+	Matrix4(
+		Vec4(s.x(),	zero,	zero,	zero),
+		Vec4(zero,	s.y(),	zero,	zero),
+		Vec4(zero,	zero,	s.z(),	zero),
+		Vec4(zero,zero,zero,one))
 }
 
 pub fn projection_frustum<F:Float=f32>(left:F,right:F, bottom:F, top:F, fov_radians:F, aspect:F, fnear:F, ffar:F)->Matrix4<Vec4<F>> {
@@ -262,20 +337,43 @@ pub fn projection_frustum<F:Float=f32>(left:F,right:F, bottom:F, top:F, fov_radi
     let b=(top+bottom)/(top-bottom);
     let c=-(ffar+fnear)/(ffar-fnear);
     let d=-(two*ffar*fnear/(ffar-fnear));
-   /*
-#define STORE4(D,I, X,Y,Z,W) (D)[0+I]=X; (D)[4+I]=Y; (D)[8+I]=Z; (D)[12+I]=W;
-    STORE4(m,0, 2.f*fnear/(right-left), 0.f,0.f,0.f);
-    STORE4(m,1, 0.f, 2.f*fnear/(top-bottom), 0.f,0.f);
-    STORE4(m,2, a,b,c,-1.f);
-    STORE4(m,3, 0.f,0.f,d,0.f);
-#undef STORE4
-*/
 	Matrix4(
-		Vec4(two*fnear/(right-left), zero::<F>(), zero::<F>(), zero::<F>()),
-		Vec4(zero::<F>(), two*fnear/(top-bottom), zero::<F>(), zero::<F>()),
+		Vec4(two*fnear/(right-left), zero(), zero(), zero()),
+		Vec4(zero(), two*fnear/(top-bottom), zero(), zero()),
 		Vec4(a, b, c, -one::<F>()),
-		Vec4(zero::<F>(), zero::<F>(), d, zero::<F>()),
+		Vec4(zero(), zero(), d, zero()),
 	)
+}
+
+pub fn scale_rotate_translate<F:FloatMath=f32>(s:&Vec3<F>,r:&Vec3<F>,t:&Vec3<F>)->Matrix4<Vec4<F>> {
+	translate(t)*rotate_zyx(r)*scale_vec(s)
+}
+
+pub fn from_quaternion<F:Float=f32+Copy>(q:&Vec4<F>)->Matrix4<Vec4<F>>{
+	let Vec4(qx,qy,qz,qw)=*q;
+	let two=one::<F>()+one::<F>();
+	let zero=zero::<F>();
+	let one=one::<F>();
+	let qx2=qx*qx;
+	let qy2=qy*qy;
+	let qz2=qz*qz;
+	Matrix4(
+		Vec4(one - two*qy2 - two*qz2,	two*qx*qy - two*qz*qw,	two*qx*qz + two*qy*qw, zero),
+		Vec4(two*qx*qy + two*qz*qw,	one - two*qx2 - two*qz2,	two*qy*qz - two*qx*qw, zero),
+		Vec4(two*qx*qz - two*qy*qw,	two*qy*qz + two*qx*qw,	one - two*qx2 - two*qy2, zero),
+		Vec4(zero,zero,zero,one))
+}
+
+// frame represented as 9 values, as in softimage
+pub struct SRT<T> {
+	scale:Vec3<T>, rotate:Vec3<T>,translate:Vec3<T>
+}
+
+impl<T:FloatMath> SRT<T> {
+	fn to_matrix(&self)->Matrix4<Vec4<T>> {
+		scale_rotate_translate(&self.scale,&self.rotate,&self.translate)
+	}
+	fn new()->SRT<T> { SRT{scale:Vec3(one(),one(),one()), rotate:Vec3(zero(),zero(),zero()), translate:Vec3(zero(),zero(),zero())}}
 }
 
 // combines vector operations with operations aware of a matrix..
