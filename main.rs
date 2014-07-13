@@ -31,7 +31,7 @@ pub mod r3d;
 pub mod shadertest;
 
 
-// framework can be: Android, Glut, (iOS,..)
+// framework can be: Android, Glut, (iOS,.o.)
 
 #[cfg(target_os = "android")]
 extern { fn android_log_print(lvl:c_int,  s:*const c_char);}
@@ -143,41 +143,8 @@ pub fn main()
 
 
 
-trait Collide<T> { fn collide(&self, other:&T); }
 
-struct Spaceship;
-struct Asteroid;
-// dispatch-traits for 2nd param
-trait CollideSpaceship {
-	fn collide_spaceship(&self,s:&Spaceship);
-}
-trait CollideAsteroid {
-	fn collide_asteroid(&self,s:&Asteroid);
-}
-impl<T:CollideSpaceship>  Collide<T> for Spaceship {
-	fn collide(&self,other:&T){ 
-		other.collide_spaceship(self)
-	}
-}
-impl<T:CollideAsteroid> Collide<T> for Asteroid {
-	fn collide(&self,other:&T){ 
-		other.collide_asteroid(self)
-	}
-}
 
-fn ct<X:Collide<Y>,Y:Collide<X>>(x:&X,y:&Y){
-	x.collide(y);
-	
-}
 
-// WELL THAT IS NOT ACTUALLY SO BAD, AT ALL.
-impl CollideSpaceship for Asteroid {
-	fn collide_spaceship(&self,other:&Spaceship) {
-	}
-}
-impl CollideSpaceship for Spaceship {
-	fn collide_spaceship(&self,other:&Spaceship) {
-	}
-}
 
 

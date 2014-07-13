@@ -279,60 +279,60 @@ pub fn projection<F:FloatMath=f32>(fov_radians:F, aspect:F, znear:F, zfar:F)->Ma
 	let h=two*znear/ height;
 	
 	Matrix4::new(
-		&Vec4::<F>::new(w, zero::<F>(), zero::<F>(), zero::<F>()),
-		&Vec4::<F>::new(zero::<F>(), h, zero::<F>(), zero::<F>()),
-		&Vec4::<F>::new(zero::<F>(), zero::<F>(), q, -one::<F>()),
-		&Vec4::<F>::new(zero::<F>(), zero::<F>(), qn, zero::<F>()),
+		&Vec4::<F>(w, zero::<F>(), zero::<F>(), zero::<F>()),
+		&Vec4::<F>(zero::<F>(), h, zero::<F>(), zero::<F>()),
+		&Vec4::<F>(zero::<F>(), zero::<F>(), q, -one::<F>()),
+		&Vec4::<F>(zero::<F>(), zero::<F>(), qn, zero::<F>()),
 	)
 }
 
 pub fn rotate_x<F:FloatMath=f32>(a:F)->Matrix4<Vec4<F>> {
 	let (s,c)=a.sin_cos(); let one=one::<F>(); let zero=zero::<F>();
 	Matrix4::new(
-		&Vec4::<F>::new(one,	zero,	zero,	zero),
-		&Vec4::<F>::new(zero,	c,		s,	zero),
-		&Vec4::<F>::new(zero,	-s,		c,	zero),
-		&Vec4::<F>::new(zero,	zero,	zero,	one))
+		&Vec4::<F>(one,	zero,	zero,	zero),
+		&Vec4::<F>(zero,	c,		s,	zero),
+		&Vec4::<F>(zero,	-s,		c,	zero),
+		&Vec4::<F>(zero,	zero,	zero,	one))
 }
 pub fn rotate_y<F:FloatMath=f32>(a:F)->Matrix4<Vec4<F>> {
 	let (s,c)=a.sin_cos(); let one=one::<F>(); let zero=zero::<F>();
 	Matrix4::new(
-		&Vec4::<F>::new(c,		zero,	s,	zero),
-		&Vec4::<F>::new(zero,	one,	zero,	zero),
-		&Vec4::<F>::new(-s,		zero,	c,	zero),
-		&Vec4::<F>::new(zero,	zero,	zero,	one))
+		&Vec4::<F>(c,		zero,	s,	zero),
+		&Vec4::<F>(zero,	one,	zero,	zero),
+		&Vec4::<F>(-s,		zero,	c,	zero),
+		&Vec4::<F>(zero,	zero,	zero,	one))
 }
 pub fn rotate_z<F:FloatMath=f32>(a:F)->Matrix4<Vec4<F>> {
 	let (s,c)=a.sin_cos(); let one=one::<F>(); let zero=zero::<F>();
 	Matrix4::new(
-		&Vec4::<F>::new(c,		s,	zero,	zero),
-		&Vec4::<F>::new(-s,		c,	zero,	zero),
-		&Vec4::<F>::new(zero,	zero,	one,	zero),
-		&Vec4::<F>::new(zero,	zero,	zero,	one))
+		&Vec4::<F>(c,		s,	zero,	zero),
+		&Vec4::<F>(-s,		c,	zero,	zero),
+		&Vec4::<F>(zero,	zero,	one,	zero),
+		&Vec4::<F>(zero,	zero,	zero,	one))
 }
 pub fn translate_xyz<F:FloatMath=f32>(x:F,y:F,z:F)->Matrix4<Vec4<F>> {
 	let one=one::<F>(); let zero=zero::<F>();
 	Matrix4::new(
-		&Vec4::<F>::new(one,	zero,	zero,	zero),
-		&Vec4::<F>::new(zero,	one,	zero,	zero),
-		&Vec4::<F>::new(zero,	zero,	one,	zero),
-		&Vec4::<F>::new(x,	y,	z,	one))
+		&Vec4::<F>(one,	zero,	zero,	zero),
+		&Vec4::<F>(zero,	one,	zero,	zero),
+		&Vec4::<F>(zero,	zero,	one,	zero),
+		&Vec4::<F>(x,	y,	z,	one))
 }
 pub fn translate_vec4<F:FloatMath=f32>(trans:&Vec4<F>)->Matrix4<Vec4<F>> {
 	let one=one::<F>(); let zero=zero::<F>();
 	Matrix4::new(
-		&Vec4::<F>::new(one,	zero,	zero,	zero),
-		&Vec4::<F>::new(zero,	one,	zero,	zero),
-		&Vec4::<F>::new(zero,	zero,	one,	zero),
+		&Vec4::<F>(one,	zero,	zero,	zero),
+		&Vec4::<F>(zero,	one,	zero,	zero),
+		&Vec4::<F>(zero,	zero,	one,	zero),
 		trans)
 }
 pub fn translate<F:Float=f32>(trans:&Vec3<F>)->Matrix4<Vec4<F>> {
 	let one=one::<F>(); let zero=zero::<F>();
 	Matrix4::new(
-		&Vec4::<F>::new(one,	zero,	zero,	zero),
-		&Vec4::<F>::new(zero,	one,	zero,	zero),
-		&Vec4::<F>::new(zero,	zero,	one,	zero),
-		&Vec4::<F>::new(trans.x,trans.y,trans.z, one))
+		&Vec4::<F>(one,	zero,	zero,	zero),
+		&Vec4::<F>(zero,	one,	zero,	zero),
+		&Vec4::<F>(zero,	zero,	one,	zero),
+		&Vec4::<F>(trans.x(),trans.y(),trans.z(), one))
 }
 
 pub fn projection_frustum<F:Float=f32>(left:F,right:F, bottom:F, top:F, fov_radians:F, aspect:F, fnear:F, ffar:F)->Matrix4<Vec4<F>> {
@@ -351,10 +351,10 @@ pub fn projection_frustum<F:Float=f32>(left:F,right:F, bottom:F, top:F, fov_radi
 #undef STORE4
 */
 	Matrix4::new(
-		&Vec4::<F>::new(two*fnear/(right-left), zero::<F>(), zero::<F>(), zero::<F>()),
-		&Vec4::<F>::new(zero::<F>(), two*fnear/(top-bottom), zero::<F>(), zero::<F>()),
-		&Vec4::<F>::new(a, b, c, -one::<F>()),
-		&Vec4::<F>::new(zero::<F>(), zero::<F>(), d, zero::<F>()),
+		&Vec4::<F>(two*fnear/(right-left), zero::<F>(), zero::<F>(), zero::<F>()),
+		&Vec4::<F>(zero::<F>(), two*fnear/(top-bottom), zero::<F>(), zero::<F>()),
+		&Vec4::<F>(a, b, c, -one::<F>()),
+		&Vec4::<F>(zero::<F>(), zero::<F>(), d, zero::<F>()),
 	)
 }
 
@@ -385,6 +385,12 @@ impl<T:Float> PreMulMat33<T,Matrix3<Vec3<T>>> for Matrix3<Vec3<T>> {
 }
 
 /*
+impl<T:MyFloat,RHS,OUT> Mul<RHS,OUT> for Matrix4<Vec4<T>>    {
+	fn mul(&self, other:&RHS)->OUT { other.vpre_mul_mat44(self) }
+}
+
+
+
 impl<T:MyFloat,RHS,OUT> Mul<RHS,OUT> for Matrix4<Vec4<T>> {
 	fn mul(&self, other:&RHS)->OUT { other.vpre_mul_mat44(self) }
 }

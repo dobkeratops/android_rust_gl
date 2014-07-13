@@ -745,7 +745,7 @@ fn safe_set_uniform1i(loc:GLint, value:GLint) {
 fn safe_set_uniform(loc:GLint, pvalue:&Vec4<f32>) {
 	// todo - validate
 	unsafe {	
-		glUniform4fv(loc, 1, &pvalue.x);
+		glUniform4fv(loc, 1, pvalue.ref0());
 	}
 }
 
@@ -753,7 +753,7 @@ unsafe fn as_void_ptr<T>(ptr:&T)->*const c_void {
 	ptr as *const T as *const c_void
 }              
 
-static g_fog_color:Vec4<f32> =Vec4{x:0.25,y:0.5,z:0.5,w:1.0};
+static g_fog_color:Vec4<f32> =Vec4(0.25,0.5,0.5,1.0);
 impl Mesh {
 	unsafe fn	render_mesh_shader(&self)  {
 		
@@ -806,7 +806,7 @@ pub extern "C" fn	app_render(_:&mut App)
 		assert!(g_resources_init==true)		//logi!("render_no_swap"); // once..
 		g_angle+=0.0025f32;
 
-		glClearColor(g_fog_color.x+(g_angle*2.0).sin(),g_fog_color.y,g_fog_color.z,g_fog_color.w);
+		glClearColor(g_fog_color.x()+(g_angle*2.0).sin(),g_fog_color.y(),g_fog_color.z(),g_fog_color.w());
 
 		glClearDepthf(1.0f32);
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -853,14 +853,14 @@ pub extern "C" fn	app_render(_:&mut App)
 			//io::println(format!("{:?}", g_shader_program));
 
 			// fixed function pipeline view, for debug.
-			glMatrixMode(GL_PROJECTION);glLoadMatrixf(&matP.ax.x);
-			glMatrixMode(GL_MODELVIEW);	glLoadMatrixf(&rot_trans.ax.x);
+			glMatrixMode(GL_PROJECTION);glLoadMatrixf(matP.ax.ref0());
+			glMatrixMode(GL_MODELVIEW);	glLoadMatrixf(rot_trans.ax.ref0());
 
 			glUseProgram(g_shader_program);
 			match g_uniform_table {
 				Some(ref ut)=>{
-					glUniformMatrix4fvARB(ut.uMatProj, 1,  GL_FALSE, &matP.ax.x);
-					glUniformMatrix4fvARB(ut.uMatModelView, 1, GL_FALSE, &rot_trans.ax.x);
+					glUniformMatrix4fvARB(ut.uMatProj, 1,  GL_FALSE, matP.ax.ref0());
+					glUniformMatrix4fvARB(ut.uMatModelView, 1, GL_FALSE, rot_trans.ax.ref0());
 				},
 				None=>{assert!(false,"no shader uniforms")}
 			}
@@ -945,7 +945,6 @@ fn	create_textures() {
 //		g_textures[2] = get_texture(&"data/cliffs.tga");
 	}
 }
-
 
 static mut g_resources_init:bool=false;
 
