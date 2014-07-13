@@ -1,5 +1,6 @@
 #[cfg(testbed)]
 use r3d::glut::*;
+use r3d::*;
 use std::vec::Vec;
 use std::intrinsics::{size_of,offset};
 use std::f32;
@@ -144,17 +145,22 @@ pub fn draw_tri_iso_tex(
 	}
 }
 
-pub unsafe fn draw_init() {
+pub unsafe fn draw_init() {	
+	dump!();
 	let mut argc:c_int=0;
 	let argv:Vec<*const c_char> =Vec::new();
+	glutDisplayFunc(draw_null as *const u8);
 	glutInit((&mut argc) as *mut c_int,0 as *const *const c_char );
 		//::macros::test();
 
 	glutInitDisplayMode(GLUT_RGBA);
 	glutInitWindowSize(1024,1024);
-	let win=glutCreateWindow("testbed".to_c_str().unwrap());
-
+	let win=glutCreateWindow("testbed".to_c_str().unwrap()	
+);
+dump!();
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+dump!();}
+pub unsafe fn draw_null(){
 }
 pub unsafe fn draw_show() {
 	glFlush();

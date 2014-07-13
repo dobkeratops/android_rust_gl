@@ -24,6 +24,7 @@ use std::intrinsics::{size_of,offset};
 use std::c_str::CString;
 use std::f32;
 use std::collections::hashmap::HashSet;
+use r3d::macros::*;
 
 // compile opt  --cfg testbed
 #[cfg(testbed)]
