@@ -21,11 +21,13 @@ extern crate collections;
 pub use std::str::raw::*;
 use std::c_str;
 use std::io;
-use shadertest::*;
+//use shadertest::*;
 pub use common::*;
 use libc::*;
-use r3d::matrix;
+//use r3d::matrix;
 use r3d::vecmath;
+use r3d::matrix;
+use r3d::c_str;
 
 pub mod r3d;
 pub mod shadertest;
@@ -120,8 +122,8 @@ pub fn main()
 		glutInitWindowSize(1280,800);
 		let win=verify!(glutCreateWindow(c_str("Rust ShaderTest")) isnt 0);
 
-		let mut app = app_create(0,0 as *const *const c_char,1280,800);
-		app_display_create(&mut *app);
+		let mut app = shadertest::app_create(0,0 as *const *const c_char,1280,800);
+		shadertest::app_display_create(&mut *app);
 		glDrawBuffer(GL_BACK);
 
 		glutIdleFunc(null_func as *const u8);
@@ -132,12 +134,12 @@ pub fn main()
 
 		loop {
 			glutMainLoopEvent();
-			app_render(&mut *app);
+			shadertest::app_render(&mut *app);
 			glFlush();
 			glutSwapBuffers();
 		}
-		app_display_destroy(&mut *app);
-		app_destroy(app);
+		shadertest::app_display_destroy(&mut *app);
+		shadertest::app_destroy(app);
 	}
 }
 

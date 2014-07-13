@@ -7,15 +7,12 @@ pub use std::cmp;
 pub use std::c_str;
 pub use libc::c_void;
 pub use std::vec::Vec;
-use r3d::macros::*;
-
-pub use r3d::*;
-pub use r3d::matrix::*;
-pub use r3d::vecmath::*;
-pub use r3d::gl::*;
-pub use r3d::glut::*;
 pub use std::io;
-use gl=r3d::gl;
+
+//pub use r3d;
+use r3d::glut::*;
+use r3d::gl::*;
+use r3d::*;
 
 pub struct App;
 /// Defines a vertex structure with embedded  attribute index annotations & GL type enums; 
@@ -199,9 +196,6 @@ unsafe fn create_texture(filename:String)->GLuint {
 	return g_textures[0]
 }
 
-pub unsafe fn c_str(s:&str)->*const c_char {
-	s.to_c_str().unwrap()
-}
 //extern {pub fn bind_attrib_locations(prog:c_uint);}
 
 unsafe fn	create_shader_program(
@@ -815,7 +809,7 @@ pub extern "C" fn	app_render(_:&mut App)
 		glDepthFunc(GL_LEQUAL);
 
 		glEnable(GL_CULL_FACE);
-		let matI = Matrix4::<Vec4>::identity();
+		let matI = matrix::identity();
 		let matP = matrix::projection_frustum(-0.5f32,0.5f32,-0.5f32,0.5f32, 90.0f32, 1.0f32, 0.5f32,5.0f32);
 
 		let pi=3.14159265f32;
@@ -910,6 +904,39 @@ fn debug_draw_cross(s:f32) {
 		glNormal3f(-1.0,-1.0,-1.0);
 		glVertex3f(-s,-s,s);
 		glEnd();
+	}
+}
+fn glVertex(v:&Vec3<f32>) {
+	unsafe {glVertex3f(v.x(),v.y(),v.z())}
+}
+fn glVertex_vec4(v:&Vec4<f32>) {
+	unsafe {glVertex3f(v.x(),v.y(),v.z())}
+}
+fn glColor(v:&Vec4<f32>) {
+	unsafe{glColor4f(v.x(),v.y(),v.z(),v.w())}
+}
+fn debug_draw_line(a:&Vec3<f32>,b:&Vec3<f32>, rgba:u32) {
+	let color=rgba.unpack_8888();
+	unsafe {
+		glBegin(GL_LINES);
+		glColor(&color);
+		glNormal3f(-1.0,-1.0,-1.0);
+		glVertex(a);
+		glColor(&color);
+		glNormal3f(-1.0,-1.0,-1.0);
+		glVertex(b);
+	}
+}
+fn debug_draw_line_vec4(a:&Vec4<f32>,b:&Vec4<f32>, rgba:u32) {
+	let color=rgba.unpack_8888();
+	unsafe {
+		glBegin(GL_LINES);
+		glColor(&color);
+		glNormal3f(-1.0,-1.0,-1.0);
+		glVertex_vec4(a);
+		glColor(&color);
+		glNormal3f(-1.0,-1.0,-1.0);
+		glVertex_vec4(b);
 	}
 }
 
