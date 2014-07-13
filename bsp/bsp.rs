@@ -44,12 +44,13 @@ pub fn main()
 		draw_init();
 		let bsp=Blob::<BspHeader>::read(&Path::new("../data/e1m1.bsp"));
 		let mut a=0.0f32;
-
 		let mut tex_array=Vec::<GLuint>::new();
 		// Load textures to GL
 		bsp.visit_textures( &mut |i,_|{ // we miss do notation :(
+				println!("tex:{}",i);
 				let (tx,img)=bsp.get_texture_image(i); 
 				let txsize=(tx.width as u32,tx.height as u32);
+				println!("tex:{}x{}",tx.width, tx.height);
 				draw_image(txsize,&img, (((i&7)as f32)*(1.0/4.0)-1.0, (((i>>3)&7)as f32)*(1.0/4.0)-1.0) );
 				let txi=create_texture((tx.width,tx.height), &img,8);
 				tex_array.push(txi);
@@ -67,6 +68,7 @@ pub fn main()
 				draw_tri_iso_tex(applytx(txinfo,v0),applytx(txinfo,v1),applytx(txinfo,v2), 0xffffff, 1.0/2000.0)
 			}
 		);
+		println!("foo");
 		draw_show();
 		draw_win_loop();
 	}
@@ -78,7 +80,7 @@ struct Blob<HEADER> {
 
 impl<T> std::ops::Deref<T> for Blob<T> {
 	fn deref<'s>(&'s self)->&'s T {
-		unsafe {	&*(&self.data.get(0)as*const _ as*const T)
+		unsafe {	&*(self.data.get(0)as*const _ as*const T)
 		}
 	}
 }
@@ -122,13 +124,16 @@ impl<Header,T> DEntry<Header,T> {
 		// TODO: to REALLY be safe, the sub-elements need to check safety from the blob 'owner'
 		// unfortunately 'bspheader' doesn't seem to have that, although the last elements' ofs & size could be used
 		// for an assert?
+		println!("dirent: offset={} size={}", self.offset, self.size);
 		unsafe {
-//			&*(((owner as *Header as *u8).offset(self.offset as int) as *T).offset(i as int))
-			&*(byte_ofs_ptr(owner, self.offset).offset(i as int))
+			&*(((owner as *const Header as *const u8).offset(self.offset as int) as *const T).offset(i as int))
+//			&*(byte_ofs_ptr(owner, self.offset).offset(i as int))
 		}
 	}
 }
 pub type BspDEntry<T> =DEntry<BspHeader,T>;
+
+#[repr(C)]
 pub struct BspHeader {
 	version:u32,
 	entities:BspDEntry<Entity>,
@@ -160,7 +165,7 @@ macro_rules! get {
 }
 impl BspHeader {
 	fn dump_vertices(&self) {	
-		println!("{}",self.vertices.len());
+		println!("vertices:{}(",self.vertices.len());
 		let mut i:uint=0;
 		let vtlen=self.vertices.len();
 		while i<vtlen { 
@@ -171,10 +176,21 @@ impl BspHeader {
 			i+=1;
 			let v=*vtref;
 		}
+		println!("vertices:)");
 	
 	}
 	fn dump(&self) {
-		println!("vertices: {:u}", self.vertices.len());
+		println!("ptrs: {:p}\t{:p}\t{:p}",self, &self.entities, &self.planes);
+		println!("id: {}", self.version);
+		println!("entities: {}{}", self.entities.offset, self.entities.size);
+		println!("BSP info:-(");
+		println!("entities: {:u}", self.entities.len());
+		println!("planes: {:u}", self.planes.len());
+		println!("miptex: {:u}", self.miptex.len());
+		println!("vertices: {:u}", self.vertices.len())		println!("nodes: {:u}", self.nodes.len());
+		println!("faces: {:u}", self.faces.len())
+		println!("lightmaps: {:u}", self.lightmaps.len())
+		println!("BSP info:-)");
 		self.dump_vertices();
 	}
 	// some convinient accessors. - TODO autogenerate from a macro
@@ -244,8 +260,11 @@ impl BspHeader {
 	}
 
 	fn visit_textures<'a>(&'a self, mut tex_fn:&mut|i:uint,tx:&MipTex|:'a) {
+		println!("visit textures self={:p}",&self);
 		let txh =self.miptex.get(self,0);
+		println!("visit textures txh={:p}",txh);
 		for i in range(0,txh.numtex) {
+			println!("{}/{}",i,txh.numtex);
 			let tx=self.get_texture(i as uint);
 			unsafe {
 				println!("tx: {} {} {}",
@@ -297,7 +316,7 @@ impl BspHeader {
 
 pub type Point3s=(i16,i16,i16);
 pub type BBox=(Point3s,Point3s);
-pub struct Entity;
+pub struct Entity(u8);
 pub struct Plane {
 	normal:BspVec3,
 	dist:f32,
@@ -354,8 +373,8 @@ pub struct TexInfo {
 	miptex:i32,
 	flags:i32
 }
-pub struct Faces;
-pub struct LightMap; //{ 	texels:[u8]} ??
+pub struct Faces(u8);
+pub struct LightMap(u8); //{ 	texels:[u8]} ??
 pub struct ClipNode {
 	planenum:u32,
 	front:u16, back:u16,
@@ -424,9 +443,6 @@ impl BspHeader {
 			let tx=self.get_texture(i);
 			let mip0:*const u8=byte_ofs_ptr(tx, tx.offset1);
 
-			println!("size={}x{} miptex offsets {} {} {} {}",
-				tx.width, tx.height, 
-				tx.offset1, tx.offset2, tx.offset4, tx.offset8);
 
 			let image = Vec::<u32>::from_fn(
 				(tx.width*tx.height) as uint, 

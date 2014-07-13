@@ -13,6 +13,7 @@ pub use std::io;
 use r3d::glut::*;
 use r3d::gl::*;
 use r3d::*;
+//use super::mesh::*;
 
 pub struct App;
 /// Defines a vertex structure with embedded  attribute index annotations & GL type enums; 
@@ -86,7 +87,7 @@ def_vertex_format!{
 //typedef int IndexType;
 //	enum {IndexSize = sizeof(IndexType) };
 //typedef	::TestVertex Vertex;
-struct	Mesh 
+struct	RMesh 
 {
 	vertex_size:GLsizei,
 	vbo:GLuint,
@@ -658,9 +659,9 @@ unsafe fn create_index_buffer<T>(data:&Vec<T>)->GLuint {
 	create_buffer(data.len()as GLsizei *mem::size_of::<T>() as GLsizei, as_void_ptr(data.get(0)), GL_ELEMENT_ARRAY_BUFFER)
 }
 
-impl Mesh {
+impl RMesh {
 	/// create a grid mesh , TODO - take a vertex generator
-	fn new_torus((num_u,num_v):(uint,uint))->Mesh
+	fn new_torus((num_u,num_v):(uint,uint))->RMesh
 	{
 		// TODO: 2d fill array. from_fn_2f(numi,numj, &|..|->..)
 		let strip_indices = (num_u+1)*2 +2;
@@ -678,7 +679,7 @@ impl Mesh {
 		let vertices=Vec::from_fn(num_vertices,|i|generate_torus_vertex(i,num_u,num_v));
 
  		unsafe {
-			Mesh{
+			RMesh{
 				num_vertices:num_vertices as GLuint,
 				num_indices:num_indices as GLuint,
 				vertex_size: mem::size_of_val(vertices.get(0)) as GLsizei,
@@ -695,7 +696,7 @@ impl Mesh {
 
 //float	angle=0.f;
 //GridMesh*	g_pGridMesh;
-static mut g_grid_mesh:Mesh=Mesh{
+static mut g_grid_mesh:RMesh=RMesh{
 	num_vertices:0,
 	num_indices:0,
 	vbo:-1,
@@ -705,7 +706,7 @@ static mut g_grid_mesh:Mesh=Mesh{
 
 type UniformIndex=GLint;
 
-impl Mesh {
+impl RMesh {
 	fn	render_mesh_from_buffer(&self)
 	{
 		unsafe {
@@ -748,7 +749,7 @@ unsafe fn as_void_ptr<T>(ptr:&T)->*const c_void {
 }              
 
 static g_fog_color:Vec4<f32> =Vec4(0.25,0.5,0.5,1.0);
-impl Mesh {
+impl RMesh {
 	unsafe fn	render_mesh_shader(&self)  {
 		
 		let clientState:[GLenum,..3]=[GL_VERTEX_ARRAY,GL_COLOR_ARRAY,GL_TEXTURE_COORD_ARRAY];
@@ -913,7 +914,7 @@ pub extern "C" fn app_display_create(_:&mut App) {
 		logi!("shadertest Create Resources \n");
 		create_shaders();
 		create_textures();
-		g_grid_mesh = Mesh::new_torus((16,16)); //new GridMesh(16,16);
+		g_grid_mesh = RMesh::new_torus((16,16)); //new GridMesh(16,16);
 		g_resources_init=true;
 	}
 }

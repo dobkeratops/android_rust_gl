@@ -48,13 +48,28 @@ impl<V> Matrix3<V> {
 	pub fn ay<'a>(&'a self)->&'a V { let Matrix3(_,ref r,_)=*self; r}
 	pub fn az<'a>(&'a self)->&'a V { let Matrix3(_,_,ref r)=*self; r}
 }
-
+pub trait Axes<V> {
+	fn axis_x(&self)->V {let (x,_,_)=self.axes(); x}
+	fn axis_y(&self)->V {let (_,y,_)=self.axes(); y}
+	fn axis_z(&self)->V {let (_,_,z)=self.axes(); z}
+	fn axes(&self)->(V,V,V) {(self.axis_x(),self.axis_y(),self.axis_z())}
+}
+impl<V:Clone> Axes<V> for Matrix4<V> {
+	fn axes(&self)->(V,V,V) {
+		(self.ax().clone(),self.ay().clone(),self.az().clone())
+	}
+}
+pub trait Pos<V> {
+	fn pos<'a>(&'a self)->V;
+}
+impl<V:Clone> Pos<V> for Matrix4<V> {
+	fn pos(&self)->V { let Matrix4( _,_,_,ref r)=*self; r.clone()}
+}
 impl<V> Matrix4<V> {
 	pub fn ax<'a>(&'a self)->&'a V { let Matrix4(ref r,_,_,_)=*self; r}
 	pub fn ay<'a>(&'a self)->&'a V { let Matrix4( _,ref r,_,_)=*self; r}
 	pub fn az<'a>(&'a self)->&'a V { let Matrix4( _,_,ref r,_)=*self; r}
 	pub fn aw<'a>(&'a self)->&'a V { let Matrix4( _,_,_,ref r)=*self; r}
-	pub fn pos<'a>(&'a self)->&'a V { let Matrix4( _,_,_,ref r)=*self; r}
 }
 impl<T:Zero+One+Clone> Matrix4<Vec4<T>> {
 	pub fn from_mat33(mat33:&Matrix3<Vec3<T>>)->Matrix4<Vec4<T>> {
@@ -103,10 +118,10 @@ impl<T:Clone+Float> Transpose<Matrix4<Vec4<T>,Vec4<T>>> for Matrix4<Vec4<T>> {
 	fn transpose(&self)->Matrix4<Vec4<T>> {
 		// todo-SIMD..
 		Matrix4(
-			Vec4(self.ax().x(), self.ay().x(), self.az().x(), self.pos().x()),
-			Vec4(self.ax().y(), self.ay().y(), self.az().y(), self.pos().y()),
-			Vec4(self.ax().z(), self.ay().z(), self.az().z(), self.pos().z()),
-			Vec4(self.ax().w(), self.ay().w(), self.az().w(), self.pos().w())
+			Vec4(self.ax().x(), self.ay().x(), self.az().x(), self.aw().x()),
+			Vec4(self.ax().y(), self.ay().y(), self.az().y(), self.aw().y()),
+			Vec4(self.ax().z(), self.ay().z(), self.az().z(), self.aw().z()),
+			Vec4(self.ax().w(), self.ay().w(), self.az().w(), self.aw().w())
 		)
 	}
 }
@@ -145,16 +160,16 @@ impl<V:VecMath<T>,T:Float=f32> Matrix4<V> {
 	}
 	pub fn look_at(pos:&V,target:&V,up:&V)->Matrix4<V> { Matrix4::look_along(pos,&target.sub(pos),up) }
 	pub fn orthonormalize_zyx(self)->Matrix4<V> {
-		Matrix4::look_along(self.pos(),self.az(),self.ay())
+		Matrix4::look_along(self.aw(),self.az(),self.ay())
 	}
 	pub fn mul_point(&self,pt:&Vec3<T>)->V{	// 'point'=x,y,z,1
-		self.pos().mad(self.ax(),pt.x()).mad(self.ay(),pt.y()).mad(self.az(),pt.z())
+		self.aw().mad(self.ax(),pt.x()).mad(self.ay(),pt.y()).mad(self.az(),pt.z())
 	}
 	pub fn mul_axis(&self,pt:&Vec3<T>)->V{	// 'axis'=x,y,z,0
 		self.ax().scale(pt.x()).mad(self.ay(),pt.y()).mad(self.az(),pt.z())
 	}
 	pub fn inv_mul_point(&self,pt:&V)->V{
-		let ofs=pt.sub(self.pos());
+		let ofs=pt.sub(self.aw());
 		VecNum::from_xyz(ofs.dot(self.ax()),ofs.dot(self.ay()),ofs.dot(self.az()))
 	}
 	pub fn inv_mul_axis(&self,axis:&V)->V{
@@ -164,14 +179,14 @@ impl<V:VecMath<T>,T:Float=f32> Matrix4<V> {
 		self.ax().scale(pt.x()).mad(self.ay(),pt.y()).mad(self.az(),pt.z())
 	}
 	pub fn mul_vec4(&self,pt:&V)->V{
-		self.ax().scale(pt.x()).mad(self.ay(),pt.y()).mad(self.az(),pt.z()).mad(self.pos(),pt.w())
+		self.ax().scale(pt.x()).mad(self.ay(),pt.y()).mad(self.az(),pt.z()).mad(self.aw(),pt.w())
 	}
 	pub fn mul_matrix(&self,other:&Matrix4<V>)->Matrix4<V> {
 		Matrix4(
 			self.mul_vec4(other.ax()),
 			self.mul_vec4(other.ay()),
 			self.mul_vec4(other.az()),
-			self.mul_vec4(other.pos()))
+			self.mul_vec4(other.aw()))
 	}
 }
 
@@ -201,7 +216,7 @@ impl<T:Float> PreMulVec4<T,Vec4<T>> for Matrix4<Vec4<T>> {
 			v.dot(self.ax()),
 			v.dot(self.ay()),
 			v.dot(self.az()),
-			v.dot(self.pos()))
+			v.dot(self.aw()))
 	}
 }
 
