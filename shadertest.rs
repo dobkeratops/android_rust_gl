@@ -846,9 +846,8 @@ pub extern "C" fn	app_render(_:&mut App)
 			let matMV = matT;	// toodo - combine rotation...
 			//io::println(format!("{:?}", g_shader_program));
 
-			// fixed function pipeline view, for debug.
-			glMatrixMode(GL_PROJECTION);glLoadMatrixf(matP.ax().ref0());
-			glMatrixMode(GL_MODELVIEW);	glLoadMatrixf(rot_trans.ax().ref0());
+			gl_matrix_projection(&matP);
+			gl_matrix_modelview(&rot_trans);
 
 			glUseProgram(g_shader_program);
 			match g_uniform_table {

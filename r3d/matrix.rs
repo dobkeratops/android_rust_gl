@@ -24,7 +24,7 @@ impl<T:Float> Scaling<T>
 	pub fn identity()->Scaling<T> { Scaling{sx:one(),sy:one(),sz:one()}}
 	pub fn new(x:T,y:T,z:T)->Scaling<T> {Scaling{sx:x,sy:y,sz:z} }
 	pub fn from_vec3(v:&Vec3<T>)->Scaling<T> {Scaling{sx:v.x(),sy:v.y(),sz:v.z()}}
-	pub fn from_xyz<V:VecAccessors<T>>(v:&V)->Scaling<T> {Scaling{sx:v.x(),sy:v.y(),sz:v.z()}}
+	pub fn from_xyz<V:XYZW<T>>(v:&V)->Scaling<T> {Scaling{sx:v.x(),sy:v.y(),sz:v.z()}}
 	pub fn to_vec3(&self, v:&Vec3<T>)->Vec3<T> { Vec3(self.sx,self.sy,self.sz)}
 	pub fn to_vec4(&self, v:&Vec3<T>)->Vec3<T> { Vec3(self.sx,self.sy,self.sz)}
 }
@@ -257,16 +257,16 @@ pub fn rotate_z<F:FloatMath=f32>(a:F)->Matrix4<Vec4<F>> {
 		Vec4(zero,	zero,	one,	zero),
 		Vec4(zero,	zero,	zero,	one))
 }
-pub fn rotate_xyz<V:VecAccessors<F>,F:FloatMath+Copy=f32>(r:&V)->Matrix4<Vec4<F>> {
+pub fn rotate_xyz<V:XYZW<F>,F:FloatMath+Copy=f32>(r:&V)->Matrix4<Vec4<F>> {
 	rotate_x(r.x())*rotate_y(r.y())*rotate_z(r.z())
 }
-pub fn rotate_xzy<V:VecAccessors<F>,F:FloatMath+Copy=f32>(r:&V)->Matrix4<Vec4<F>> {
+pub fn rotate_xzy<V:XYZW<F>,F:FloatMath+Copy=f32>(r:&V)->Matrix4<Vec4<F>> {
 	rotate_x(r.x())*rotate_z(r.z())*rotate_y(r.y())
 }
-pub fn rotate_zyx<V:VecAccessors<F>,F:FloatMath+Copy=f32>(r:&V)->Matrix4<Vec4<F>> {
+pub fn rotate_zyx<V:XYZW<F>,F:FloatMath+Copy=f32>(r:&V)->Matrix4<Vec4<F>> {
 	rotate_z(r.z())*rotate_y(r.y())*rotate_x(r.x())
 }
-pub fn rotate_yzx<V:VecAccessors<F>,F:FloatMath+Copy=f32>(r:&V)->Matrix4<Vec4<F>> {
+pub fn rotate_yzx<V:XYZW<F>,F:FloatMath+Copy=f32>(r:&V)->Matrix4<Vec4<F>> {
 	rotate_y(r.y())*rotate_z(r.z())*rotate_x(r.x())
 }
 
@@ -278,7 +278,7 @@ pub fn translate_xyz<F:FloatMath=f32>(x:F,y:F,z:F)->Matrix4<Vec4<F>> {
 		Vec4(zero,	zero,	one,	zero),
 		Vec4(x,	y,	z,	one))
 }
-pub fn translate<V:VecAccessors<F>,F:FloatMath+One=f32>(trans:&V)->Matrix4<Vec4<F>> {
+pub fn translate<V:XYZW<F>,F:FloatMath+One=f32>(trans:&V)->Matrix4<Vec4<F>> {
 	let one=one(); let zero=zero();
 	Matrix4(
 		Vec4(one,	zero,	zero,	zero),
@@ -287,7 +287,7 @@ pub fn translate<V:VecAccessors<F>,F:FloatMath+One=f32>(trans:&V)->Matrix4<Vec4<
 		Vec4(trans.x(),trans.y(),trans.z(),one))
 }
 
-pub fn scale_x<V:VecAccessors<F>,F:FloatMath+One=f32>(scale:F)->Matrix4<Vec4<F>> {
+pub fn scale_x<V:XYZW<F>,F:FloatMath+One=f32>(scale:F)->Matrix4<Vec4<F>> {
 	let one=one(); let zero=zero();
 	Matrix4(
 		Vec4(scale,	zero,	zero,	zero),
@@ -295,7 +295,7 @@ pub fn scale_x<V:VecAccessors<F>,F:FloatMath+One=f32>(scale:F)->Matrix4<Vec4<F>>
 		Vec4(zero,	zero,	one,	zero),
 		Vec4(zero,zero,zero,one))
 }
-pub fn scale_y<V:VecAccessors<F>,F:FloatMath+One=f32>(scale:F)->Matrix4<Vec4<F>> {
+pub fn scale_y<V:XYZW<F>,F:FloatMath+One=f32>(scale:F)->Matrix4<Vec4<F>> {
 	let one=one(); let zero=zero();
 	Matrix4(
 		Vec4(one,	zero,	zero,	zero),
@@ -303,7 +303,7 @@ pub fn scale_y<V:VecAccessors<F>,F:FloatMath+One=f32>(scale:F)->Matrix4<Vec4<F>>
 		Vec4(zero,	zero,	one,	zero),
 		Vec4(zero,zero,zero,one))
 }
-pub fn scale_z<V:VecAccessors<F>,F:FloatMath+One=f32>(scale:F)->Matrix4<Vec4<F>> {
+pub fn scale_z<V:XYZW<F>,F:FloatMath+One=f32>(scale:F)->Matrix4<Vec4<F>> {
 	let one=one(); let zero=zero();
 	Matrix4(
 		Vec4(one,	zero,	zero,	zero),
@@ -321,7 +321,7 @@ pub fn scale<F:FloatMath+One=f32>(scale:F)->Matrix4<Vec4<F>> {
 		Vec4(zero,zero,zero,one))
 }
 
-pub fn scale_vec<V:VecAccessors<F>,F:FloatMath+One=f32>(s:&V)->Matrix4<Vec4<F>> {
+pub fn scale_vec<V:XYZW<F>,F:FloatMath+One=f32>(s:&V)->Matrix4<Vec4<F>> {
 	let one=one(); let zero=zero();
 	Matrix4(
 		Vec4(s.x(),	zero,	zero,	zero),

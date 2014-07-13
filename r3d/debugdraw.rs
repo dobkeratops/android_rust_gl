@@ -2,6 +2,16 @@ use super::gl::*;
 use super::vecmath::*;
 use super::matrix::*;
 use super::formats::*;
+
+pub fn gl_matrix_projection(mat:&Matrix4) {
+	unsafe{glMatrixMode(GL_PROJECTION);glLoadMatrixf(mat.ax().ref0());
+	}
+}
+pub fn gl_matrix_modelview(mat:&Matrix4) {
+	unsafe {glMatrixMode(GL_MODELVIEW);	glLoadMatrixf(mat.ax().ref0());
+	}
+}
+
 pub fn dbg_cross(s:f32) {
 	unsafe {
 		glBegin(GL_LINES);
