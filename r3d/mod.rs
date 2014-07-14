@@ -1,6 +1,6 @@
 #![macro_escape]
 use std::c_str;
-use libc::c_char;
+use libc::{c_char,c_int,c_void};
 
 pub use self::vecmath::*;
 pub use self::matrix::*;

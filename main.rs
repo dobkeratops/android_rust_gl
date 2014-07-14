@@ -25,6 +25,7 @@ pub mod r3d;
 pub mod shadertest;
 pub mod bsp;
 pub mod bsprender;
+pub mod rustwin;
 
 // framework can be: Android, Glut, (iOS,.o.)
 
