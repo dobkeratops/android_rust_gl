@@ -12,7 +12,7 @@ macro_rules! def_vertex_format{
 	)=>(
 //		mod $layout_name {
 			pub struct $layout_name {
-				$( $element: [$elem_type ,.. $elem_count],)*
+				$( pub $element: [$elem_type ,.. $elem_count],)*
 			}
 			impl $layout_name {
 				pub fn set_vertex_attrib() {
@@ -41,11 +41,11 @@ macro_rules! def_vertex_format{
 
 macro_rules! def_vertex_attrib(
 	( enum $attrib_group_name:ident { $($attr_name:ident),* } ) =>(
-		enum $attrib_group_name {
+		pub enum $attrib_group_name {
 			$($attr_name),*
 		}
 		impl $attrib_group_name {
-			fn bind_attribs(prog:GLuint) {
+			pub fn bind_attribs(prog:GLuint) {
 				use r3d::gl::{GLuint,GLfloat,GLsizei,glBindAttribLocation};
 				unsafe {
 					$(glBindAttribLocation(prog, $attr_name as GLuint, c_str( stringify!($attr_name) ) );
@@ -58,15 +58,15 @@ macro_rules! def_vertex_attrib(
 
 macro_rules! def_uniform_table {
 	(struct $uniform_table:ident { $($uniform_name:ident),* }) => (
-		struct $uniform_table {
-			$( $uniform_name : GLint),*
+		pub struct $uniform_table {
+			$( pub $uniform_name : GLint),*
 		}
 
 		// TODO: this could be purely data-driven for data-linked shaders,
 		// but we want to expose it conviniently to rust code..
 
 		impl $uniform_table {
-			fn new(prog:GLuint)->$uniform_table {
+			pub fn new(prog:GLuint)->$uniform_table {
 				$uniform_table {
 				$(
 					$uniform_name : {

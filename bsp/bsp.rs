@@ -15,6 +15,7 @@ extern crate debug;
 //#[cfg(testbed)]
 
 use r3d::*;
+use r3d::vecmath::*;
 
 #[cfg(testbed)]
 pub fn log_print(i:int, s:&str){std::io::println(s);}
@@ -178,6 +179,18 @@ impl BspHeader {
 		println!("BSP info:-)");
 		self.dump_vertices();
 	}
+	pub fn visit_vertices<'a>(&'a self, fv:|int,&Vec3<f32>|){
+		dump!();
+		for i in range (0,self.vertices.len()) {
+			let v=self.vertices.get(self,i);
+		dump!();
+			let vt=Vec3(v.val0(),v.val1(),v.val2());
+		dump!();
+			fv(i as int,&vt);
+		dump!();
+		}
+		dump!();
+	}
 	// some convinient accessors. - TODO autogenerate from a macro
 	pub fn visit_triangles<'a,'b,R>(
 			&'a self,
@@ -228,6 +241,21 @@ impl BspHeader {
 		for i in range(0, self.faces.len()) {
 			(*f)(i, get!{self.faces[i]} );
 		}
+	}
+
+	pub fn extents(&self)->(Extents<Vec3<f32>>,Vec3<f32>,f32) {
+		let mut ext=Extents::new();
+		self.visit_vertices(|index,pos|{
+			ext.include(pos);
+		});
+		let c=ext.centre();
+		let mut maxr2=0.0f32;
+		self.visit_vertices(|_,pos|{
+			let ofs=pos-c;
+			let d2=ofs.sqr();
+			maxr2=fmax(d2,maxr2);
+		});
+		(ext,c,maxr2.sqrt())
 	}
 
 	pub fn get_used_textures(&self)->HashSet<uint> {

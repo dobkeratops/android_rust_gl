@@ -14,6 +14,7 @@ pub use self::gl::*;
 pub use self::glut::*;
 pub use self::common::*;
 pub use self::debugdraw::*;
+pub use self::shaders::*;
 
 pub mod macros;
 pub mod to;
@@ -31,4 +32,6 @@ pub mod debugdraw;
 pub mod half;
 pub mod render;
 pub mod common;
+pub mod shaders;
+pub mod vertex;
 

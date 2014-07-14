@@ -29,8 +29,8 @@ pub struct Vec3<T=f32>(pub T,pub T,pub T);
 #[deriving(Clone,Show)]
 pub struct Vec4<T=f32>(pub T,pub T,pub T,pub T);
 
-fn min<T:PartialOrd>(a:T,b:T)->T { if a<b{a}else{b} }
-fn max<T:PartialOrd>(a:T,b:T)->T { if a>b{a}else{b} }
+pub fn fmin<T:PartialOrd>(a:T,b:T)->T { dump!();if a<b{a}else{b} }
+pub fn fmax<T:PartialOrd>(a:T,b:T)->T { dump!();if a>b{a}else{b} }
 
 
 pub type Vec2f = Vec2<f32>;
@@ -375,8 +375,8 @@ impl<T:Num+Clone> VecNum<T> for Vec2<T> {
 	fn from_xyz(x:T,y:T,_:T)->Vec2<T>{Vec2(x.clone(),y.clone())}
 }
 impl<T:PartialOrd+Clone+Zero> VecCmp<T> for Vec2<T> {
-	fn min(&self,b:&Vec2<T>)->Vec2<T>	{Vec2(min(self.x().clone(),b.x().clone()),min(self.y().clone(),b.y().clone()))}
-	fn max(&self,b:&Vec2<T>)->Vec2<T>	{Vec2(max(self.x().clone(),b.x().clone()),max(self.y().clone(),b.y().clone()))}
+	fn min(&self,b:&Vec2<T>)->Vec2<T>	{Vec2(fmin(self.x(),b.x()),fmin(self.y(),b.y()))}
+	fn max(&self,b:&Vec2<T>)->Vec2<T>	{Vec2(fmax(self.x(),b.x()),fmax(self.y(),b.y()))}
 	
 }
 impl<T:Float> Scale<T> for Vec2<T> {
@@ -437,14 +437,15 @@ impl<T:Clone+Num> VecNum<T> for Vec3<T> {
 	fn from_xyz(x:T,y:T,z:T)->Vec3<T>{Vec3(x,y,z)}
 }
 impl<T:Clone+PartialOrd+Zero> VecCmp<T> for Vec3<T> {
-	fn min(&self,b:&Vec3<T>)->Vec3<T>	{Vec3(
-									min(self.x().clone(),b.x().clone()),
-									min(self.y().clone(),b.y().clone()),
-									min(self.z().clone(),b.z().clone()))}
+	fn min(&self,b:&Vec3<T>)->Vec3<T>	{
+		let x=fmin(self.x(), b.x());
+		let y=fmin(self.y(), b.y());
+		let z=fmin(self.z(), b.z());
+		Vec3(x,y,z)}
 	fn max(&self,b:&Vec3<T>)->Vec3<T>	{Vec3(
-									max(self.x(),b.x()),
-									max(self.y(),b.y()),
-									max(self.z(),b.z()))}
+									fmax(self.x(),b.x()),
+									fmax(self.y(),b.y()),
+									fmax(self.z(),b.z()))}
 }
 
 impl<T:Float> Scale<T> for Vec3<T> { 
@@ -463,13 +464,13 @@ impl<T:Float> Cross<T,Vec3<T>> for Vec3<T> {
 	//fpub fn axisScale(i:int,f:VScalar)->Vec3 { VecConsts::axis(i).scale(f)} 
 }
 impl<T:Clone+Zero> X<T> for Vec3<T> {
-	fn x(&self)->T	{ self.x()}
+	fn x(&self)->T	{ let Vec3(ref v,_,_)=*self;v.clone()}
 }
 impl<T:Clone+Zero> Y<T> for Vec3<T> {
-	fn y(&self)->T	{ self.y()}
+	fn y(&self)->T	{ let Vec3( _,ref v,_)=*self;v.clone()}
 }
 impl<T:Clone+Zero> Z<T> for Vec3<T> {
-	fn z(&self)->T	{ self.z()}
+	fn z(&self)->T	{ let Vec3( _,_,ref v)=*self;v.clone()}
 }
 impl<T:Clone+Zero> W<T> for Vec3<T> {
 	fn w(&self)->T	{ zero()}
@@ -562,15 +563,15 @@ impl<T:Clone+Num> VecNum<T> for Vec4<T> {
 }
 impl<T:Clone+PartialOrd+Zero> VecCmp<T> for Vec4<T> {
 	fn min(&self,b:&Vec4<T>)->Vec4<T>	{Vec4(
-									min(self.x(),b.x()),
-									min(self.y(),b.y()),
-									min(self.z(),b.z()),
-									min(self.w(),b.w()))}
+									fmin(self.x(),b.x()),
+									fmin(self.y(),b.y()),
+									fmin(self.z(),b.z()),
+									fmin(self.w(),b.w()))}
 	fn max(&self,b:&Vec4<T>)->Vec4<T>	{Vec4(
-									max(self.x(),b.x()),
-									max(self.y(),b.y()),
-									max(self.z(),b.z()),
-									max(self.w(),b.w()))}
+									fmax(self.x(),b.x()),
+									fmax(self.y(),b.y()),
+									fmax(self.z(),b.z()),
+									fmax(self.w(),b.w()))}
 }
 
 impl<T:Num+Clone> Scale<T> for Vec4<T> {
@@ -612,18 +613,27 @@ pub fn vec_normalize<T:Float,V:VecMath<T>>(v:&V)->V { v.scale(v.sqr().rsqrt()) }
 
 
 #[deriving(Clone,Show)]
-pub struct Extents<T> {  
+pub struct Extents<T=Vec3<f32>> {  
 	min:T,max:T	
 }
 
 impl<T:Clone> Extents<T> {
-	fn init(v:&T)->Extents<T>{ Extents::<T>{min:v.clone(),max:v.clone()}}
+	pub fn init(v:&T)->Extents<T>{ Extents::<T>{min:v.clone(),max:v.clone()}}
+}
+impl Extents<Vec3<f32>>{
+	pub fn new()->Extents<Vec3<f32>> {
+		let f=1000000.0f32;//todo: FLT_MAX
+		Extents{min:Vec3(f,f,f),max:Vec3(-f,-f,-f)}
+	}
 }
 
 impl<T:Num+PartialOrd,V:Add<V,V>+Sub<V,V>+Scale<T>+VecCmp<T>> Extents<V> { 
-	fn size(&self)->V { self.max.sub(&self.min) }
-	fn centre(&self)->V { self.min.add(&self.max).scale(one::<T>()/(one::<T>()+one::<T>())) }
-	fn include(&mut self, v:&V) { self.min=self.min.min(v); self.max=self.max.max(v);}
+	pub fn size(&self)->V { self.max.sub(&self.min) }
+	pub fn centre(&self)->V { self.min.add(&self.max).scale(one::<T>()/(one::<T>()+one::<T>())) }
+	pub fn include(&mut self, v:&V) {
+		self.min=self.min.min(v);
+		self.max=self.max.max(v);
+	}
 }
 
 pub fn triangle_norm<T:Float,V:VecMath<T>>((v0,v1,v2):(&V,&V,&V))->V{
@@ -641,7 +651,7 @@ pub fn triangle_extents<T:PartialOrd+Num+Clone,V:VecMath<T>>((v0,v1,v2):(&V,&V,&
 // todo - math UT, ask if they can go in the stdlib.
 
 fn clamp<T:PartialOrd>(x:T, lo:T, hi:T)->T {
-	max(min(x,hi),lo)
+	fmax(fmin(x,hi),lo)
 }
 fn clamp_s<T:PartialOrd+Num>(value:T, limit:T)->T {
 	clamp(value,-limit,limit)

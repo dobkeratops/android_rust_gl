@@ -5,6 +5,7 @@ use bsp::*;
 pub struct BspRender {
 	bsp:Box<Blob<BspHeader>>,
 	textures:Vec<GLuint>,
+	extents:Extents<Vec3<f32>>,
 	centre:Vec3,
 	radius:f32
 	// vertex/index arrays would go here
@@ -20,12 +21,14 @@ impl BspRender {
 				tex_array.push(txi);
 			}
 		);
-		let (c,r)=bsp.centre_radius();
+		let (ext,c,r)=bsp.extents();
 
 		BspRender{
 			bsp:bsp,
 			textures:tex_array,
-			centre:c,radius:r,
+			extents:ext,
+			centre:c,
+			radius:r
 		}
 	}
 
