@@ -15,6 +15,8 @@ pub use self::glut::*;
 pub use self::common::*;
 pub use self::debugdraw::*;
 pub use self::shaders::*;
+pub use self::geom::*;
+pub use self::array3d::*;
 
 pub mod macros;
 pub mod to;
@@ -34,4 +36,5 @@ pub mod render;
 pub mod common;
 pub mod shaders;
 pub mod vertex;
+pub mod geom;
 

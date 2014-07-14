@@ -180,29 +180,24 @@ impl BspHeader {
 		self.dump_vertices();
 	}
 	pub fn visit_vertices<'a>(&'a self, fv:|int,&Vec3<f32>|){
-		dump!();
 		for i in range (0,self.vertices.len()) {
 			let v=self.vertices.get(self,i);
-		dump!();
 			let vt=Vec3(v.val0(),v.val1(),v.val2());
-		dump!();
 			fv(i as int,&vt);
-		dump!();
 		}
-		dump!();
 	}
 	// some convinient accessors. - TODO autogenerate from a macro
-	pub fn visit_triangles<'a,'b,R>(
+	pub fn visit_triangles<'a,'b>(
 			&'a self,
 			fn_apply_to_tri:
 				&mut |	tri_indices:(uint,uint,uint),
 						tri_vertices:(&'a BspVec3,&'a BspVec3,&'a BspVec3),
 						texinfo:(uint,&'a TexInfo),
 						plane:(uint,&'a Plane),
-						face_id:(uint,&'a Face)|:'b->R
-			)->Vec<R>
+						face_id:(uint,&'a Face)|:'b
+			)
 	{
-		let mut return_val:Vec<R> =Vec::new();	// todo: reserve
+		//let mut return_val:Vec<R> =Vec::new();	// todo: reserve
 		for face_id in range(0,self.faces.len()) {
 			let face=self.faces.get(self, face_id);
 			let eii = face.firstedge;
@@ -232,10 +227,10 @@ impl BspHeader {
 					(face.plane as uint,	get!{self.planes[face.plane]} ),
 					(face_id, face)
 				);
-				return_val.push(tri_result);
+				//return_val.push(tri_result);
 			}
 		}
-		return_val
+		//return_val
 	}
 	pub fn visit_faces<'a>(&'a self, f:&mut |i:uint, f:&Face |:'a) {
 		for i in range(0, self.faces.len()) {

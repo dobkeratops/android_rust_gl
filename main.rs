@@ -106,6 +106,13 @@ pub fn main()
 	let m12=m1*m2;
 	let v10= m1*v0*2.0f32;
 	dump!(m12,v10);
+	let v1=Vec3::<f32>(1.0,2.0,3.0);
+	let v2=(1.1f32,2.2f32,3.3f32);
+//	dump!(v2+v2);
+	dump!(v1.xyz());
+	dump!(v1.xyzw());
+	let x=3.0f32; let y=2.0f32;
+	dump!(x%y);	
 
 	unsafe {
 		let mut argc:c_int=0;

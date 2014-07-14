@@ -77,7 +77,7 @@ impl GlColor for (f32,f32,f32,f32)  {
 	}
 }
 trait GlVertex{ fn gl_vertex(&self);}
-impl<V:XYZ<f32>> GlVertex for V { fn gl_vertex(&self){ unsafe{glVertex3f(self.x(),self.y(),self.z());}}}
+impl<V:XYZW<f32>> GlVertex for V { fn gl_vertex(&self){ unsafe{glVertex3f(self.x(),self.y(),self.z());}}}
 //impl GlVertex for Vec4<f32>{ fn gl_vertex(&self){ unsafe{glVertex3f(self.x(),self.y(),self.z());}}}
 //impl GlVertex for (f32,f32,f32){ fn gl_vertex(&self){ let(x,y,z)=*self;unsafe{glVertex3f(x,y,z);}}}
 
