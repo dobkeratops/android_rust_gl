@@ -5,6 +5,8 @@ use bsp::*;
 pub struct BspRender {
 	bsp:Box<Blob<BspHeader>>,
 	textures:Vec<GLuint>,
+	centre:Vec3,
+	radius:f32
 	// vertex/index arrays would go here
 }
 impl BspRender {
@@ -18,11 +20,12 @@ impl BspRender {
 				tex_array.push(txi);
 			}
 		);
-
+		let (c,r)=bsp.centre_radius();
 
 		BspRender{
 			bsp:bsp,
 			textures:tex_array,
+			centre:c,radius:r,
 		}
 	}
 
