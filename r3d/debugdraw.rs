@@ -216,6 +216,23 @@ pub fn draw_tri_iso_tex(
 		glEnd();
 	}
 }
+pub fn draw_tri_tex(
+		(v0,uv0):(&V3,V2), 
+		(v1,uv1):(&V3,V2),
+		(v2,uv2):(&V3,V2),
+		color:u32,scale:f32) {
+	unsafe {
+		glBegin(GL_TRIANGLES);
+		gl_color(&color);
+		gl_tex0(&uv0);
+		gl_vertex(&v3scale(v0,scale));
+		gl_tex0(&uv1);
+		gl_vertex(&v3scale(v1,scale));
+		gl_tex0(&uv2);
+		gl_vertex(&v3scale(v2,scale));
+		glEnd();
+	}
+}
 
 pub unsafe fn draw_init() {	
 	dump!();

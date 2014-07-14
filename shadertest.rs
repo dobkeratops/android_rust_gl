@@ -1,7 +1,12 @@
 #![macro_escape]
 use r3d::*;
+use bsp::*;
+use bsprender::*;
 
-pub struct App;
+pub struct App {
+	bsp:Option<Box<Blob<BspHeader>>>,
+	bsprender:Option<Box<BspRender>>,
+}
 struct	RMesh 
 {
 	vertex_size:GLsizei,
@@ -538,11 +543,11 @@ impl RMesh {
 static mut g_angle:f32=0.0f32;
 static mut g_frame:int=0;
 
-static g_num_torus:int = 256;
+static g_num_torus:int = 128;
 /// render a load of meshes in a lissajous curve
 
 #[no_mangle]
-pub extern "C" fn	app_render(_:&mut App) 
+pub extern "C" fn	app_render(app:&mut App) 
 {
 	//logw("render noswap");
 
@@ -562,6 +567,8 @@ pub extern "C" fn	app_render(_:&mut App)
 		glEnable(GL_CULL_FACE);
 		let matI = matrix::identity();
 		let matP = matrix::projection_frustum(-0.5f32,0.5f32,-0.5f32,0.5f32, 90.0f32, 1.0f32, 0.5f32,5.0f32);
+		gl_matrix_projection(&matP);
+
 
 		let pi=3.14159265f32;
 		let tau=pi*2.0f32;
@@ -582,6 +589,7 @@ pub extern "C" fn	app_render(_:&mut App)
 		let da4=tau*0.153f32*sda;
 		let da5=tau*0.1621f32*sda;
 
+		// render spinning tori
 		for i in range(0,g_num_torus) {
 
 			let matT = matrix::translate_xyz(
@@ -617,6 +625,22 @@ pub extern "C" fn	app_render(_:&mut App)
 				draw_cross(0.2f32);
 			}
 		}
+
+		// render bsp level
+		match app.bsprender {
+			Some(ref x)=>{
+				glUseProgram(0);
+				let rot_x = matrix::rotate_x(a0);
+				let rot_y = matrix::rotate_x(a1*0.245f32);
+				let rot_xy=rot_x.mul_matrix(&rot_y);
+				let trans=matrix::translate(&Vec4(0.0f32,0.0f32,-1.0f32,1.0f32));
+				let rt=trans*rot_xy;
+				gl_matrix_modelview(&rt);
+				x.render();
+			}
+			None=>{}
+		}
+
 
 		g_frame+=1;
 	}
@@ -659,13 +683,18 @@ fn	create_textures() {
 static mut g_resources_init:bool=false;
 
 #[no_mangle]
-pub extern "C" fn app_display_create(_:&mut App) {
+pub extern "C" fn app_display_create(app:&mut App) {
 	unsafe {
 		logi!("shadertest Create Resources \n");
 		create_shaders();
 		create_textures();
 		g_grid_mesh = RMesh::new_torus((16,16)); //new GridMesh(16,16);
 		g_resources_init=true;
+		let bsp:Option<Box<Blob<BspHeader>>> =app.bsp.take();
+		if bsp.is_some() {
+			app.bsprender=Some(box BspRender::new(bsp.unwrap()));
+			
+		}
 	}
 }
 #[no_mangle]
@@ -682,7 +711,10 @@ pub extern "C" fn app_destroy(_:Box<App>) {
 
 #[no_mangle]
 pub extern "C" fn app_create(argc:c_int, argv:*const *const c_char, w:c_int,h:c_int)->Box<App> {
-	box App
+	box App{
+		bsp: Some(box Blob::<BspHeader>::read(&Path::new("data/e1m1.bsp"))),
+		bsprender:None
+	}
 }
 
 

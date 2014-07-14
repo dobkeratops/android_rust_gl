@@ -24,6 +24,7 @@ use r3d::*;
 pub mod r3d;
 pub mod shadertest;
 pub mod bsp;
+pub mod bsprender;
 
 // framework can be: Android, Glut, (iOS,.o.)
 

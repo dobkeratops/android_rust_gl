@@ -25,7 +25,6 @@ pub fn log_print(i:int, s:&str){std::io::println(s);}
 #[path="../r3d/mod.rs"]
 mod r3d;
 
-
 #[cfg(testbed)]
 pub fn main()
 {
@@ -61,7 +60,7 @@ pub fn main()
 	}
 }
 
-struct Blob<HEADER> {
+pub struct Blob<HEADER> {
 	data:Vec<u8>,
 }
 
@@ -73,9 +72,9 @@ impl<T> Deref<T> for Blob<T> {
 }
 
 impl<T> Blob<T> {
-	fn num_bytes(&self) -> uint { self.data.len() }
+	pub fn num_bytes(&self) -> uint { self.data.len() }
 	
-	fn read(path:&Path)->Blob<T> {
+	pub fn read(path:&Path)->Blob<T> {
 		let data=
 			match io::File::open(path).read_to_end() {
 				Ok(data)=>{
@@ -121,36 +120,36 @@ pub type BspDEntry<T> =DEntry<BspHeader,T>;
 
 #[repr(C)]
 pub struct BspHeader {
-	version:u32,
-	entities:BspDEntry<Entity>,
-	planes:BspDEntry<Plane>,
+	pub version:u32,
+	pub entities:BspDEntry<Entity>,
+	pub planes:BspDEntry<Plane>,
 
-	miptex:BspDEntry<MipHeader>,
-	vertices:BspDEntry<BspVec3>,
+	pub miptex:BspDEntry<MipHeader>,
+	pub vertices:BspDEntry<BspVec3>,
 
-	visibility:BspDEntry<VisiList>,
-	nodes:BspDEntry<BspNode>,
+	pub visibility:BspDEntry<VisiList>,
+	pub nodes:BspDEntry<BspNode>,
 
-	texinfo:BspDEntry<TexInfo>,
+	pub texinfo:BspDEntry<TexInfo>,
 
-	faces:BspDEntry<Face>,
+	pub faces:BspDEntry<Face>,
 
-	lightmaps:BspDEntry<LightMap>,
-	clipnodes:BspDEntry<ClipNode>,
+	pub lightmaps:BspDEntry<LightMap>,
+	pub clipnodes:BspDEntry<ClipNode>,
 
-	leafs:BspDEntry<BspLeaf>,
+	pub leafs:BspDEntry<BspLeaf>,
 
-	marksurfaces:BspDEntry<i16>, //? no
-	edges:BspDEntry<Edge>,
+	pub marksurfaces:BspDEntry<i16>, //? no
+	pub edges:BspDEntry<Edge>,
 
-	surfedges:BspDEntry<i32>, // ? no
-	models:BspDEntry<Model>,
+	pub surfedges:BspDEntry<i32>, // ? no
+	pub models:BspDEntry<Model>,
 }
 macro_rules! get {
 	($obj:ident . $field:ident [ $id:expr ] )=>($obj . $field . get( $obj , $id as uint ))
 }
 impl BspHeader {
-	fn dump_vertices(&self) {	
+	pub fn dump_vertices(&self) {	
 		println!("vertices:{}(",self.vertices.len());
 		let mut i:uint=0;
 		let vtlen=self.vertices.len();
@@ -165,7 +164,7 @@ impl BspHeader {
 		println!("vertices:)");
 	
 	}
-	fn dump(&self) {
+	pub fn dump(&self) {
 		println!("ptrs: {:p}\t{:p}\t{:p}",self, &self.entities, &self.planes);
 		println!("id: {}", self.version);
 		println!("entities: {}{}", self.entities.offset, self.entities.size);
@@ -180,7 +179,7 @@ impl BspHeader {
 		self.dump_vertices();
 	}
 	// some convinient accessors. - TODO autogenerate from a macro
-	fn visit_triangles<'a,'b,R>(
+	pub fn visit_triangles<'a,'b,R>(
 			&'a self,
 			fn_apply_to_tri:
 				&mut |	tri_indices:(uint,uint,uint),
@@ -225,19 +224,19 @@ impl BspHeader {
 		}
 		return_val
 	}
-	fn visit_faces<'a>(&'a self, f:&mut |i:uint, f:&Face |:'a) {
+	pub fn visit_faces<'a>(&'a self, f:&mut |i:uint, f:&Face |:'a) {
 		for i in range(0, self.faces.len()) {
 			(*f)(i, get!{self.faces[i]} );
 		}
 	}
 
-	fn get_used_textures(&self)->HashSet<uint> {
+	pub fn get_used_textures(&self)->HashSet<uint> {
 		let mut used_tx= HashSet::<uint>::new();
 		self.visit_faces( &mut |i:uint,face:&Face|{used_tx.insert(face.texinfo as uint);});
 		used_tx
 	}
 
-	fn get_texture<'a>(&'a self, i:uint)->&'a MipTex {
+	pub fn get_texture<'a>(&'a self, i:uint)->&'a MipTex {
 		let txh=self.miptex.get(self,0);
 		let tx = unsafe {&*(
 			(txh as *const _ as *const u8).offset(*txh.miptex_offset.unsafe_ref(i as uint) as int) as *const MipTex
@@ -245,7 +244,7 @@ impl BspHeader {
 		tx
 	}
 
-	fn visit_textures<'a>(&'a self, mut tex_fn:&mut|i:uint,tx:&MipTex|:'a) {
+	pub fn visit_textures<'a>(&'a self, mut tex_fn:&mut|i:uint,tx:&MipTex|:'a) {
 		println!("visit textures self={:p}",&self);
 		let txh =self.miptex.get(self,0);
 		println!("visit textures txh={:p}",txh);
@@ -304,17 +303,17 @@ pub type Point3s=(i16,i16,i16);
 pub type BBox=(Point3s,Point3s);
 pub struct Entity(u8);
 pub struct Plane {
-	normal:BspVec3,
-	dist:f32,
-	plane_type:u32	// 0,1,2 = axial planes x,y,z; 3,4,5 = x,y,z predominant..
+	pub normal:BspVec3,
+	pub dist:f32,
+	pub plane_type:u32	// 0,1,2 = axial planes x,y,z; 3,4,5 = x,y,z predominant..
 }
 pub struct MipTex {
-	name:[c_char,..16],
-	width:u32, height:u32, offset1:u32, offset2:u32, offset4:u32, offset8:u32
+	pub name:[c_char,..16],
+	pub width:u32, pub height:u32, pub offset1:u32, pub offset2:u32, pub offset4:u32, pub offset8:u32
 }
 pub struct MipHeader {
-	numtex:u32, 
-	miptex_offset:[u32,..0]	// actual size is..
+	pub numtex:u32, 
+	pub miptex_offset:[u32,..0]	// actual size is..
 }
 impl MipHeader {
 	pub unsafe fn tex_offsets(&self)->*const u32 {
@@ -354,29 +353,29 @@ impl BspNode {
 }
 
 pub struct TexInfo {
-	axis_s:BspVec3, ofs_s:f32,
-	axis_t:BspVec3, ofs_t:f32,
-	miptex:i32,
-	flags:i32
+	pub axis_s:BspVec3, pub ofs_s:f32,
+	pub axis_t:BspVec3, pub ofs_t:f32,
+	pub miptex:i32,
+	pub flags:i32
 }
 pub struct Faces(u8);
 pub struct LightMap(u8); //{ 	texels:[u8]} ??
 pub struct ClipNode {
-	planenum:u32,
-	front:u16, back:u16,
+	pub planenum:u32,
+	pub front:u16, pub back:u16,
 }
 pub struct BspLeaf {
-	contents:u32, 
-	visofs:u32, 
-	min:Point3s,
-	max:Point3s,
-	firstmarksurface:u16,
-	nummarksurfaces:u16,
-	ambient_level:[u8,..AmbientNum]
+	pub contents:u32, 
+	pub visofs:u32, 
+	pub min:Point3s,
+	pub max:Point3s,
+	pub firstmarksurface:u16,
+	pub nummarksurfaces:u16,
+	pub ambient_level:[u8,..AmbientNum]
 }
 
 pub struct Edge {
-	vertex0:u16,vertex1:u16
+	pub vertex0:u16,pub vertex1:u16
 }
 
 enum Max{
@@ -388,24 +387,24 @@ enum Ambient {
 }
 
 pub struct Model {
-	bound:BBox,
-	origin:BspVec3,
-	headnode:[i32,..MaxMapHulls],
-	visileafs:i32,
-	firstface:i32,
-	numfaces:i32
+	pub bound:BBox,
+	pub origin:BspVec3,
+	pub headnode:[i32,..MaxMapHulls],
+	pub visileafs:i32,
+	pub firstface:i32,
+	pub numfaces:i32
 	
 }
 pub struct Face {
-	plane:u16,
-	side:u16,
-	firstedge:i32,
-	num_edges:u16,
-	texinfo:u16,
+	pub plane:u16,
+	pub side:u16,
+	pub firstedge:i32,
+	pub num_edges:u16,
+	pub texinfo:u16,
 //	typelight:u8,
 //	baselight:u8,
-	light:[u8,..2],
-	lightmap_ofs:i32, // [styles*sursize] samples..
+	pub light:[u8,..2],
+	pub lightmap_ofs:i32, // [styles*sursize] samples..
 }
 
 /// return a reference to a different type at a byte offset from the given base object reference
@@ -424,7 +423,7 @@ unsafe fn byte_ofs<'a,FROM,TO=u8,I:Int=int>(base:*const FROM, ofs:I)->*const TO 
 static g_palette:&'static [u8]=include_bin!("palette.lmp");
 
 impl BspHeader {
-	fn get_texture_image<'a>(&'a self, i:uint)->(&'a MipTex, Vec<u32>) {
+	pub fn get_texture_image<'a>(&'a self, i:uint)->(&'a MipTex, Vec<u32>) {
 		unsafe {
 			let tx=self.get_texture(i);
 			let mip0:*const u8=byte_ofs_ptr(tx, tx.offset1);
