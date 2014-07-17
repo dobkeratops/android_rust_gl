@@ -11,12 +11,12 @@ pub struct App {
 }
 struct	RMesh 
 {
+//	bounds:Bounds,
 	vertex_size:GLsizei,
 	vbo:GLuint,
 	ibo:GLuint,
 	num_vertices:GLuint,num_indices:GLuint
 }
-
 
 
 struct	VertexAttr {
@@ -269,7 +269,7 @@ pub extern "C" fn	app_render(app:&mut App)
 			a0+=da0;a1+=da1;a2+=da2;a3+=da3;a4+=da4;a5+=da5;
 
 			if (i & 15) == 0{
-				draw_cross(0.2f32);
+				debugdraw::draw_cross(0.2f32);
 			}
 		}
 
@@ -292,7 +292,7 @@ pub extern "C" fn	app_render(app:&mut App)
 		g_frame+=1;
 	}
 }
-
+// hidef framebuffer: 1920x1080x 2mbx(rgba x z32)= 16mb;  
 
 fn	create_textures() {
 //	static_assert(sizeof(GLuint)==sizeof(int));
@@ -304,8 +304,6 @@ fn	create_textures() {
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR  as GLint);
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT  as GLint);
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT  as GLint);
-
-
 
 		let	(usize,vsize)=(256,256);
 		let buffer = Vec::<u32>::from_fn(usize*vsize,|index|{

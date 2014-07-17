@@ -248,7 +248,7 @@ pub fn create_shader_program(ps:PixelShader,vs:VertexShader,f_bind_attribs:|p:Sh
 
 	logi!("linking verteshader{:?}, pixelshader{:?} to program{:?}\n", vs, ps, prog);
 		f_bind_attribs(prog);
-		glLinkProgram(prog);
+ 		glLinkProgram(prog);
 		let x=glGetAttribLocation(prog,c_str("a_color"));
 		logi!("write,read attrib location in prog {:?} a_color={:?}", prog, x);
 

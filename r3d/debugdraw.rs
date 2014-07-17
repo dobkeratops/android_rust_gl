@@ -95,17 +95,22 @@ pub fn draw_line<V:GlVertex,C:GlColor>(a:&V,b:&V, color:&C) {
 		gl_vertex(b);
 	}
 }
-pub fn draw_line_vec4(a:&Vec4<f32>,b:&Vec4<f32>, rgba:u32) {
-	let color=rgba.unpack_8888();
-	unsafe {
-		glBegin(GL_LINES);
-		gl_color(&color);
-		glNormal3f(-1.0,-1.0,-1.0);
-		gl_vertex(a);
-		gl_color(&color);
-		glNormal3f(-1.0,-1.0,-1.0);
-		gl_vertex(b);
+
+pub fn draw_axes_sized(a:&Matrix4,f:f32) {
+	draw_line(a.pos(), &(a.pos()+a.ax()*f), &0xff0000ffu32);
+	draw_line(a.pos(), &(a.pos()+a.ay()*f), &0xff00ff00u32);
+	draw_line(a.pos(), &(a.pos()+a.az()*f), &0xffff0000u32);
+}
+pub fn draw_oobb<V:VecMath,C:GlColor>(m:&Matrix4<V>, sz:&Vec3, c:&C) {
+	
+	let vertices=super::geom::cuboid_vertices(m,sz);
+
+	for edge in super::geom::g_cuboid_edges.iter() {
+		draw_line(&vertices[edge[0]],&vertices[edge[1]],c);
 	}
+}
+pub fn draw_aabb<V:VecMath,C:GlColor>(a:&V,b:&V,c:&C) {
+	
 }
 
 
@@ -148,6 +153,7 @@ pub fn	draw_image(size:(u32,u32),image:&Vec<u32>, pos:(f32,f32)) {
 }
 
 pub fn get_format(bytes_per_pixel:u32, alpha_bits:u32)->(GLenum,GLenum) {
+
 	match (bytes_per_pixel,alpha_bits) {
 		(4,_) => (GL_RGBA,GL_UNSIGNED_BYTE),
 		(3,0) => (GL_RGB,GL_UNSIGNED_BYTE),
@@ -285,8 +291,6 @@ pub fn random_color3(a:uint,b:uint,c:uint)->u32 {
 pub fn random_color(a:uint)->u32 {
 	(a^(a<<3)^(a<<8)*(a<<2)^(a<<19)^(a<<22)*(a<<13) )as u32
 }
-
-
 
 
 

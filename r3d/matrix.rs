@@ -1,3 +1,4 @@
+pub use super::vectypes::*;
 pub use super::vecmath::*;
 pub use std::cmp::*;
 
@@ -33,7 +34,14 @@ struct RotateX<T>(T);
 struct RotateY<T>(T);
 struct RotateZ<T>(T);
 
-
+pub trait Pos<V=Vec3> {
+	fn pos<'a>(&'a self)->&'a V;
+}
+pub trait Axes<V=Vec3> {
+	fn ax<'a>(&'a self)->&'a V;
+	fn ay<'a>(&'a self)->&'a V;
+	fn az<'a>(&'a self)->&'a V;
+}
 
 pub trait Transpose<OUT> {
 	fn transpose(&self)->OUT;
@@ -43,36 +51,37 @@ impl<V> Matrix2<V> {
 	pub fn ay<'a>(&'a self)->&'a V { let Matrix2(_,ref r)=*self; r}
 }
 
-impl<V> Matrix3<V> {
-	pub fn ax<'a>(&'a self)->&'a V { let Matrix3(ref r,_,_)=*self; r}
-	pub fn ay<'a>(&'a self)->&'a V { let Matrix3(_,ref r,_)=*self; r}
-	pub fn az<'a>(&'a self)->&'a V { let Matrix3(_,_,ref r)=*self; r}
+impl<'a, V> Axes<V> for  Matrix3<V> {
+	fn ax<'a>(&'a self)->&'a V { let Matrix3(ref r,_,_)=*self; r}
+	fn ay<'a>(&'a self)->&'a V { let Matrix3(_,ref r,_)=*self; r}
+	fn az<'a>(&'a self)->&'a V { let Matrix3(_,_,ref r)=*self; r}
 }
 // Accessor for axes, by value: may be efficeint to construct axes simultaneously.
 // individual acessors may be overriden if its' convenient
-pub trait Axes<V> {
+pub trait ToAxes<V> {
 	fn axis_x(&self)->V {let (x,_,_)=self.axes(); x}
 	fn axis_y(&self)->V {let (_,y,_)=self.axes(); y}
 	fn axis_z(&self)->V {let (_,_,z)=self.axes(); z}
 	fn axes(&self)->(V,V,V);
 }
-impl<V:Clone> Axes<V> for Matrix4<V> {
+impl<V:Clone> ToAxes<V> for Matrix4<V> {
 	fn axes(&self)->(V,V,V) {
 		(self.ax().clone(),self.ay().clone(),self.az().clone())
 	}
 }
-pub trait Pos<V> {
-	fn pos<'a>(&'a self)->V;
+impl<V> Axes<V> for Matrix4<V> {
+	fn ax<'a>(&'a self)->&'a V { let Matrix4(ref r,_,_,_)=*self; r}
+	fn ay<'a>(&'a self)->&'a V { let Matrix4( _,ref r,_,_)=*self; r}
+	fn az<'a>(&'a self)->&'a V { let Matrix4( _,_,ref r,_)=*self; r}
 }
-impl<V:Clone> Pos<V> for Matrix4<V> {
-	fn pos(&self)->V { let Matrix4( _,_,_,ref r)=*self; r.clone()}
-}
+
 impl<V> Matrix4<V> {
-	pub fn ax<'a>(&'a self)->&'a V { let Matrix4(ref r,_,_,_)=*self; r}
-	pub fn ay<'a>(&'a self)->&'a V { let Matrix4( _,ref r,_,_)=*self; r}
-	pub fn az<'a>(&'a self)->&'a V { let Matrix4( _,_,ref r,_)=*self; r}
 	pub fn aw<'a>(&'a self)->&'a V { let Matrix4( _,_,_,ref r)=*self; r}
 }
+impl<V> Pos<V> for Matrix4<V> {
+	fn pos<'a>(&'a self)->&'a V { let Matrix4( _,_,_,ref r)=*self; r}
+}
+
 impl<T:Zero+One+Clone> Matrix4<Vec4<T>> {
 	pub fn from_mat33(mat33:&Matrix3<Vec3<T>>)->Matrix4<Vec4<T>> {
 		Matrix4::from_mat33_pos(mat33,&Vec4(zero(),zero(),zero(),one()))
@@ -172,10 +181,10 @@ impl<V:VecMath<T>,T:Float=f32> Matrix4<V> {
 	}
 	pub fn inv_mul_point(&self,pt:&V)->V{
 		let ofs=pt.sub(self.aw());
-		VecXYZ::xyz(ofs.dot(self.ax()),ofs.dot(self.ay()),ofs.dot(self.az()))
+		VecXYZ::from_xyz(ofs.dot(self.ax()),ofs.dot(self.ay()),ofs.dot(self.az()))
 	}
 	pub fn inv_mul_axis(&self,axis:&V)->V{
-		VecXYZ::xyz(axis.dot(self.ax()),axis.dot(self.ay()),axis.dot(self.az()))
+		VecXYZ::from_xyz(axis.dot(self.ax()),axis.dot(self.ay()),axis.dot(self.az()))
 	}
 	pub fn mul_vec3(&self,pt:&V)->V{
 		self.ax().scale(pt.x()).mad(self.ay(),pt.y()).mad(self.az(),pt.z())

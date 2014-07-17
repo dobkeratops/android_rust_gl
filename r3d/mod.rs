@@ -2,6 +2,7 @@
 use std::c_str;
 use libc::{c_char,c_int,c_void};
 
+pub use self::vectypes::*;
 pub use self::vecmath::*;
 pub use self::matrix::*;
 pub use self::formats::*;	
@@ -20,6 +21,7 @@ pub use self::array3d::*;
 
 pub mod macros;
 pub mod to;
+pub mod vectypes;
 pub mod vecmath;
 pub mod matrix;
 pub mod formats;

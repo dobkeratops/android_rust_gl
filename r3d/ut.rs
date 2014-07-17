@@ -62,6 +62,29 @@ pub unsafe fn c_str(s:&str)->*const c_char {
 	s.to_c_str().unwrap()
 }
 
+pub fn array8_from_fn<T:Copy>(f:|uint|->T)->[T,..8] {
+	unsafe {
+		let mut v=::std::mem::uninitialized::<[T,..8]>();
+		for i in range(0,8) { v[i]=f(i); } 
+		v
+	}
+}
+
+pub fn array4_from_fn<T:Copy>(f:|uint|->T)->[T,..4] {
+	unsafe {
+		let mut v=::std::mem::uninitialized::<[T,..4]>();
+		for i in range(0,4) { v[i]=f(i); } 
+		v
+	}
+}
+pub fn array16_from_fn<T:Copy>(f:|uint|->T)->[T,..16] {
+	unsafe {
+		let mut v=::std::mem::uninitialized::<[T,..16]>();
+		for i in range(0,16) { v[i]=f(i); } 
+		v
+	}
+}
+
 
 
 

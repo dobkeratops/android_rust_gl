@@ -95,7 +95,14 @@ impl Foo for (Baz,Foz) {
 		let &(ref a,ref b)=self;
 	}
 }
-
+/*
+// can rust be convinced?
+impl<T:Num> Add<[T,..3],[T,..3]> for [T,..3] {
+	fn add(&self,b:&[T,..3])->[T,..3] {
+		[self[0]+b[0],self[1]+b[1],self[2]+b[2]]
+	}
+}
+*/
 #[cfg(not(target_os = "android"))]
 pub fn main()
 {
@@ -114,6 +121,9 @@ pub fn main()
 	dump!(v1.xyzw());
 	let x=3.0f32; let y=2.0f32;
 	dump!(x%y);	
+	dump!(((1.0f32,2.0f32,3.0f32),4.0f32).to_vec4());
+	dump!((1.0f32,2.0f32,3.0f32).to_vec3());
+	//dump!([1,2,3]+[4,5,6])
 
 	unsafe {
 		let mut argc:c_int=0;

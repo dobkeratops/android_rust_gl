@@ -23,6 +23,12 @@ struct OOBB {
 	ext:Extents<Vec3f>,
 }
 
+struct Bounds {	// combined sphere & bounding-box.
+	centre:Vec3,
+	size:Vec3,
+	radius:f32
+}
+
 struct Triangle<V>{
 	v0:V, v1:V, v2:V
 }
@@ -84,4 +90,27 @@ pub fn triangle_extents<T:PartialOrd+Num+Clone,V:VecCmp<T>+Clone+Num>((v0,v1,v2)
 	ex.include(v2);
 	ex
 }
+
+pub fn cuboid_vertices<V1:VecMath,V2:XYZW>(mat:&Matrix4<V1>, size:&V2)->[V1,..8] {
+	let vx = mat.ax().scale(size.x());
+	let vy = mat.ay().scale(size.y());
+	let vz = mat.az().scale(size.z());
+
+	let v0 = mat.pos() .sub(&vx);
+	let v1 = mat.pos() .add(&vx);
+	let v00 = v0 -vy;
+	let v01 = v0 +vy;
+	let v10 =v1 - vy;
+	let v11 =v1 + vy;
+
+	[	v00 - vz,v00 + vz,
+		v01 - vz,v01 + vz,
+		v10 - vz,v10 + vz,
+		v11 - vz,v11 + vz]
+}
+
+pub static g_cuboid_edges:[[uint,..2],..12]=[
+	[0,1],[0,2],[1,3],[2,3],
+	[4,5],[4,6],[5,7],[6,7],
+	[0,4],[1,5],[2,6],[3,7]];
 

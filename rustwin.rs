@@ -231,10 +231,10 @@ fn special_key_to_mask(k:c_int)->i32 {
 	0
 }
 
-extern "C" fn tabletMotion(x: c_int,y: c_int) {
+extern "C" fn tablet_motion(x: c_int,y: c_int) {
 	println!("TabletMotion {}",(x,y));
 }
-extern "C" fn tabletButton(button:c_int,state:c_int,x:c_int,y:c_int) {
+extern "C" fn tablet_button(button:c_int,state:c_int,x:c_int,y:c_int) {
 	println!("TabletButton:{} pos {}",(button,state),(x,y));
 }
 extern "C" fn mouse(button:c_int,state:c_int,x:c_int,y:c_int) {
@@ -259,7 +259,7 @@ extern "C" fn motion(x:c_int,y:c_int){
 		push_event(MouseMotion(curr_win(), g_curr_buttons,(x,y)));
 	}
 }
-extern "C" fn passiveMotion(x:c_int,y:c_int){
+extern "C" fn passive_motion(x:c_int,y:c_int){
 	unsafe {
 		g_cursor=(x,y);
 		ev_println(format!("MousePos:{}",(x,y)));
@@ -274,7 +274,7 @@ extern "C" fn keyboard(k:c_uchar,x:c_int,y:c_int){
 		
 	}
 }
-extern "C" fn keyboardUp(k:c_uchar,x:c_int,y:c_int){
+extern "C" fn keyboard_up(k:c_uchar,x:c_int,y:c_int){
 	unsafe {
 		ev_println(format!("keyUp:{} at {}",k,(x,y)));
 		g_keys[k as uint]=false;
@@ -289,7 +289,7 @@ extern "C" fn special(k:c_int,x:c_int,y:c_int) {
 		push_event(KeyDown(curr_win(),k as Key_t,g_key_modifiers, (x,y)));
 	}
 }
-extern "C" fn specialUp(k:c_int,x:c_int,y:c_int) {
+extern "C" fn special_up(k:c_int,x:c_int,y:c_int) {
 	ev_println(format!("specialKeyUp:{} at {}",k,(x,y)));
 	// todo - translate special key into modifiers, thru glut enum
 	unsafe{
@@ -302,13 +302,13 @@ fn init_input() {
 	unsafe {
 		glutMouseFunc(mouse);
 		glutMotionFunc(motion);
-		glutPassiveMotionFunc(passiveMotion);
+		glutPassiveMotionFunc(passive_motion);
 		glutKeyboardFunc(keyboard);
-		glutKeyboardUpFunc(keyboardUp);
+		glutKeyboardUpFunc(keyboard_up);
 		glutSpecialFunc(special);
-		glutSpecialUpFunc(specialUp);
-		glutTabletMotionFunc(tabletMotion);
-		glutTabletButtonFunc(tabletButton);
+		glutSpecialUpFunc(special_up);
+		glutTabletMotionFunc(tablet_motion);
+		glutTabletButtonFunc(tablet_button);
 	}
 }
 
