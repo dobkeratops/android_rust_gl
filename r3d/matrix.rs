@@ -124,6 +124,9 @@ impl<T:Float, OUT, RHS:PreMulMat44<T,OUT> > Mul<RHS,OUT> for Matrix4<Vec4<T>> {
 impl<T:Float, OUT, RHS:PreMulMat33<T,OUT> > Mul<RHS,OUT> for Matrix3<Vec3<T>> {
 	fn mul(&self, rhs:&RHS)->OUT { rhs.pre_mul_mat33(self) } 
 }
+//impl<T:Float, V:VecMath<T>,OUT, RHS:PreMulMat4<V,OUT> > Mul<RHS,OUT> for Matrix4<V> {
+//	fn mul(&self, rhs:&RHS)->OUT { rhs.pre_mul_mat4(self) } 
+//}
 
 impl<T:Clone+Float> Transpose<Matrix4<Vec4<T>,Vec4<T>>> for Matrix4<Vec4<T>> {
 	fn transpose(&self)->Matrix4<Vec4<T>> {
@@ -173,11 +176,11 @@ impl<V:VecMath<T>,T:Float=f32> Matrix4<V> {
 	pub fn orthonormalize_zyx(self)->Matrix4<V> {
 		Matrix4::look_along(self.aw(),self.az(),self.ay())
 	}
-	pub fn mul_point(&self,pt:&Vec3<T>)->V{	// 'point'=x,y,z,1
+	pub fn mul_point(&self,pt:&V)->V{	// 'point'=x,y,z,1
 		self.aw().mad(self.ax(),pt.x()).mad(self.ay(),pt.y()).mad(self.az(),pt.z())
 	}
-	pub fn mul_axis(&self,pt:&Vec3<T>)->V{	// 'axis'=x,y,z,0
-		self.ax().scale(pt.x()).mad(self.ay(),pt.y()).mad(self.az(),pt.z())
+	pub fn mul_axis(&self,pt:&V)->V{	// 'axis'=x,y,z,0
+		self.mul_vec3(pt)
 	}
 	pub fn inv_mul_point(&self,pt:&V)->V{
 		let ofs=pt.sub(self.aw());
@@ -199,6 +202,15 @@ impl<V:VecMath<T>,T:Float=f32> Matrix4<V> {
 			self.mul_vec4(other.az()),
 			self.mul_vec4(other.aw()))
 	}
+	// matrix inverse with assumption of being orthonormalized.
+	pub fn inv_orthonormal(&self)->Matrix4<V> {
+		let ax=self.inv_mul_axis(self.ax());
+		let ay=self.inv_mul_axis(self.ay());
+		let az=self.inv_mul_axis(self.az());
+		let aw=self.inv_mul_point(self.aw());
+		Matrix4(ax,ay,az,aw)
+	}
+	// todo: full 
 }
 
 impl<T:Float> Matrix3<Vec3<T>> {
@@ -212,7 +224,6 @@ impl<T:Float> Matrix3<Vec3<T>> {
 		let ax:&Vec3<T>=self.ax();
 		let f=pt.x();
 		ax.mad(ax,f);
-//		self.ax().mad(self.ay(),pt.x());
 		self.ax().scale(pt.x()).mad(self.ay(),pt.y()).mad(self.az(),pt.z())
 	}
 	pub fn mul_matrix(&self,other:&Matrix3<Vec3<T>>)->Matrix3<Vec3<T>> {
@@ -263,16 +274,15 @@ pub fn projection<F:FloatMath=f32>(fov_radians:F, aspect:F, znear:F, zfar:F)->Ma
 	)
 }
 
-
-pub fn rotate_x<F:FloatMath>(a:F)->Matrix4<Vec4<F>> {
+pub fn rotate_x<F:FloatMath+Clone=f32>(a:F)->Matrix4<Vec4<F>> {
 	let (s,c)=a.sin_cos(); let one=one(); let zero=zero();
 	Matrix4(
-		Vec4(one,	zero,	zero,	zero),
-		Vec4(zero,	c,		s,	zero),
-		Vec4(zero,	-s,		c,	zero),
-		Vec4(zero,	zero,	zero,	one))
+		XYZW::from_xyzw(one,	zero,	zero,	zero),
+		XYZW::from_xyzw(zero,	c,		s,	zero),
+		XYZW::from_xyzw(zero,	-s,		c,	zero),
+		XYZW::from_xyzw(zero,	zero,	zero,	one))
 }
-pub fn rotate_y<F:FloatMath=f32>(a:F)->Matrix4<Vec4<F>> {
+pub fn rotate_y<F:FloatMath+Clone=f32>(a:F)->Matrix4<Vec4<F>> {
 	let (s,c)=a.sin_cos(); let one=one(); let zero=zero();
 	Matrix4(
 		Vec4(c,		zero,	s,	zero),
@@ -280,7 +290,7 @@ pub fn rotate_y<F:FloatMath=f32>(a:F)->Matrix4<Vec4<F>> {
 		Vec4(-s,		zero,	c,	zero),
 		Vec4(zero,	zero,	zero,	one))
 }
-pub fn rotate_z<F:FloatMath=f32>(a:F)->Matrix4<Vec4<F>> {
+pub fn rotate_z<F:FloatMath+Clone=f32>(a:F)->Matrix4<Vec4<F>> {
 	let (s,c)=a.sin_cos(); let one=one(); let zero=zero();
 	Matrix4(
 		Vec4(c,		s,	zero,	zero),
@@ -288,16 +298,16 @@ pub fn rotate_z<F:FloatMath=f32>(a:F)->Matrix4<Vec4<F>> {
 		Vec4(zero,	zero,	one,	zero),
 		Vec4(zero,	zero,	zero,	one))
 }
-pub fn rotate_xyz<V:XYZW<F>,F:FloatMath+Copy=f32>(r:&V)->Matrix4<Vec4<F>> {
+pub fn rotate_xyz<F:FloatMath+Clone=f32, V:XYZW<F>=Vec3<F>>(r:&V)->Matrix4<Vec4<F>> {
 	rotate_x(r.x())*rotate_y(r.y())*rotate_z(r.z())
 }
-pub fn rotate_xzy<V:XYZW<F>,F:FloatMath+Copy=f32>(r:&V)->Matrix4<Vec4<F>> {
+pub fn rotate_xzy<F:FloatMath+Clone=f32,V:VecMath<F>=Vec4<F>>(r:&V)->Matrix4<Vec4<F>> {
 	rotate_x(r.x())*rotate_z(r.z())*rotate_y(r.y())
 }
-pub fn rotate_zyx<V:XYZW<F>,F:FloatMath+Copy=f32>(r:&V)->Matrix4<Vec4<F>> {
+pub fn rotate_zyx<F:FloatMath+Clone=f32, V:VecMath<F>=Vec4<F>>(r:&V)->Matrix4<Vec4<F>> {
 	rotate_z(r.z())*rotate_y(r.y())*rotate_x(r.x())
 }
-pub fn rotate_yzx<V:XYZW<F>,F:FloatMath+Copy=f32>(r:&V)->Matrix4<Vec4<F>> {
+pub fn rotate_yzx<F:FloatMath+Clone=f32 , V:XYZW<F>=Vec4<F>>(r:&V)->Matrix4<Vec4<F>> {
 	rotate_y(r.y())*rotate_z(r.z())*rotate_x(r.x())
 }
 
@@ -408,6 +418,10 @@ impl<T:FloatMath> SRT<T> {
 }
 
 // combines vector operations with operations aware of a matrix..
+pub trait PreMulMat4<V,OUT> {
+	fn pre_mul_mat4(&self,mat:&Matrix4<V>)->OUT;
+}
+
 pub trait PreMulMat44<T,OUT> {
 	fn pre_mul_mat44(&self,mat:&Matrix4<Vec4<T>>)->OUT;
 }
@@ -432,6 +446,15 @@ impl<T:Float> PreMulMat44<T,Matrix4<Vec4<T>>> for Matrix4<Vec4<T>> {
 impl<T:Float> PreMulMat33<T,Matrix3<Vec3<T>>> for Matrix3<Vec3<T>> {
 	fn pre_mul_mat33(&self, mat:&Matrix3<Vec3<T>>)->Matrix3<Vec3<T>> {mat.mul_matrix(self)}
 }
+/*
+impl<T:Float,V:VecMath<T>> PreMulMat4<V,V> for V {
+	fn pre_mul_mat4(&self, mat:&Matrix4<V>)->V {mat.mul_vec4(self)}
+}
+
+impl<T:Float,V:VecMath<T>> PreMulMat4<V,Matrix4<V>> for Matrix4<V> {
+	fn pre_mul_mat4(&self, mat:&Matrix4<V>)->Matrix4<V> {mat.mul_matrix(self)}
+}
+*/
 
 /*
 impl<T:MyFloat,RHS,OUT> Mul<RHS,OUT> for Matrix4<Vec4<T>>    {

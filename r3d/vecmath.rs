@@ -108,8 +108,8 @@ pub trait XYZW<T:Zero+Clone=f32> {
 
 
 
-/// VecPermute relying on type associations created by VecXY VecXYZ VecXYZW
-pub trait VecPermute<T:Clone+One+Zero,V2:XYZW<T>, V3:XYZW<T>,V4:XYZW<T>> : XYZW<T> {
+/// VecPermute carries some type associations - the type should know about the 2,3,4 element versions
+pub trait VecPermute<T:Clone+One+Zero,V2:XYZW<T>=Self, V3:XYZW<T>=Self,V4:XYZW<T>=Self> : XYZW<T> {
 
 	fn xy(&self)->V2	{ XYZW::from_xy(self.x(),self.y())}
 	fn yx(&self)->V2	{ XYZW::from_xy(self.y(),self.x())}
@@ -227,6 +227,8 @@ impl<T:Rem<T,T>+Clone+Zero> Rem<Vec4<T>,Vec4<T>> for Vec4<T> {
 	}
 }
 
+
+
 impl<T:Neg<T>+Clone+Zero> Neg<Vec2<T>> for Vec2<T> {
 	fn neg(&self)->Vec2<T> { Vec2(-self.x(),-self.y()) }
 }
@@ -251,8 +253,6 @@ impl<F:Mul<F,F>+Clone,OUT, RHS:PreMulVec4<F,OUT>> Mul<RHS,OUT> for Vec4<F> {
 pub trait Sum<T> {
 	fn sum(&self)->T;
 }
-
-
 
 pub trait PreMulVec3<T,RESULT> {
 	fn pre_mul_vec3(&self,&Vec3<T>)->RESULT;
@@ -331,6 +331,9 @@ pub trait VecMath<T:Float=f32>:Clone+XYZW<T>+Num+VecCmp<T>+Sum<T> {
                 2=>XYZW::from_xyzw(zero::<T>(),zero(),one(),zero()),
                 _=>XYZW::from_xyzw(zero::<T>(),zero::<T>(),zero::<T>(),one::<T>())}
 	}
+//	fn from_xyzw(x:T,y:T,z:T,w:T)->Self {
+//		XYZW::<T>::from_xyzw(x,y,z,w)
+//	}
 	fn longest_axis(&self)->uint{ self.mul(self).max_elem_index()}
 
 	fn cross(&self,b:&Self)->Self	{XYZW::<T>::from_xyz(self.y()*b.z()-self.z()*b.y(),self.z()*b.x()-self.x()*b.z(),self.x()*b.y()-self.y()*b.x())}
