@@ -357,9 +357,9 @@ impl<T:PartialEq+Clone+Zero> PartialEq for Vec4<T> {
 }
 
 // todo: satisfy if Num+Clone only
-impl<T:Num+Clone+One+Float> Num for Vec2<T> {}
-impl<T:Num+Clone+One+Float> Num for Vec3<T> {}
-impl<T:Num+Clone+One+Float> Num for Vec4<T> {}
+impl<T:Num+Clone+Float> Num for Vec2<T> {}
+impl<T:Num+Clone+Float> Num for Vec3<T> {}
+impl<T:Num+Clone+Float> Num for Vec4<T> {}
 
 // vector maths gathers primitive operations and implements more in terms of them
 pub trait VecMath<T:Float=f32>:Clone+XYZW<T>+VecXYZ<T>+Num+VecConsts<T>+VecCmp<T>+Scale<T>+Cross<T>+Sum<T> {
@@ -409,6 +409,7 @@ pub fn vsub_norm<T:Float,V:VecMath<T>>(a:&V,b:&V)->V { a.sub(b).normalize() }
 pub fn vcross<T:Float,V:VecMath<T>>(a:&V,b:&V)->V { a.cross(b)}
 pub fn vcross_norm<T:Float,V:VecMath<T>>(a:&V,b:&V)->V { a.cross(b).normalize()}
 pub fn vpara_perp<T:Float,V:VecMath<T>>(a:&V,b:&V)->(V,V) { a.para_perp(b)}
+
 
 //  wtf this does,t work now
 impl<T:Add<T,T>+Clone+Zero+One> Add<Vec2<T>,Vec2<T>> for Vec2<T> {
@@ -564,7 +565,7 @@ impl<T:Float> Cross<T> for Vec3<T> {
 	fn cross(&self,b:&Vec3<T>)->Vec3<T>	{Vec3(self.y()*b.z()-self.z()*b.y(),self.z()*b.x()-self.x()*b.z(),self.x()*b.y()-self.y()*b.x())}
 
 //	fn cross_to_vec3(&self,b:&Vec3<T>)->Vec3<T>	{self.cross(b)}
-	//fpub fn axisScale(i:int,f:VScalar)->Vec3 { VecConsts::axis(i).scale(f)} 
+// pub fn axisScale(i:int,f:VScalar)->Vec3 { VecConsts::axis(i).scale(f)} 
 }
 impl<T>  Vec3<T> {
 	pub fn ref0<'a>(&'a self)->&'a T { let Vec3(ref x,ref y,ref z)=*self; x}
@@ -577,7 +578,6 @@ impl<T:Clone+Zero> XYZW<T> for Vec3<T> {
 	fn z(&self)->T	{ self.ref2().clone()}
 	fn w(&self)->T	{ zero()}
 }
-
 
 
 impl<T:Clone+Zero> Zero for Vec4<T> {

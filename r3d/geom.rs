@@ -3,6 +3,12 @@ use super::ut::*;
 use super::vecmath::*;
 use super::matrix::*;
 
+#[deriving(Clone,Show)]
+pub struct Extents<T=Vec3<f32>> {  
+	min:T,max:T	
+}
+pub type AABB=Extents<Vec3<f32>>;
+
 struct Sphere<T=f32> {
 	pos:Vec3<T>,
 	radius:T
@@ -29,6 +35,20 @@ struct Bounds {	// combined sphere & bounding-box.
 	radius:f32
 }
 
+trait ToAABB {
+	fn to_aabb(&self)->AABB;
+}
+fn pos_radius_to_aabb(pos:&Vec3, r:f32)->Extents{
+	let size=Vec3::<f32>::splat(r);
+	Extents{min:pos-size, max:pos+size}
+}
+
+impl ToAABB for Sphere {
+	fn to_aabb(&self)->AABB {
+		pos_radius_to_aabb(&self.pos, self.radius)
+	}
+}
+
 struct Triangle<V>{
 	v0:V, v1:V, v2:V
 }
@@ -43,15 +63,13 @@ impl<T:Float> Plane<T> {
 	}
 }
 
+
 struct Contact {
 	pos:Vec3,
 	norm:Vec3
 }
 
-#[deriving(Clone,Show)]
-pub struct Extents<T=Vec3<f32>> {  
-	min:T,max:T	
-}
+
 
 impl<T:Clone> Extents<T> {
 	pub fn init(v:&T)->Extents<T>{ Extents::<T>{min:v.clone(),max:v.clone()}}

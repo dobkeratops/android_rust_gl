@@ -20,7 +20,6 @@ use r3d::vecmath::*;
 #[cfg(testbed)]
 pub fn log_print(i:int, s:&str){std::io::println(s);}
 
-
 // compile opt  --cfg testbed
 #[cfg(testbed)]
 #[path="../r3d/mod.rs"]
@@ -60,6 +59,7 @@ pub fn main()
 		draw_win_loop();
 	}
 }
+
 
 pub struct Blob<HEADER> {
 	data:Vec<u8>,

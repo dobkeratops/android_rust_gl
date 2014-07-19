@@ -263,7 +263,8 @@ pub fn projection<F:FloatMath=f32>(fov_radians:F, aspect:F, znear:F, zfar:F)->Ma
 	)
 }
 
-pub fn rotate_x<F:FloatMath=f32>(a:F)->Matrix4<Vec4<F>> {
+
+pub fn rotate_x<F:FloatMath>(a:F)->Matrix4<Vec4<F>> {
 	let (s,c)=a.sin_cos(); let one=one(); let zero=zero();
 	Matrix4(
 		Vec4(one,	zero,	zero,	zero),
