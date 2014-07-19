@@ -38,9 +38,6 @@ pub fn fmax<T:PartialOrd>(a:T,b:T)->T { if a>b{a}else{b} }
 // TODO: Packed normal 10:10:10
 // TODO: 565 colors
 
-impl<T:Clone> Vec2<T> {
-	pub fn splat(v:T)->Vec2<T> { Vec2(v.clone(),v.clone())}
-}
 
 impl<T:Clone+Num> Vec2<T> {
 	pub fn cross_to_scalar(&self,other:&Vec2<T>)->T {self.x()*other.y()-self.y()*other.x()}
@@ -52,7 +49,6 @@ impl<T:Clone+Num> Vec2<T> {
 	}
 }
 impl<T:Clone+Zero+One> Vec3<T> {
-	pub fn splat(v:T)->Vec3<T> { Vec3(v.clone(),v.clone(),v.clone())}
 
 	pub fn from_vec2(xy:&Vec2<T>,z:T)->Vec3<T> {Vec3::<T>(xy.x().clone(),xy.y().clone(),z.clone())}
 	pub fn map<Y>(&self, f:|T|->Y)->Vec3<Y>{
@@ -74,7 +70,6 @@ impl<T:Clone+Zero+One> Vec3<T> {
 
 }
 impl<T:Clone+Zero+One> Vec4<T> {
-	pub fn splat(v:T)->Vec4<T> { Vec4(v.clone(),v.clone(),v.clone(),v.clone())}	// todo -move to elsewhere
 
 	pub fn from_vec3(xyz:&Vec3<T>,w:T)->Vec4<T> {Vec4(xyz.x(),xyz.y(),xyz.z(),w.clone())}
 	pub fn from_vec2(xy:&Vec2<T>,z:T,w:T)->Vec4<T> {Vec4(xy.x(),xy.y(),z.clone(),w.clone())}
@@ -100,85 +95,62 @@ impl<T:Clone+Zero+One> Vec4<T> {
 	}
 }
 
-pub trait XYZW<T:Zero=f32> {
+pub trait XYZW<T:Zero+Clone=f32> {
 	fn x(&self)->T;
 	fn y(&self)->T;
 	fn z(&self)->T;
 	fn w(&self)->T;
-//	fn from_xyzw(x:T,y:T,z:T,w:T)->Self;
-//	fn from_xyz(x:T,y:T,z:T)->Self { XYZW::<T>::from_xyzw(x,y,z,zero::<T>()) }
-//	fn from_xy(x:T,y:T)->Self { XYZW::<T>::from_xyzw(x,y,zero::<T>(),zero::<T>()) }
+	fn from_xyzw(x:T,y:T,z:T,w:T)->Self;
+	fn from_xyz(x:T,y:T,z:T)->Self { XYZW::<T>::from_xyzw(x,y,z,zero::<T>()) }
+	fn from_xy(x:T,y:T)->Self { XYZW::<T>::from_xyzw(x,y,zero::<T>(),zero::<T>()) }
+	fn splat(f:T)->Self { XYZW::<T>::from_xyzw(f.clone(),f.clone(),f.clone(),f.clone()) }
 }
 
-pub trait FromXY<T> : XYZW<T>{ fn from_xy(x:T,y:T)->Self; }
-pub trait FromXYZ<T> : XYZW<T>{ fn from_xyz(x:T,y:T,z:T)->Self; }
-pub trait FromXYZW<T> : XYZW<T>{ fn from_xyzw(x:T,y:T,z:T,w:T)->Self; }
-
-impl<T:Clone+Zero> FromXY<T> for Vec2<T> { fn from_xy(x:T,y:T)->Vec2<T>{Vec2::<T>(x,y)} }
-impl<T:Clone+Zero> FromXYZ<T> for Vec3<T> { fn from_xyz(x:T,y:T,z:T)->Vec3<T>{Vec3::<T>(x,y,z)} }
-impl<T:Clone+Zero> FromXYZW<T> for Vec4<T> { fn from_xyzw(x:T,y:T,z:T,w:T)->Vec4<T>{Vec4::<T>(x,y,z,w)} }
-
-impl<T:Clone+Zero> FromXYZW<T> for Vec2<T> { fn from_xyzw(x:T,y:T,z:T,w:T)->Vec2<T>{Vec2::<T>(x,y)} }
-impl<T:Clone+Zero> FromXYZW<T> for Vec3<T> { fn from_xyzw(x:T,y:T,z:T,w:T)->Vec3<T>{Vec3::<T>(x,y,z)} }
-
-impl<T:Clone+Zero> FromXYZ<T> for Vec2<T> { fn from_xyz(x:T,y:T,z:T)->Vec2<T>{Vec2::<T>(x,y)} }
-impl<T:Clone+Zero> FromXYZ<T> for Vec4<T> { fn from_xyz(x:T,y:T,z:T)->Vec4<T>{Vec4::<T>(x,y,z,zero())} }
-
-
-impl<T:Clone+Zero> FromXY<T> for (T,T) { fn from_xy(x:T,y:T)->(T,T){(x,y)} }
-impl<T:Clone+Zero> FromXYZ<T> for (T,T,T) { fn from_xyz(x:T,y:T,z:T)->(T,T,T){(x,y,z)} }
-impl<T:Clone+Zero> FromXYZW<T> for (T,T) { fn from_xyzw(x:T,y:T,z:T,w:T)->(T,T){(x,y)} }
-impl<T:Clone+Zero> FromXYZW<T> for (T,T,T) { fn from_xyzw(x:T,y:T,z:T,w:T)->(T,T,T){(x,y,z)} }
-impl<T:Clone+Zero> FromXYZW<T> for (T,T,T,T) { fn from_xyzw(x:T,y:T,z:T,w:T)->(T,T,T,T){(x,y,z,w)} }
-
-impl<T:Clone+Zero> FromXY<T> for [T,..2] { fn from_xy(x:T,y:T)->[T,..2]{[x,y]} }
-impl<T:Clone+Zero> FromXYZ<T> for [T,..3] { fn from_xyz(x:T,y:T,z:T)->[T,..3]{[x,y,z]} }
-impl<T:Clone+Zero> FromXYZW<T> for [T,..4] { fn from_xyzw(x:T,y:T,z:T,w:T)->[T,..4]{[x,y,z,w]} }
 
 
 /// VecPermute relying on type associations created by VecXY VecXYZ VecXYZW
-pub trait VecPermute<T:Clone+One+Zero,V2:FromXY<T>, V3:FromXYZ<T>,V4:FromXYZW<T>> : XYZW<T>+FromXYZW<T> {
+pub trait VecPermute<T:Clone+One+Zero,V2:XYZW<T>, V3:XYZW<T>,V4:XYZW<T>> : XYZW<T> {
 
 
-	fn xy(&self)->V2	{ FromXY::from_xy(self.x(),self.y())}
-	fn yx(&self)->V2	{ FromXY::from_xy(self.y(),self.x())}
-	fn xz(&self)->V2	{ FromXY::from_xy(self.x(),self.z())}
-	fn yz(&self)->V2	{ FromXY::from_xy(self.y(),self.z())}
+	fn xy(&self)->V2	{ XYZW::from_xy(self.x(),self.y())}
+	fn yx(&self)->V2	{ XYZW::from_xy(self.y(),self.x())}
+	fn xz(&self)->V2	{ XYZW::from_xy(self.x(),self.z())}
+	fn yz(&self)->V2	{ XYZW::from_xy(self.y(),self.z())}
 
-	fn xy01(&self)->V4	{ FromXYZW::from_xyzw(self.x(),self.y(),zero(),one())}
+	fn xy01(&self)->V4	{ XYZW::from_xyzw(self.x(),self.y(),zero(),one())}
 
-	fn xyz(&self)->V3	 {FromXYZ::from_xyz(self.x(),self.y(),self.z())}
-	fn xyz1(&self)->V4	{ FromXYZW::from_xyzw(self.x(),self.y(),self.z(),one())}	// vec3 to homogeneous point
-	fn xyz0(&self)->V4	{ FromXYZW::from_xyzw(self.x(),self.y(),self.z(),zero())}	// vec3 to homogeneous offset
-	fn xyzw(&self)->V4	{FromXYZW::from_xyzw(self.x(),self.y(),self.z(),self.w())}
+	fn xyz(&self)->V3	 { XYZW::from_xyz(self.x(),self.y(),self.z())}
+	fn xyz1(&self)->V4	{ XYZW::from_xyzw(self.x(),self.y(),self.z(),one())}	// vec3 to homogeneous point
+	fn xyz0(&self)->V4	{ XYZW::from_xyzw(self.x(),self.y(),self.z(),zero())}	// vec3 to homogeneous offset
+	fn xyzw(&self)->V4	{XYZW::from_xyzw(self.x(),self.y(),self.z(),self.w())}
 
 	// permutes useful for swapping rgb/bgr
-	fn zyx(&self)->V3	{ FromXYZ::from_xyz(self.z(),self.y(),self.x())}
-	fn zyx0(&self)->V4	{ FromXYZW::from_xyzw(self.z(),self.y(),self.x(),zero())}
-	fn zyx1(&self)->V4	{ FromXYZW::from_xyzw(self.z(),self.y(),self.x(),one())}
+	fn zyx(&self)->V3	{ XYZW::from_xyz(self.z(),self.y(),self.x())}
+	fn zyx0(&self)->V4	{ XYZW::from_xyzw(self.z(),self.y(),self.x(),zero())}
+	fn zyx1(&self)->V4	{ XYZW::from_xyzw(self.z(),self.y(),self.x(),one())}
 
 	// permutes for swapping Y or Z being up
-	fn xzy(&self)->V3	{ FromXYZ::from_xyz(self.x(),self.z(),self.y())}
-	fn xzy0(&self)->V4	{ FromXYZW::from_xyzw(self.x(),self.z(),self.y(),zero())}
-	fn xzy1(&self)->V4	{ FromXYZW::from_xyzw(self.x(),self.z(),self.y(),one())}
+	fn xzy(&self)->V3	{ XYZW::from_xyz(self.x(),self.z(),self.y())}
+	fn xzy0(&self)->V4	{ XYZW::from_xyzw(self.x(),self.z(),self.y(),zero())}
+	fn xzy1(&self)->V4	{ XYZW::from_xyzw(self.x(),self.z(),self.y(),one())}
 	// permutes for cross-product
 	// i  j   k
 	// x0 y0 z0
 	// x1 y1 z1
 
 	// x'=y0*z1 - z0*y1 ,  y'=z0*x1-x0*z1,  z'=x0*y1-y0*x1
-	fn yzx(&self)->V3 {FromXYZ::from_xyz(self.y(),self.z(),self.x())}
-	fn zxy(&self)->V3 {FromXYZ::from_xyz(self.z(),self.x(),self.y())}
-	fn yzxw(&self)->V4 {FromXYZW::from_xyzw(self.y(),self.z(),self.x(),self.w())}
-	fn zxyw(&self)->V4 {FromXYZW::from_xyzw(self.z(),self.x(),self.y(),self.w())}
-	fn yzx0(&self)->V4 {FromXYZW::from_xyzw(self.y(),self.z(),self.x(),zero())}
-	fn zxy0(&self)->V4 {FromXYZW::from_xyzw(self.z(),self.x(),self.y(),zero())}
+	fn yzx(&self)->V3 {XYZW::from_xyz(self.y(),self.z(),self.x())}
+	fn zxy(&self)->V3 {XYZW::from_xyz(self.z(),self.x(),self.y())}
+	fn yzxw(&self)->V4 {XYZW::from_xyzw(self.y(),self.z(),self.x(),self.w())}
+	fn zxyw(&self)->V4 {XYZW::from_xyzw(self.z(),self.x(),self.y(),self.w())}
+	fn yzx0(&self)->V4 {XYZW::from_xyzw(self.y(),self.z(),self.x(),zero())}
+	fn zxy0(&self)->V4 {XYZW::from_xyzw(self.z(),self.x(),self.y(),zero())}
 
 	// splats in permute syntax
-	fn xxxx(&self)->V4	{ FromXYZW::from_xyzw(self.x(),self.x(),self.x(),self.x())}
-	fn yyyy(&self)->V4	{ FromXYZW::from_xyzw(self.y(),self.y(),self.y(),self.y())}
-	fn zzzz(&self)->V4	{ FromXYZW::from_xyzw(self.z(),self.z(),self.z(),self.z())}
-	fn wwww(&self)->V4	{ FromXYZW::from_xyzw(self.w(),self.w(),self.w(),self.w())}
+	fn xxxx(&self)->V4	{ XYZW::from_xyzw(self.x(),self.x(),self.x(),self.x())}
+	fn yyyy(&self)->V4	{ XYZW::from_xyzw(self.y(),self.y(),self.y(),self.y())}
+	fn zzzz(&self)->V4	{ XYZW::from_xyzw(self.z(),self.z(),self.z(),self.z())}
+	fn wwww(&self)->V4	{ XYZW::from_xyzw(self.w(),self.w(),self.w(),self.w())}
 }
 
 
@@ -351,18 +323,18 @@ impl<T:Num+Clone+Float> Num for Vec3<T> {}
 impl<T:Num+Clone+Float> Num for Vec4<T> {}
 
 // vector maths gathers primitive operations and implements more in terms of them
-pub trait VecMath<T:Float=f32>:Clone+XYZW<T>+FromXYZ<T>+Num+VecCmp<T>+Sum<T>+FromXYZW<T> {
-	fn origin()->Self	{ FromXYZW::from_xyzw(zero::<T>(),zero::<T>(),zero::<T>(),one::<T>()) }
+pub trait VecMath<T:Float=f32>:Clone+XYZW<T>+Num+VecCmp<T>+Sum<T> {
+	fn origin()->Self	{ XYZW::from_xyzw(zero::<T>(),zero::<T>(),zero::<T>(),one::<T>()) }
 	fn axis(i:int)->Self{
-		match i{ 0=>FromXYZW::from_xyzw(one::<T>(),zero(),zero(),zero()),
-                1=>FromXYZW::from_xyzw(zero::<T>(),one(),zero(),zero()),
-                2=>FromXYZW::from_xyzw(zero::<T>(),zero(),one(),zero()),
-                _=>FromXYZW::from_xyzw(zero::<T>(),zero::<T>(),zero::<T>(),one::<T>())}
+		match i{ 0=>XYZW::from_xyzw(one::<T>(),zero(),zero(),zero()),
+                1=>XYZW::from_xyzw(zero::<T>(),one(),zero(),zero()),
+                2=>XYZW::from_xyzw(zero::<T>(),zero(),one(),zero()),
+                _=>XYZW::from_xyzw(zero::<T>(),zero::<T>(),zero::<T>(),one::<T>())}
 	}
 
-	fn cross(&self,b:&Self)->Self	{FromXYZ::<T>::from_xyz(self.y()*b.z()-self.z()*b.y(),self.z()*b.x()-self.x()*b.z(),self.x()*b.y()-self.y()*b.x())}
+	fn cross(&self,b:&Self)->Self	{XYZW::<T>::from_xyz(self.y()*b.z()-self.z()*b.y(),self.z()*b.x()-self.x()*b.z(),self.x()*b.y()-self.y()*b.x())}
 
-	fn scale(&self,f:T)->Self	{ FromXYZW::<T>::from_xyzw(self.x()*f,self.y()*f,self.z()*f,self.w()*f) }
+	fn scale(&self,f:T)->Self	{ XYZW::<T>::from_xyzw(self.x()*f,self.y()*f,self.z()*f,self.w()*f) }
 	fn dot(&self,b:&Self)->T	{self.mul(b).sum()}
 	fn para(&self,vaxis:&Self)->Self {  	let dotp=self.dot(vaxis); vaxis.scale(dotp) }
 
@@ -387,7 +359,7 @@ pub trait VecMath<T:Float=f32>:Clone+XYZW<T>+FromXYZ<T>+Num+VecCmp<T>+Sum<T>+Fro
 		(vpara.clone(),self.sub(&vpara))
 	}
 }
-impl<T:Float,V2:FromXY<T>,V3:FromXYZ<T>,V4:FromXYZW<T>, V:Clone+XYZW<T>+VecCmp<T>+FromXYZ<T>+Num+VecPermute<T,V2,V3,V4>+Mul<V,V>+Sum<T>> VecMath<T> for V {} 
+impl<T:Float,V2:XYZW<T>,V3:XYZW<T>,V4:XYZW<T>, V:Clone+XYZW<T>+VecCmp<T>+Num+VecPermute<T,V2,V3,V4>+Mul<V,V>+Sum<T>> VecMath<T> for V {} 
 
 //todo: HALF
 fn bilerp<F:Float,V:VecMath<F>>(((v00,v01),(v10,v11)):((V,V),(V,V)),(s,t):(F,F))->V{
@@ -479,6 +451,7 @@ impl<T:Clone+Zero> XYZW<T> for Vec2<T> {
 	fn y(&self)->T	{ self.ref1().clone()}
 	fn z(&self)->T	{ zero::<T>()}
 	fn w(&self)->T	{ zero::<T>()}
+	fn from_xyzw(x:T,y:T,_:T,_:T)->Vec2<T> { Vec2(x,y) }
 }
 
 impl<T:Clone+Zero> Zero for Vec3<T> {
@@ -544,6 +517,7 @@ impl<T:Clone+Zero> XYZW<T> for Vec3<T> {
 	fn y(&self)->T	{ self.ref1().clone()}
 	fn z(&self)->T	{ self.ref2().clone()}
 	fn w(&self)->T	{ zero()}
+	fn from_xyzw(x:T,y:T,z:T,_:T)->Vec3<T> { Vec3(x,y,z) }
 }
 
 
@@ -559,18 +533,22 @@ impl<T:Clone+Zero> XYZW<T> for [T,..2] {
 	fn y(&self)->T { self[1].clone() }
 	fn z(&self)->T { zero() }
 	fn w(&self)->T { zero() }
+	fn from_xyzw(x:T,y:T,z:T,w:T)->[T,..2] { [x,y] }
+
 }
 impl<T:Clone+Zero> XYZW<T> for [T,..3] {
 	fn x(&self)->T { self[0].clone() }
 	fn y(&self)->T { self[1].clone() }
 	fn z(&self)->T { self[2].clone() }
 	fn w(&self)->T { zero() }
+	fn from_xyzw(x:T,y:T,z:T,w:T)->[T,..3]{ [x,y,z] }
 }
 impl<T:Clone+Zero> XYZW<T> for [T,..4] {
 	fn x(&self)->T { self[0].clone() }
 	fn y(&self)->T { self[1].clone() }
 	fn z(&self)->T { self[2].clone() }
 	fn w(&self)->T { self[3].clone() }
+	fn from_xyzw(x:T,y:T,z:T,w:T)->[T,..4]{ [x,y,z,w] }
 }
 
 impl<T:Clone+Zero> XYZW<T> for (T,T) {
@@ -578,18 +556,22 @@ impl<T:Clone+Zero> XYZW<T> for (T,T) {
 	fn y(&self)->T { let(_,ref v,)=*self;v.clone() }
 	fn z(&self)->T { zero() }
 	fn w(&self)->T { zero() }
+	fn from_xyzw(x:T,y:T,z:T,w:T)->(T,T) { (x,y) }
 }
 impl<T:Clone+Zero> XYZW<T> for (T,T,T) {
 	fn x(&self)->T { let(ref v,_,_)=*self; v.clone() }
 	fn y(&self)->T { let(_,ref v,_)=*self;v.clone() }
 	fn z(&self)->T { let(_,_,ref v)=*self;v.clone() }
 	fn w(&self)->T { zero() }
+	fn from_xyzw(x:T,y:T,z:T,w:T)->(T,T,T) { (x,y,z) }
+
 }
 impl<T:Clone+Zero> XYZW<T> for (T,T,T,T) {
 	fn x(&self)->T { let(ref v,_,_,_)=*self; v.clone() }
 	fn y(&self)->T { let(_,ref v,_,_)=*self;v.clone() }
 	fn z(&self)->T { let(_,_,ref v,_)=*self;v.clone() }
 	fn w(&self)->T { let(_,_,_,ref v)=*self;v.clone() }
+	fn from_xyzw(x:T,y:T,z:T,w:T)->(T,T,T,T) { (x,y,z,w) }
 }
 
 impl<T:Clone+Zero> Vec4<T> {
@@ -652,6 +634,7 @@ impl<T:Clone+Zero> XYZW<T> for Vec4<T>
 	fn y(&self)->T {self.ref1().clone()}
 	fn z(&self)->T {self.ref2().clone()}
 	fn w(&self)->T {self.ref3().clone()}
+	fn from_xyzw(x:T,y:T,z:T,w:T)->Vec4<T> { Vec4(x,y,z,w) }
 }
 
 

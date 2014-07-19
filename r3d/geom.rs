@@ -39,7 +39,7 @@ trait ToAABB {
 	fn to_aabb(&self)->AABB;
 }
 fn pos_radius_to_aabb(pos:&Vec3, r:f32)->Extents{
-	let size=Vec3::<f32>::splat(r);
+	let size=XYZW::splat(r);
 	Extents{min:pos-size, max:pos+size}
 }
 

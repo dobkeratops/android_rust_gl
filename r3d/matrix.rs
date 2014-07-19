@@ -181,10 +181,10 @@ impl<V:VecMath<T>,T:Float=f32> Matrix4<V> {
 	}
 	pub fn inv_mul_point(&self,pt:&V)->V{
 		let ofs=pt.sub(self.aw());
-		FromXYZ::from_xyz(ofs.dot(self.ax()),ofs.dot(self.ay()),ofs.dot(self.az()))
+		XYZW::from_xyz(ofs.dot(self.ax()),ofs.dot(self.ay()),ofs.dot(self.az()))
 	}
 	pub fn inv_mul_axis(&self,axis:&V)->V{
-		FromXYZ::from_xyz(axis.dot(self.ax()),axis.dot(self.ay()),axis.dot(self.az()))
+		XYZW::from_xyz(axis.dot(self.ax()),axis.dot(self.ay()),axis.dot(self.az()))
 	}
 	pub fn mul_vec3(&self,pt:&V)->V{
 		self.ax().scale(pt.x()).mad(self.ay(),pt.y()).mad(self.az(),pt.z())
