@@ -111,7 +111,6 @@ pub trait XYZW<T:Zero+Clone=f32> {
 /// VecPermute relying on type associations created by VecXY VecXYZ VecXYZW
 pub trait VecPermute<T:Clone+One+Zero,V2:XYZW<T>, V3:XYZW<T>,V4:XYZW<T>> : XYZW<T> {
 
-
 	fn xy(&self)->V2	{ XYZW::from_xy(self.x(),self.y())}
 	fn yx(&self)->V2	{ XYZW::from_xy(self.y(),self.x())}
 	fn xz(&self)->V2	{ XYZW::from_xy(self.x(),self.z())}
@@ -161,6 +160,7 @@ pub trait VecPermute<T:Clone+One+Zero,V2:XYZW<T>, V3:XYZW<T>,V4:XYZW<T>> : XYZW<
 pub trait VecCmp<T:PartialOrd> {
 	fn min(&self,b:&Self)->Self;
 	fn max(&self,b:&Self)->Self;
+	fn max_elem_index(&self)->uint;
 }
 
 // componentwise multiplication operator for vectors
@@ -331,6 +331,7 @@ pub trait VecMath<T:Float=f32>:Clone+XYZW<T>+Num+VecCmp<T>+Sum<T> {
                 2=>XYZW::from_xyzw(zero::<T>(),zero(),one(),zero()),
                 _=>XYZW::from_xyzw(zero::<T>(),zero::<T>(),zero::<T>(),one::<T>())}
 	}
+	fn longest_axis(&self)->uint{ self.mul(self).max_elem_index()}
 
 	fn cross(&self,b:&Self)->Self	{XYZW::<T>::from_xyz(self.y()*b.z()-self.z()*b.y(),self.z()*b.x()-self.x()*b.z(),self.x()*b.y()-self.y()*b.x())}
 
@@ -359,7 +360,7 @@ pub trait VecMath<T:Float=f32>:Clone+XYZW<T>+Num+VecCmp<T>+Sum<T> {
 		(vpara.clone(),self.sub(&vpara))
 	}
 }
-impl<T:Float,V2:XYZW<T>,V3:XYZW<T>,V4:XYZW<T>, V:Clone+XYZW<T>+VecCmp<T>+Num+VecPermute<T,V2,V3,V4>+Mul<V,V>+Sum<T>> VecMath<T> for V {} 
+impl<T:Float,V2:XYZW<T>,V3:XYZW<T>,V4:XYZW<T>, V:Clone+VecCmp<T>+Num+VecPermute<T,V2,V3,V4>+Mul<V,V>+Sum<T>> VecMath<T> for V {} 
 
 //todo: HALF
 fn bilerp<F:Float,V:VecMath<F>>(((v00,v01),(v10,v11)):((V,V),(V,V)),(s,t):(F,F))->V{
@@ -421,22 +422,20 @@ impl<T:Sub<T,T>+Clone+Zero+One> Sub<Vec4<T>,Vec4<T>> for Vec4<T> {
 
 impl<T:Zero+Clone+One> Zero for Vec2<T> {
 	fn zero()->Vec2<T> {Vec2(zero::<T>(),zero::<T>())}
-	fn is_zero(&self)->bool { fail!();false/*self.x==zero::<T>() && self.y==zero::<T>() */}
+	fn is_zero(&self)->bool { let Vec2(ref x,ref y)=*self; x.is_zero() && y.is_zero()}
 }
 fn vec_axis_scale<T:Float,V:VecMath<T>>(i:int,f:T)->V { let ret:V; ret=VecMath::axis(i); ret.scale(f) }
 
 impl<T:Clone+One+Zero> VecPermute<T,Vec2<T>,Vec3<T>,Vec4<T>> for Vec2<T> {
 }
-//impl<T:Num+Clone> VecNum<T> for Vec2<T> {
-//	fn from_xyz(x:T,y:T,_:T)->Vec2<T>{Vec2(x.clone(),y.clone())}
-//}
 impl<T:PartialOrd+Clone+Zero+One> VecCmp<T> for Vec2<T> {
 	fn min(&self,b:&Vec2<T>)->Vec2<T>	{Vec2(fmin(self.x(),b.x()),fmin(self.y(),b.y()))}
 	fn max(&self,b:&Vec2<T>)->Vec2<T>	{Vec2(fmax(self.x(),b.x()),fmax(self.y(),b.y()))}
+	fn max_elem_index(&self)->uint { if self.x()>self.y() {0}else{1}}
 	
 }
 
-impl<T:Float+Zero+Clone> Sum<T> for Vec2<T> {
+impl<T:Add<T,T>+Zero+Clone> Sum<T> for Vec2<T> {
 	fn sum(&self)->T	{self.x()+self.y()}
 }
 
@@ -456,7 +455,7 @@ impl<T:Clone+Zero> XYZW<T> for Vec2<T> {
 
 impl<T:Clone+Zero> Zero for Vec3<T> {
 	fn zero()->Vec3<T>{Vec3(zero(),zero(),zero())}
-	fn is_zero(&self)->bool  {fail!(); false/*self.x.is_zero() && self.y.is_zero() && self.z.is_zero()*/}
+	fn is_zero(&self)->bool  { self.x().is_zero() && self.y().is_zero() && self.z().is_zero()}
 }
 
 impl<T:Clone+One+Zero+Float> One for Vec2<T> {
@@ -470,18 +469,12 @@ impl<T:Clone+One+Zero+Float> One for Vec4<T> {
 }
 
 
-
-
 impl<T:Clone+One+Zero> VecPermute<T,Vec2<T>,Vec3<T>,Vec4<T>> for Vec3<T> {}
 
-// permutation of tuples.
 impl<T:Clone+One+Zero> VecPermute<T,(T,T),(T,T,T),(T,T,T,T)> for (T,T) {}
 impl<T:Clone+One+Zero> VecPermute<T,(T,T),(T,T,T),(T,T,T,T)> for (T,T,T) {}
 
 
-//impl<T:Clone+Num> VecNum<T> for Vec3<T> {/
-//	fn from_xyz(x:T,y:T,z:T)->Vec3<T>{Vec3(x,y,z)}
-//}
 impl<T:Clone+PartialOrd+Zero> VecCmp<T> for Vec3<T> {
 	fn min(&self,b:&Vec3<T>)->Vec3<T>	{
 		let x=fmin(self.x(), b.x());
@@ -492,18 +485,20 @@ impl<T:Clone+PartialOrd+Zero> VecCmp<T> for Vec3<T> {
 									fmax(self.x(),b.x()),
 									fmax(self.y(),b.y()),
 									fmax(self.z(),b.z()))}
+	fn max_elem_index(&self)->uint { if self.x()>self.y() {if self.x()>self.z(){0}else{2}}
+									else{if self.y()>self.z(){1}else{2}}}
 }
 
-impl<T:Float> Sum<T> for Vec3<T> {
+impl<T:Add<T,T>+Clone+Zero> Sum<T> for Vec3<T> {
 	fn sum(&self)->T	{self.x()+self.y()+self.z()}
 }
-impl<T:Float> Sum<T> for [T,..2] {
+impl<T:Add<T,T>> Sum<T> for [T,..2] {
 	fn sum(&self)->T	{self[0]+self[1]}
 }
-impl<T:Float> Sum<T> for [T,..3] {
+impl<T:Add<T,T>> Sum<T> for [T,..3] {
 	fn sum(&self)->T	{self[0]+self[1]+self[2]}
 }
-impl<T:Float> Sum<T> for [T,..4] {
+impl<T:Add<T,T>> Sum<T> for [T,..4] {
 	fn sum(&self)->T	{self[0]+self[1]+self[2]+self[3]}
 }
 
@@ -520,10 +515,9 @@ impl<T:Clone+Zero> XYZW<T> for Vec3<T> {
 	fn from_xyzw(x:T,y:T,z:T,_:T)->Vec3<T> { Vec3(x,y,z) }
 }
 
-
 impl<T:Clone+Zero> Zero for Vec4<T> {
-	fn zero()->Vec4<T>{Vec4(zero(),zero(),zero(),zero())}
-	fn is_zero(&self)->bool  {fail!();false/*self.x.is_zero() && self.y.is_zero() && self.z.is_zero() && self.w.is_zero()*/}
+	fn zero()->Vec4<T>{ XYZW::splat(zero::<T>())}
+	fn is_zero(&self)->bool  {self.x().is_zero() && self.y().is_zero() && self.z().is_zero() && self.w().is_zero()}
 }
 
 // Converting Vec2,Vec3,Vec4 to/from tuples & arrays
@@ -610,6 +604,11 @@ impl<T:Clone+PartialOrd+Zero> VecCmp<T> for Vec4<T> {
 									fmax(self.y(),b.y()),
 									fmax(self.z(),b.z()),
 									fmax(self.w(),b.w()))}
+	fn max_elem_index(&self)->uint { 
+		let (f0,max_xy)=if self.x()>self.y() {(self.x(),0)}else{(self.y(),1)};
+		let (f1,max_zw)=if self.z()>self.w() {(self.z(),2)}else{(self.w(),3)};
+		if f0>f1 {max_xy} else{max_zw}
+	}
 }
 
 //impl<T:Clone+Num> VecNum<T> for Vec4<T> {
