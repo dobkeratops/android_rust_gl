@@ -18,10 +18,12 @@ pub fn gl_matrix_modelview(mat:&Matrix4) {
 pub fn draw_cross(s:f32) {
 	let color=0xff00ff00u32;
 	unsafe {
+		draw_begin(GL_LINES);
 		draw_line((-s,-s,-s),(s,s,s),color);
 		draw_line((s,-s,-s),(-s,s,s),color);
 		draw_line((-s,s,-s),(s,-s,s),color);
 		draw_line((s,s,-s),(-s,-s,s),color);
+		draw_end();
 	}
 }
 
@@ -62,27 +64,49 @@ fn gl_color<T:GlColor>(v:&T) {v.gl_color(); }
 fn gl_vertex<T:GlVertex>(v:&T) {v.gl_vertex(); }
 fn gl_tex0<T:GlTexCoord>(v:&T) {v.gl_texcoord(); }
 
+static mut g_draw:uint=0;
+pub fn draw_begin( x:GLenum) {
+	unsafe {
+		if g_draw==0{ 
+			glBegin(x as GLenum)
+		}
+		g_draw+=1;
+	}
+}
+pub fn draw_end() {	
+	unsafe {
+		g_draw-=1;
+		if g_draw==0 {
+			glEnd()
+		}
+	}
+}
+
 pub fn draw_line<V:GlVertex,C:GlColor>(a:V,b:V, color:C) {
 	unsafe {
-		glBegin(GL_LINES);
+		draw_begin(GL_LINES);
 		draw_vertex_color((a,color));
 		draw_vertex_color((b,color));
-		glEnd()
+		draw_end()
 	}
 }
 
 pub fn draw_axes_sized(a:&Matrix4,f:f32) {
+	draw_begin(GL_LINES);
 	draw_line(*a.pos(), (a.pos()+a.ax()*f), 0xff0000ffu32);
 	draw_line(*a.pos(), (a.pos()+a.ay()*f), 0xff00ff00u32);
 	draw_line(*a.pos(), (a.pos()+a.az()*f), 0xffff0000u32);
+	draw_end();
 }
 pub fn draw_oobb<V:VecMath+Copy,C:GlColor>(m:&Matrix4<V>, sz:Vec3, c:C) {
 	
 	let vertices=super::geom::cuboid_vertices(m,&sz);
 
+	draw_begin(GL_LINES);
 	for edge in super::geom::g_cuboid_edges.iter() {
 		draw_line(vertices[edge[0]],vertices[edge[1]],c);
 	}
+	draw_end()
 }
 pub fn draw_aabb<V:VecMath,C:GlColor>(a:&V,b:&V,c:&C) {
 	
@@ -171,12 +195,12 @@ pub fn draw_tri_iso(v0:&V3,v1:&V3,v2:&V3,color:u32, scale:f32 ) {
 	let tv1=v3isometric(&v3scale(v1,scale));
 	let tv2=v3isometric(&v3scale(v2,scale));
 	unsafe {
-		glBegin(GL_TRIANGLES);
+		draw_begin(GL_TRIANGLES);
 		gl_color(&color);
 		gl_vertex(&tv0);	
 		gl_vertex(&tv1);	
 		gl_vertex(&tv2);	
-		glEnd();
+		draw_end();
 	}
 }
 pub fn draw_tri_iso_tex(
@@ -188,7 +212,7 @@ pub fn draw_tri_iso_tex(
 	let tv1=v3isometric(&v3scale(v1,scale));
 	let tv2=v3isometric(&v3scale(v2,scale));
 	unsafe {
-		glBegin(GL_TRIANGLES);
+		draw_begin(GL_TRIANGLES);
 		gl_color(&color);
 		gl_tex0(&uv0);
 		gl_vertex(&tv0);
@@ -196,7 +220,7 @@ pub fn draw_tri_iso_tex(
 		gl_vertex(&tv1);	
 		gl_tex0(&uv2);
 		gl_vertex(&tv2);	
-		glEnd();
+		draw_end();
 	}
 }
 pub fn draw_tri_tex(
@@ -205,7 +229,7 @@ pub fn draw_tri_tex(
 		(v2,uv2):(&V3,V2),
 		color:u32,scale:f32) {
 	unsafe {
-		glBegin(GL_TRIANGLES);
+		draw_begin(GL_TRIANGLES);
 		gl_color(&color);
 		gl_tex0(&uv0);
 		gl_vertex(&v3scale(v0,scale));
@@ -213,7 +237,7 @@ pub fn draw_tri_tex(
 		gl_vertex(&v3scale(v1,scale));
 		gl_tex0(&uv2);
 		gl_vertex(&v3scale(v2,scale));
-		glEnd();
+		draw_end();
 	}
 }
 pub fn draw_vertex_color<V:GlVertex,C:GlColor>((v,c):(V,C)) {
@@ -231,11 +255,11 @@ pub fn draw_tri_color<V:GlVertex,C:GlColor>(
 								v2:(V,C))
 {
 	unsafe {
-		glBegin(GL_TRIANGLES);
+		draw_begin(GL_TRIANGLES);
 		draw_vertex_color(v0);
 		draw_vertex_color(v1);
 		draw_vertex_color(v2);
-		glEnd();
+		draw_end();
 	}
 }
 pub fn draw_tri_color_tex<V:GlVertex,C:GlColor>(
@@ -244,11 +268,11 @@ pub fn draw_tri_color_tex<V:GlVertex,C:GlColor>(
 								v2:(V,C,(f32,f32)))
 {
 	unsafe {
-		glBegin(GL_TRIANGLES);
+		draw_begin(GL_TRIANGLES);
 		draw_vertex_color_tex(v0);
 		draw_vertex_color_tex(v1);
 		draw_vertex_color_tex(v2);
-		glEnd();
+		draw_end();
 	}
 }
 pub fn draw_quad_color<V:GlVertex,C:GlColor>(
@@ -258,14 +282,14 @@ pub fn draw_quad_color<V:GlVertex,C:GlColor>(
 								v3:(V,C))
 {
 	unsafe {
-		glBegin(GL_TRIANGLES);
+		draw_begin(GL_TRIANGLES);
 		draw_vertex_color(v0);
 		draw_vertex_color(v1);
 		draw_vertex_color(v2);
 		draw_vertex_color(v0);
 		draw_vertex_color(v2);
 		draw_vertex_color(v3);
-		glEnd();
+		draw_end();
 	}
 }
 pub fn draw_quad_color_tex<V:GlVertex,C:GlColor>(

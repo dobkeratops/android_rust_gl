@@ -5,6 +5,7 @@ use bsp::*;
 pub struct BspRender {
 	bsp:Box<Blob<BspHeader>>,
 	textures:Vec<GLuint>,
+//	tris_per_tex:Vec<Vec<uint>>,
 	extents:Extents<Vec3<f32>>,
 	centre:Vec3,
 	radius:f32
@@ -23,6 +24,7 @@ impl BspRender {
 		);
 		let (ext,c,r)=bsp.extents();
 
+		// Sort triangles per texture...
 		BspRender{
 			bsp:bsp,
 			textures:tex_array,
@@ -35,11 +37,18 @@ impl BspRender {
 
 impl Render for BspRender {
 	fn render(&self) {
+		let mut curr_texid=0xffff;
+		draw_begin(GL_TRIANGLES);
 		self.bsp.visit_triangles(
 			&mut |_,(v0,v1,v2),(_,txinfo),(_,plane),(face_id,_)| {
 				unsafe {
 					let txi=txinfo.miptex as uint;
-					draw_set_texture(0,*self.textures.get(txi));
+					if curr_texid!=txi {
+						draw_end();
+						draw_set_texture(0,*self.textures.get(txi));
+						curr_texid=txi;
+						draw_begin(GL_TRIANGLES);
+					}
 			
 					fn applytx<'a>(tx:&'a TexInfo,v:&'a BspVec3)->(&'a BspVec3,(f32,f32)){
 						(v, (v3dot(&tx.axis_s,v)+tx.ofs_s,v3dot(&tx.axis_t,v)+tx.ofs_t) )
@@ -49,5 +58,6 @@ impl Render for BspRender {
 				}
 			}
 		);
+		draw_end();
 	}
 }
