@@ -40,3 +40,6 @@ pub mod shaders;
 pub mod vertex;
 pub mod geom;
 
+pub trait Render {
+	fn render(&self);
+}

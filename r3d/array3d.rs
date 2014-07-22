@@ -181,13 +181,13 @@ impl<T:Clone> Vec3d<T> {
 
 	fn fold<R=()>(&self,
 						initial_val:R,
-						f:|(int,int,int),&T,R|->R
+						f:|(int,int,int),R,&T|->R
 						)->R {
 		let mut acc=initial_val;
 		for k in range(0,self.size.k) {
 			for j in range(0,self.size.j) {
 				for i in range(0,self.size.i) {
-					acc=f((i,j,k), self.get((i,j,k)),acc)
+					acc=f((i,j,k), acc,self.get((i,j,k)))
 				}
 			}
 		}
@@ -196,13 +196,13 @@ impl<T:Clone> Vec3d<T> {
 
 	fn fold_mut<R=()>(&mut self,
 						initial_val:R,
-						f:|(int,int,int),&mut T,R|->R
+						f:|(int,int,int),R,&mut T|->R
 						)->R {
 		let mut acc=initial_val;
 		for k in range(0,self.size.k) {
 			for j in range(0,self.size.j) {
 				for i in range(0,self.size.i) {
-					acc=f((i,j,k), self.get_mut((i,j,k)),acc)
+					acc=f((i,j,k), acc, self.get_mut((i,j,k)))
 				}
 			}
 		}
@@ -228,7 +228,7 @@ fn main() {
 	}
 	println!("foreach ...")
 	foo.fold(0u32,
-		|acc,(i,j,k),val|{
+		|(i,j,k),acc,val|{
 			println!("array[{},{},{}]={}",i,j,k,val);
 			acc
 		}

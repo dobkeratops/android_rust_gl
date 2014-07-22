@@ -180,6 +180,7 @@ impl RMesh {
 		glBindTexture(GL_TEXTURE_2D, g_textures[2]);
 		glActiveTexture(GL_TEXTURE0+1);
 		glBindTexture(GL_TEXTURE_2D, g_textures[1]);
+		glActiveTexture(GL_TEXTURE0+0);
 
 		Vertex::set_vertex_attrib();
 
@@ -275,23 +276,43 @@ pub extern "C" fn	app_render(app:&mut App)
 
 		// render bsp level
 		match app.bsprender {
-			Some(ref x)=>{
-				glUseProgram(0);
-				let rot_x = matrix::rotate_x(a0);
-				let rot_y = matrix::rotate_x(a1*0.245f32);
-				let rot_xy=rot_x.mul_matrix(&rot_y);
-				let trans=matrix::translate(&Vec4(0.0f32,0.0f32,-1.0f32,1.0f32));
-				let rt=trans*rot_xy;
-				gl_matrix_modelview(&rt);
-				x.render();
-			}
+			Some(ref x)=>render_at_centre(a0,&app.bsprender),
 			None=>{}
 		}
-
 
 		g_frame+=1;
 	}
 }
+
+fn render_at_centre<R:Render>(a0:f32,x:&Option<Box<R>>) {
+	unsafe {
+		glUseProgram(0);
+
+		let rot_x = matrix::rotate_x(a0);
+		let rot_y = matrix::rotate_x(a0*0.245f32);
+		let rot_xy=rot_x.mul_matrix(&rot_y);
+		let trans=matrix::translate(&Vec4(0.0f32,0.0f32,-1.0f32,1.0f32));
+		let rt=trans*rot_xy;
+		gl_matrix_modelview(&rt);
+		match *x{ Some(ref x)=>(**x).render(), None=>{}}
+//		draw_set_texture(0,0);
+//		draw_set_texture(1,0);
+		let s=0.1f32;
+		let z=0.0f32;
+		for i in range(0i,10i){
+			for j in range(0i,10i) {
+				let x=i as f32*0.1f32-0.5f32;
+				let y=j as f32*0.1f32-0.5f32;
+				draw_quad_color_tex(
+					((x,y,z),0xffff00ffu32,(0.0f32,0.0f32)),
+					((x+s,y,z),0xff00ffffu32,(0.0f32,1.0f32)),
+					((x+s,y+s,z),0xffffff00u32,(1.0f32,1.0f32)),
+					((x,y+s,z),0xffff0000u32,(1.0f32,0.0f32)));
+			}
+		}
+	}
+}
+
 // hidef framebuffer: 1920x1080x 2mbx(rgba x z32)= 16mb;  
 
 fn	create_textures() {

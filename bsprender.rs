@@ -31,8 +31,10 @@ impl BspRender {
 			radius:r
 		}
 	}
+}
 
-	pub fn render(&self) {
+impl Render for BspRender {
+	fn render(&self) {
 		self.bsp.visit_triangles(
 			&mut |_,(v0,v1,v2),(_,txinfo),(_,plane),(face_id,_)| {
 				unsafe {
