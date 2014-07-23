@@ -118,7 +118,7 @@ impl<Header,T> DEntry<Header,T> {
 	}
 	fn get_mut<'a>(&'a self, owner:&'a  Header,i:uint) -> &'a mut T{
 		unsafe {
-			let p=((owner as *const Header as *mut Header as *mut u8).offset(self.offset as int)  as *mut T); 
+			let p=(owner as *const Header as *mut Header as *mut u8).offset(self.offset as int)  as *mut T; 
 			let p2=p.offset(i as int) as *mut T;
 			&mut *p
 		}

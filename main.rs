@@ -77,43 +77,9 @@ extern { fn android_get_inputs()->AndroidInput; }
 
 extern "C" fn null_func() {
 }
-trait Foo {
-	fn foo(&self)->() {
-	}
-}
-struct Baz {
-	i:int
-}
-struct Foz {i:int}
-impl Foo for Baz {
-	fn foo(&self)->() {
-		std::io::println("foobarbaz\n");
-	}
-}
-impl Foo for (Baz,Foz) {
-	fn foo(&self) {
-		let &(ref a,ref b)=self;
-	}
-}
-/*
-// can rust be convinced?
-impl<T:Num> Add<[T,..3],[T,..3]> for [T,..3] {
-	fn add(&self,b:&[T,..3])->[T,..3] {
-		[self[0]+b[0],self[1]+b[1],self[2]+b[2]]
-	}
-}
-*/
 
 
-
-
-
-
-#[cfg(not(target_os = "android"))]
-pub fn main()
-{
-	let b=Baz{i:0};
-	b.foo();
+pub fn try_stuff(){
 	let m1 = matrix::Matrix4::<Vec4<f32>>::identity();
 	let m2 = matrix::Matrix4::<Vec4<f32>>::identity();
 	let v0= Vec4(0.0f32,1.0f32,2.0f32,0.0f32);
@@ -129,8 +95,14 @@ pub fn main()
 	dump!(x%y);	
 	dump!(((1.0f32,2.0f32,3.0f32),4.0f32).to_vec4());
 	dump!((1.0f32,2.0f32,3.0f32).to_vec3());
-	//dump!([1,2,3]+[4,5,6])
+}
 
+
+
+#[cfg(not(target_os = "android"))]
+pub fn main()
+{
+	try_stuff();
 	unsafe {
 		let mut argc:c_int=0;
 		glutInit((&mut argc) as *mut c_int,0 as *const *const c_char );
