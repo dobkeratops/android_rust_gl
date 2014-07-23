@@ -198,7 +198,6 @@ static g_num_torus:int = 128;
 pub extern "C" fn	app_render(app:&mut App) 
 {
 	//logw("render noswap");
-
 	unsafe {
 
 		assert!(g_resources_init==true)		//logi!("render_no_swap"); // once..
@@ -288,9 +287,10 @@ fn render_at_centre<R:Render>(a0:f32,x:&Option<Box<R>>) {
 	unsafe {
 		glUseProgram(0);
 
-		let rot_x = matrix::rotate_x(a0);
-		let rot_y = matrix::rotate_x(a0*0.245f32);
-		let rot_xy=rot_x.mul_matrix(&rot_y);
+		let rot_x = matrix::rotate_x(a0*0.1f32);
+		let rot_y = matrix::rotate_y(a0*0.245f32);
+		let swap_yz=matrix::rotate_x(1.51);
+		let rot_xy=rot_x.mul_matrix(&rot_y).mul_matrix(&swap_yz);
 		let trans=matrix::translate(&Vec4(0.0f32,0.0f32,-1.0f32,1.0f32));
 		let rt=trans*rot_xy;
 		gl_matrix_modelview(&rt);

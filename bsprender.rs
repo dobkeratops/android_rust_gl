@@ -54,7 +54,7 @@ impl Render for BspRender {
 						(v, (v3dot(&tx.axis_s,v)+tx.ofs_s,v3dot(&tx.axis_t,v)+tx.ofs_t) )
 					}
 					let scale=1.0f32/2000.0f32;
-					draw_tri_tex(applytx(txinfo,v0),applytx(txinfo,v1),applytx(txinfo,v2), 0xffffff,scale)
+					draw_tri_tex(applytx(txinfo,v0),applytx(txinfo,v2),applytx(txinfo,v1), 0xffffff,scale)
 				}
 			}
 		);

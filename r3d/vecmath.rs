@@ -367,8 +367,9 @@ pub trait VecMath<T:Float=f32>:Clone+XYZW<T>+Num+VecCmp<T>+Sum<T> {
 	fn avr(&self,b:&Self)->Self {self.add(b).scale(one::<T>()/(one::<T>()+one::<T>()))}
 	fn mad(&self,b:&Self,f:T)->Self	{self.add(&b.scale(f))}
 	fn lerp(&self,b:&Self,f:T)->Self	{self.mad(&b.sub(self),f)}
-	fn sqr(&self)->T { self.dot(self)}
+	fn sqr(&self)->T { self.dot(self)} //todo:ambiguous, maybe a*a which is componentwise.
 	fn length(&self)->T { self.sqr().sqrt()}
+	fn length_squared(&self)->T { self.dot(self)}
 	fn inv_length(&self)->T { one::<T>()/self.sqr().sqrt()}
 	fn scale_to_length(&self,length:T)->Self { self.scale(length/self.sqr().sqrt()) }
 	fn normalize(&self)->Self { self.scale(one::<T>()/self.sqr().sqrt()) }
@@ -383,6 +384,8 @@ pub trait VecMath<T:Float=f32>:Clone+XYZW<T>+Num+VecCmp<T>+Sum<T> {
 		let vpara=self.para(vaxis);
 		(vpara.clone(),self.sub(&vpara))
 	}
+	fn dist(&self,b:&Self)->T {self.sub(b).length()}
+	fn dist_squared(&self,b:&Self)->T {self.sub(b).sqr()}
 }
 impl<T:Float,V2:XYZW<T>,V3:XYZW<T>,V4:XYZW<T>, V:Clone+VecCmp<T>+Num+VecPermute<T,V2,V3,V4>+Mul<V,V>+Sum<T>> VecMath<T> for V {} 
 
@@ -730,7 +733,7 @@ impl<A:To<B>+Clone+Zero, B:Clone+Zero> To<Vec4<B>> for Vec4<A> {
 	fn to(&self)->Vec4<B> { Vec4( self.x().to(),	self.y().to(),  self.z().to(), self.w().to() )}
 }
 
-
+// app_render
 #[cfg(run)]
 fn main() {
 	io::println("Vec Math Test");

@@ -116,6 +116,13 @@ impl<Header,T> DEntry<Header,T> {
 //			&*(byte_ofs_ptr(owner, self.offset).offset(i as int))
 		}
 	}
+	fn get_mut<'a>(&'a self, owner:&'a  Header,i:uint) -> &'a mut T{
+		unsafe {
+			let p=((owner as *const Header as *mut Header as *mut u8).offset(self.offset as int)  as *mut T); 
+			let p2=p.offset(i as int) as *mut T;
+			&mut *p
+		}
+	}
 }
 pub type BspDEntry<T> =DEntry<BspHeader,T>;
 
@@ -178,6 +185,12 @@ impl BspHeader {
 		println!("lightmaps: {:u}", self.lightmaps.len())
 		println!("BSP info:-)");
 		self.dump_vertices();
+	}
+	pub fn visit_vertices_mut<'a>(&'a mut self, fv:|int,&mut (f32,f32,f32)|){
+		for i in range (0,self.vertices.len()) {
+			let mut v=self.vertices.get_mut(self,i);
+			fv(i as int,v);
+		}
 	}
 	pub fn visit_vertices<'a>(&'a self, fv:|int,&Vec3<f32>|){
 		for i in range (0,self.vertices.len()) {
@@ -265,6 +278,9 @@ impl BspHeader {
 			(txh as *const _ as *const u8).offset(*txh.miptex_offset.unsafe_ref(i as uint) as int) as *const MipTex
 		)};
 		tx
+	}
+	pub fn swap_yz(&mut self) {
+		self.visit_vertices_mut(|i,v|{ let (x,y,z)=v.clone(); *v=(x,z,y);})
 	}
 
 	pub fn visit_textures<'a>(&'a self, mut tex_fn:&mut|i:uint,tx:&MipTex|:'a) {

@@ -103,6 +103,12 @@ impl<T:Num> Add<[T,..3],[T,..3]> for [T,..3] {
 	}
 }
 */
+
+
+
+
+
+
 #[cfg(not(target_os = "android"))]
 pub fn main()
 {

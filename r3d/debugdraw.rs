@@ -27,7 +27,6 @@ pub fn draw_cross(s:f32) {
 	}
 }
 
-trait GlColor:Copy {fn gl_color(&self);}
 impl GlColor for u32  {
 	fn gl_color(&self) {
 		let r=(*self)&255;
@@ -38,31 +37,31 @@ impl GlColor for u32  {
 		}
 	}
 }
-impl GlColor for Vec4  {
-	fn gl_color(&self) {
-		unsafe{
-			glColor4f(self.x(),self.y(),self.z(),self.w())
-		}
-	}
+trait GlColor:Copy{
+	fn gl_color(&self)	{fail!()}
 }
-impl GlColor for (f32,f32,f32,f32)  {
-	fn gl_color(&self) {
-		let (r,g,b,a)=*self;
-		unsafe{
-			glColor4f(r,g,b,a)
-		}
-	}
+trait GlVertex:Copy{
+	fn gl_normal(&self)	{fail!()}
+	fn gl_texcoord(&self){fail!()}
+	fn gl_vertex(&self)	{fail!()}
 }
-trait GlTexCoord:Copy{ fn gl_texcoord(&self);}
-trait GlVertex:Copy{ fn gl_vertex(&self);}
-impl<V:XYZW<f32>+Copy> GlVertex for V { fn gl_vertex(&self){ unsafe{glVertex3f(self.x(),self.y(),self.z());}}}
-impl<V:XYZW<f32>+Copy> GlTexCoord for V { fn gl_texcoord(&self){ unsafe{glTexCoord2f(self.x(),self.y());}}}
-//impl GlVertex for Vec4<f32>{ fn gl_vertex(&self){ unsafe{glVertex3f(self.x(),self.y(),self.z());}}}
-//impl GlVertex for (f32,f32,f32){ fn gl_vertex(&self){ let(x,y,z)=*self;unsafe{glVertex3f(x,y,z);}}}
+
+impl<V:XYZW<f32>+Copy> GlVertex for V {
+	fn gl_vertex(&self){ unsafe{glVertex3f(self.x(),self.y(),self.z());}}
+	fn gl_texcoord(&self){ unsafe{glTexCoord2f(self.x(),self.y());}}
+	fn gl_normal(&self){ unsafe{glNormal3f(self.x(),self.y(),self.z());}}
+}
+impl GlColor for (f32,f32,f32,f32) {
+	fn gl_color(&self) {unsafe{glColor4f(self.val0(),self.val1(),self.val2(),self.val3())}}
+}
+impl GlColor for (f32,f32,f32) {
+	fn gl_color(&self) {unsafe{glColor4f(self.val0(),self.val1(),self.val2(),one())}}
+}
 
 fn gl_color<T:GlColor>(v:&T) {v.gl_color(); }
 fn gl_vertex<T:GlVertex>(v:&T) {v.gl_vertex(); }
-fn gl_tex0<T:GlTexCoord>(v:&T) {v.gl_texcoord(); }
+fn gl_tex0<T:GlVertex>(v:&T) {v.gl_texcoord(); }
+fn gl_normal<T:GlVertex>(v:&T) {v.gl_normal(); }
 
 static mut g_draw:uint=0;
 pub fn draw_begin( x:GLenum) {
@@ -108,7 +107,7 @@ pub fn draw_oobb<V:VecMath+Copy,C:GlColor>(m:&Matrix4<V>, sz:Vec3, c:C) {
 	}
 	draw_end()
 }
-pub fn draw_aabb<V:VecMath,C:GlColor>(a:&V,b:&V,c:&C) {
+pub fn draw_aabb<V:VecMath,C:GlVertex>(a:&V,b:&V,c:&C) {
 	
 }
 
@@ -308,6 +307,7 @@ pub fn draw_quad_color_tex<V:GlVertex,C:GlColor>(
 		draw_vertex_color_tex(v3);
 		glEnd();
 	}
+
 }
 
 

@@ -9,15 +9,24 @@ pub struct Extents<T=Vec3<f32>> {
 }
 pub type AABB=Extents<Vec3<f32>>;
 
+pub trait Pos<V=Vec3<f32>> {
+	fn pos(&self)->V;
+}
+
 struct Sphere<T=f32> {
 	pos:Vec3<T>,
 	radius:T
+}
+
+impl Pos for Sphere {
+	fn pos(&self)->Vec3 { self.pos}
 }
 
 struct Ray<T=f32> {
 	pos:Vec3<T>,
 	dir:Vec3<T>
 }
+
 
 struct Plane<T=f32> {
 	norm:Vec3<T>,
@@ -34,6 +43,10 @@ struct Bounds {	// combined sphere & bounding-box.
 	size:Vec3,
 	radius:f32
 }
+impl Pos for Bounds {
+	fn pos(&self)->Vec3 { self.centre}
+}
+
 
 trait ToAABB {
 	fn to_aabb(&self)->AABB;
@@ -69,6 +82,9 @@ struct Contact {
 	norm:Vec3
 }
 
+impl Pos for Contact {
+	fn pos(&self)->Vec3 { self.pos}
+}
 
 
 impl<T:Clone> Extents<T> {
@@ -79,7 +95,31 @@ impl Extents<Vec3<f32>>{
 		let f=1000000.0f32;//todo: FLT_MAX
 		Extents{min:Vec3(f,f,f),max:Vec3(-f,-f,-f)}
 	}
+	fn from_vertices<V:Pos>(vertices:&[V])->Extents {
+		let mut m=Extents::new();
+		for v in vertices.iter() {
+			m.include(&v.pos());
+		}
+		m
+	}
 }
+impl Bounds {
+	fn from_vertices<V:Pos>(vertices:&[V])->Bounds {
+		let ext = Extents::from_vertices(vertices);
+		let centre = ext.centre();
+
+		let mut max_d2=zero();
+		for v in vertices.iter() {
+			max_d2=fmax(max_d2,v.pos().dist_squared(&centre));
+		}
+		Bounds{
+			centre:centre,
+			size:ext.max-centre,
+			radius:max_d2.sqrt()
+		}
+	}
+}
+
 pub trait Centre<V> {
 	fn centre(&self)->V;
 }
@@ -131,4 +171,7 @@ pub static g_cuboid_edges:[[uint,..2],..12]=[
 	[0,1],[0,2],[1,3],[2,3],
 	[4,5],[4,6],[5,7],[6,7],
 	[0,4],[1,5],[2,6],[3,7]];
+
+
+
 
