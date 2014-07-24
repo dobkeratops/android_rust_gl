@@ -9,7 +9,28 @@ pub struct App {
 	bsp:Option<Box<Blob<BspHeader>>>,
 	bsprender:Option<Box<BspRender>>,
 }
-struct AppScreens(App,Vec<Box<Screen<App>>>);
+impl App {
+	pub fn new()->App{
+		App{
+			bsp: Some(box Blob::<BspHeader>::read(&Path::new("data/e1m1.bsp"))),
+			bsprender:None,
+		}
+	}
+	pub fn display_create(&mut self) {
+		unsafe {
+			logi!("shadertest Create Resources \n");
+			create_shaders();
+			create_textures();
+			g_grid_mesh = RMesh::new_torus((16,16)); //new GridMesh(16,16);
+			::g_resources_init=true;
+			let bsp:Option<Box<Blob<BspHeader>>> =self.bsp.take();
+			if bsp.is_some() {
+				self.bsprender=Some(box BspRender::new(bsp.unwrap()));			
+			}
+		}
+
+	}
+}
 struct	RMesh 
 {
 //	bounds:Bounds,
@@ -34,6 +55,7 @@ static g_vertex_attr_empty:VertexAttr=VertexAttr{
 // Paired pixel and vertex shaders.
 
 
+pub static g_fog_color:Vec4<f32> =Vec4(0.25,0.5,0.5,1.0);
 
 
 unsafe fn create_texture(filename:String)->GLuint {
@@ -151,7 +173,6 @@ fn safe_set_uniform(loc:GLint, pvalue:&Vec4<f32>) {
 }
 
 
-static g_fog_color:Vec4<f32> =Vec4(0.25,0.5,0.5,1.0);
 impl RMesh {
 	unsafe fn	render_mesh_shader(&self)  {
 		
@@ -193,34 +214,15 @@ static mut g_angle:f32=0.0f32;
 static mut g_frame:int=0;
 
 static g_num_torus:int = 128;
-/// render a load of meshes in a lissajous curve
-#[no_mangle]
-pub extern "C" fn	app_render(&AppScreens(ref  mut app,ref mut screens):&mut AppScreens) 
-{
-	screens.last().unwrap().render(app);
-	
-	let next_screen={
-		screens.mut_last().unwrap().update(app)
-	};
-	unsafe {
-		match next_screen {
-			Pop=>{screens.pop();},
-			Push(x)=>{screens.push(x);},
-			Replace(x)=>{screens.pop();screens.push(x);},
-			_=>{}
-		}
-	}
 
-//	let sht=ShaderTest; 
-//	sht.render(app);
-}
-struct ShaderTest;
+pub struct ShaderTest;
 impl Screen<App> for ShaderTest {
+
 	fn render(&self, app:&mut App) {
 
 		unsafe {g_angle+=0.0025f32;}
 
-		render_clear();
+		::render_clear();
 		render_spinning_lisajous(app);
 		// render bsp level
 		
@@ -234,25 +236,11 @@ impl Screen<App> for ShaderTest {
 	}
 }
 
-fn render_clear()
-{
-	unsafe {
-		glClearColor(g_fog_color.x()+(g_angle*2.0).sin(),g_fog_color.y(),g_fog_color.z(),g_fog_color.w());
-
-		glClearDepthf(1.0f32);
-		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-		glEnable(GL_DEPTH_TEST);
-		glDepthMask(GL_TRUE);
-		glDepthFunc(GL_LEQUAL);
-
-		glEnable(GL_CULL_FACE);
-	}
-}
 	//logw("render noswap");
 fn render_spinning_lisajous(app:&mut App) {
 	unsafe {
 
-		assert!(g_resources_init==true)		//logi!("render_no_swap"); // once..
+		assert!(::g_resources_init==true)		//logi!("render_no_swap"); // once..
 		g_angle+=0.0025f32;
 
 		let matI = matrix::identity();
@@ -383,45 +371,6 @@ fn	create_textures() {
 	}
 }
 
-static mut g_resources_init:bool=false;
-
-#[no_mangle]
-pub extern "C" fn app_display_create(&AppScreens(ref mut app,ref screens):&mut AppScreens) {
-	unsafe {
-		logi!("shadertest Create Resources \n");
-		create_shaders();
-		create_textures();
-		g_grid_mesh = RMesh::new_torus((16,16)); //new GridMesh(16,16);
-		g_resources_init=true;
-		let bsp:Option<Box<Blob<BspHeader>>> =app.bsp.take();
-		if bsp.is_some() {
-			app.bsprender=Some(box BspRender::new(bsp.unwrap()));
-			
-		}
-	}
-}
-#[no_mangle]
-pub extern "C" fn app_display_destroy(_:&mut AppScreens) {
-	unsafe {
-		g_resources_init=false;
-	}
-}
-
-#[no_mangle]
-pub extern "C" fn app_destroy(_:Box<AppScreens>) {
-}
-
-
-#[no_mangle]
-pub extern "C" fn app_create(argc:c_int, argv:*const *const c_char, w:c_int,h:c_int)->Box<AppScreens> {
-	box AppScreens(
-		App{
-			bsp: Some(box Blob::<BspHeader>::read(&Path::new("data/e1m1.bsp"))),
-			bsprender:None,
-		},
-		vec![box ShaderTest as Box<Screen<App>>]
-	)
-}
 
 
 

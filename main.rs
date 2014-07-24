@@ -29,6 +29,8 @@ pub mod bsprender;
 pub mod rustwin;
 
 // framework can be: Android, Glut, (iOS,.o.)
+// 'app_*' are hooks called from platform specific stub
+// these entrypoints implement screenflow system
 
 #[cfg(target_os = "android")]
 extern { fn android_log_print(lvl:c_int,  s:*const c_char);}
@@ -92,7 +94,7 @@ pub fn main()
 		glutInitWindowSize(1280,800);
 		let win=verify!(glutCreateWindow(c_str("Rust ShaderTest")) isnt 0);
 
-		let mut app = shadertest::app_create(0,0 as *const *const c_char,1280,800);
+		let mut app = app_create(0,0 as *const *const c_char,1280,800);
 		app_display_create(&mut *app);
 		glDrawBuffer(GL_BACK);
 
@@ -113,6 +115,78 @@ pub fn main()
 		app_display_destroy(&mut *app);
 	}
 }
+
+
+/// render a load of meshes in a lissajous curve
+#[no_mangle]
+pub extern "C" fn	app_render(s:&mut AppScreens) 
+{
+	let mut screens=&mut s.screens;
+	screens.last().unwrap().render(&mut s.app);
+
+	//todo:fps timer	
+	let next_screen={
+		screens.mut_last().unwrap().update(&mut s.app)
+	};
+	unsafe {
+		match next_screen {
+			Pop=>{screens.pop();},
+			Push(x)=>{screens.push(x);},
+			Replace(x)=>{screens.pop();screens.push(x);},
+			_=>{}
+		}
+	}
+}
+
+pub static mut g_resources_init:bool=false;
+
+struct AppScreens{
+	app:App,
+	screens:Vec<Box<Screen<App>>>
+}
+
+#[no_mangle]
+pub extern "C" fn app_display_create(s:&mut AppScreens) {
+	//let mut app=&s.app;
+	s.app.display_create()
+}
+#[no_mangle]
+pub extern "C" fn app_display_destroy(_:&mut AppScreens) {
+	unsafe {
+		g_resources_init=false;
+	}
+}
+
+#[no_mangle]
+pub extern "C" fn app_destroy(_:Box<AppScreens>) {
+}
+
+
+#[no_mangle]
+pub extern "C" fn app_create(argc:c_int, argv:*const *const c_char, w:c_int,h:c_int)->Box<AppScreens> {
+	box AppScreens{
+		app:shadertest::App::new(),
+		screens:vec![box shadertest::ShaderTest as Box<Screen<App>>]
+	}
+}
+
+
+pub fn render_clear()
+{
+	unsafe {
+//		glClearColor(g_fog_color.x()+(g_angle*2.0).sin(),g_fog_color.y(),g_fog_color.z(),g_fog_color.w());
+		glClearColor(0.5f32,0.5f32,0.5f32,1.0f32);
+
+		glClearDepthf(1.0f32);
+		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+		glEnable(GL_DEPTH_TEST);
+		glDepthMask(GL_TRUE);
+		glDepthFunc(GL_LEQUAL);
+
+		glEnable(GL_CULL_FACE);
+	}
+}
+
 
 
 
