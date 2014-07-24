@@ -8,8 +8,8 @@ use r3d::vertex::*;
 pub struct App {
 	bsp:Option<Box<Blob<BspHeader>>>,
 	bsprender:Option<Box<BspRender>>,
-	screens:Vec<Box<Screen<App>>>,
 }
+struct AppScreens(App,Vec<Box<Screen<App>>>);
 struct	RMesh 
 {
 //	bounds:Bounds,
@@ -194,13 +194,25 @@ static mut g_frame:int=0;
 
 static g_num_torus:int = 128;
 /// render a load of meshes in a lissajous curve
-
 #[no_mangle]
-pub extern "C" fn	app_render(app:&mut App) 
+pub extern "C" fn	app_render(&AppScreens(ref  mut app,ref mut screens):&mut AppScreens) 
 {
+	screens.last().unwrap().render(app);
+	
+	let next_screen={
+		screens.mut_last().unwrap().update(app)
+	};
+	unsafe {
+		match next_screen {
+			Pop=>{screens.pop();},
+			Push(x)=>{screens.push(x);},
+			Replace(x)=>{screens.pop();screens.push(x);},
+			_=>{}
+		}
+	}
 
-	let sht=ShaderTest;
-	sht.render(app);
+//	let sht=ShaderTest; 
+//	sht.render(app);
 }
 struct ShaderTest;
 impl Screen<App> for ShaderTest {
@@ -216,6 +228,9 @@ impl Screen<App> for ShaderTest {
 			Some(ref x)=>unsafe{render_at_centre(g_angle*1.0f32,&app.bsprender)},
 			None=>{}
 		}
+	}
+	fn update(&mut self,app:&mut App)->NextScreen<App> {
+		Continue
 	}
 }
 
@@ -371,7 +386,7 @@ fn	create_textures() {
 static mut g_resources_init:bool=false;
 
 #[no_mangle]
-pub extern "C" fn app_display_create(app:&mut App) {
+pub extern "C" fn app_display_create(&AppScreens(ref mut app,ref screens):&mut AppScreens) {
 	unsafe {
 		logi!("shadertest Create Resources \n");
 		create_shaders();
@@ -386,24 +401,26 @@ pub extern "C" fn app_display_create(app:&mut App) {
 	}
 }
 #[no_mangle]
-pub extern "C" fn app_display_destroy(_:&mut App) {
+pub extern "C" fn app_display_destroy(_:&mut AppScreens) {
 	unsafe {
 		g_resources_init=false;
 	}
 }
 
 #[no_mangle]
-pub extern "C" fn app_destroy(_:Box<App>) {
+pub extern "C" fn app_destroy(_:Box<AppScreens>) {
 }
 
 
 #[no_mangle]
-pub extern "C" fn app_create(argc:c_int, argv:*const *const c_char, w:c_int,h:c_int)->Box<App> {
-	box App{
-		bsp: Some(box Blob::<BspHeader>::read(&Path::new("data/e1m1.bsp"))),
-		bsprender:None,
-		screens:Vec::new(),
-	}
+pub extern "C" fn app_create(argc:c_int, argv:*const *const c_char, w:c_int,h:c_int)->Box<AppScreens> {
+	box AppScreens(
+		App{
+			bsp: Some(box Blob::<BspHeader>::read(&Path::new("data/e1m1.bsp"))),
+			bsprender:None,
+		},
+		vec![box ShaderTest as Box<Screen<App>>]
+	)
 }
 
 
