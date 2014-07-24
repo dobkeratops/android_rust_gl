@@ -8,6 +8,7 @@ use r3d::vertex::*;
 pub struct App {
 	bsp:Option<Box<Blob<BspHeader>>>,
 	bsprender:Option<Box<BspRender>>,
+	screens:Vec<Box<Screen<App>>>,
 }
 struct	RMesh 
 {
@@ -197,12 +198,30 @@ static g_num_torus:int = 128;
 #[no_mangle]
 pub extern "C" fn	app_render(app:&mut App) 
 {
-	//logw("render noswap");
+
+	let sht=ShaderTest;
+	sht.render(app);
+}
+struct ShaderTest;
+impl Screen<App> for ShaderTest {
+	fn render(&self, app:&mut App) {
+
+		unsafe {g_angle+=0.0025f32;}
+
+		render_clear();
+		render_spinning_lisajous(app);
+		// render bsp level
+		
+		match app.bsprender {
+			Some(ref x)=>unsafe{render_at_centre(g_angle*1.0f32,&app.bsprender)},
+			None=>{}
+		}
+	}
+}
+
+fn render_clear()
+{
 	unsafe {
-
-		assert!(g_resources_init==true)		//logi!("render_no_swap"); // once..
-		g_angle+=0.0025f32;
-
 		glClearColor(g_fog_color.x()+(g_angle*2.0).sin(),g_fog_color.y(),g_fog_color.z(),g_fog_color.w());
 
 		glClearDepthf(1.0f32);
@@ -212,6 +231,15 @@ pub extern "C" fn	app_render(app:&mut App)
 		glDepthFunc(GL_LEQUAL);
 
 		glEnable(GL_CULL_FACE);
+	}
+}
+	//logw("render noswap");
+fn render_spinning_lisajous(app:&mut App) {
+	unsafe {
+
+		assert!(g_resources_init==true)		//logi!("render_no_swap"); // once..
+		g_angle+=0.0025f32;
+
 		let matI = matrix::identity();
 		let matP = matrix::projection_frustum(-0.5f32,0.5f32,-0.5f32,0.5f32, 90.0f32, 1.0f32, 0.5f32,5.0f32);
 		gl_matrix_projection(&matP);
@@ -272,16 +300,10 @@ pub extern "C" fn	app_render(app:&mut App)
 				debugdraw::draw_cross(0.2f32);
 			}
 		}
-
-		// render bsp level
-		match app.bsprender {
-			Some(ref x)=>render_at_centre(a0,&app.bsprender),
-			None=>{}
-		}
-
 		g_frame+=1;
 	}
 }
+
 
 fn render_at_centre<R:Render>(a0:f32,x:&Option<Box<R>>) {
 	unsafe {
@@ -379,7 +401,8 @@ pub extern "C" fn app_destroy(_:Box<App>) {
 pub extern "C" fn app_create(argc:c_int, argv:*const *const c_char, w:c_int,h:c_int)->Box<App> {
 	box App{
 		bsp: Some(box Blob::<BspHeader>::read(&Path::new("data/e1m1.bsp"))),
-		bsprender:None
+		bsprender:None,
+		screens:Vec::new(),
 	}
 }
 

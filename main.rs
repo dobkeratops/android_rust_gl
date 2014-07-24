@@ -20,6 +20,7 @@ extern crate collections;
 
 use shadertest::*;
 use r3d::*;
+use rw=rustwin;
 
 pub mod r3d;
 pub mod shadertest;
@@ -79,30 +80,10 @@ extern "C" fn null_func() {
 }
 
 
-pub fn try_stuff(){
-	let m1 = matrix::Matrix4::<Vec4<f32>>::identity();
-	let m2 = matrix::Matrix4::<Vec4<f32>>::identity();
-	let v0= Vec4(0.0f32,1.0f32,2.0f32,0.0f32);
-	let m12=m1*m2;
-	let v10= m1*v0*2.0f32;
-	dump!(m12,v10);
-	let v1=Vec3::<f32>(1.0,2.0,3.0);
-	let v2=(1.1f32,2.2f32,3.3f32);
-//	dump!(v2+v2);
-	dump!(v1.xyz());
-	dump!(v1.xyzw());
-	let x=3.0f32; let y=2.0f32;
-	dump!(x%y);	
-	dump!(((1.0f32,2.0f32,3.0f32),4.0f32).to_vec4());
-	dump!((1.0f32,2.0f32,3.0f32).to_vec3());
-}
-
-
-
 #[cfg(not(target_os = "android"))]
 pub fn main()
 {
-	try_stuff();
+
 	unsafe {
 		let mut argc:c_int=0;
 		glutInit((&mut argc) as *mut c_int,0 as *const *const c_char );
@@ -121,6 +102,8 @@ pub fn main()
 		glEnable(GL_DEPTH_TEST);
 		dump!(argc);
 
+
+
 		loop {
 			glutMainLoopEvent();
 			app_render(&mut *app);
@@ -128,7 +111,6 @@ pub fn main()
 			glutSwapBuffers();
 		}
 		app_display_destroy(&mut *app);
-		app_destroy(app);
 	}
 }
 

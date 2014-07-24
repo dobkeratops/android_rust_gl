@@ -43,3 +43,26 @@ pub mod geom;
 pub trait Render {
 	fn render(&self);
 }
+
+pub enum WinEvent {
+	KeyDown(int),
+	KeyUp(int),
+	MouseMove((int,int)),
+	MouseDown((int,int),int),
+	MouseUp((int,int),int),
+	WinResize(int,int),
+	WinMove(int,int)
+}
+pub enum NextScreen<APP> {
+	Continue,
+	Push(Box<Screen<APP>>),
+	Replace(Box<Screen<APP>>),
+	Pop
+}
+ 
+pub trait Screen<APP> {
+	fn render(&self,app:&mut APP)	{}
+	fn update(&mut self,app:&mut APP)->NextScreen<APP>	{Continue}
+	fn event(&mut self, ev:WinEvent,&mut APP){}
+}
+

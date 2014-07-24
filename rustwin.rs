@@ -323,6 +323,8 @@ fn init_window()
 		//	c_glut_init();
 		glutCreateWindow(c_str("rust window"));
 		glutPopWindow();
+		glutIdleFunc(null_func as *const u8);
+        glutDisplayFunc(null_func as *const u8);
 		glEnable(GL_DEPTH_TEST);
 	}
 }
@@ -448,3 +450,4 @@ pub fn start_main_loop_cyclic<APP:App>(mut screens:Vec<Box<ViewController<APP>>>
 	main_loop_sub(screens,app);
 }
 
+extern "C" fn null_func() {}

@@ -153,12 +153,12 @@ pub fn	draw_image(size:(u32,u32),image:&Vec<u32>, pos:(f32,f32)) {
 pub fn get_format(bytes_per_pixel:u32, alpha_bits:u32)->(GLenum,GLenum) {
 
 	match (bytes_per_pixel,alpha_bits) {
-		(4,_) => (GL_RGBA,GL_UNSIGNED_BYTE),
+		(4,8) => (GL_RGBA,GL_UNSIGNED_BYTE),
 		(3,0) => (GL_RGB,GL_UNSIGNED_BYTE),
 		(2,4) => (GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4),
 		(2,1) => (GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1),
 		(2,0) => (GL_RGB, GL_UNSIGNED_SHORT_5_6_5),
-		(1,8) => (GL_RGB, GL_UNSIGNED_BYTE_3_3_2),	// todo:should mean compressed.
+		(1,0) => (GL_RGB, GL_UNSIGNED_BYTE_3_3_2),	// todo:should mean compressed.
 		(1,_) => (GL_RGB, GL_UNSIGNED_BYTE_3_3_2),	// todo:should mean compressed.
 		_ => (GL_RGBA, GL_UNSIGNED_BYTE)
 	}
