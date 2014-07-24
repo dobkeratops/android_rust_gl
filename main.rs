@@ -147,8 +147,10 @@ struct AppScreens{
 
 #[no_mangle]
 pub extern "C" fn app_display_create(s:&mut AppScreens) {
-	//let mut app=&s.app;
-	s.app.display_create()
+	s.app.display_create();
+	for  screen in s.screens.mut_iter(){
+		screen.display_create();
+	}
 }
 #[no_mangle]
 pub extern "C" fn app_display_destroy(_:&mut AppScreens) {

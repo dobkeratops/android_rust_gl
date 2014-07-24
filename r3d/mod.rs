@@ -61,6 +61,7 @@ pub enum NextScreen<APP> {
 }
  
 pub trait Screen<APP> {
+	fn display_create(&mut self){}
 	fn render(&self,app:&mut APP)	{}
 	fn update(&mut self,app:&mut APP)->NextScreen<APP>	{Continue}
 	fn event(&mut self, ev:WinEvent,&mut APP){}
