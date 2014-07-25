@@ -18,15 +18,17 @@ extern crate debug;
 extern crate libc;
 extern crate collections;
 
-use shadertest::*;
-use r3d::*;
-use rw=rustwin;
+//use common::*;
+pub use shadertest::*;
+pub use r3d::*;
+pub use rustwin::*;
 
 pub mod r3d;
 pub mod shadertest;
 pub mod bsp;
 pub mod bsprender;
 pub mod rustwin;
+pub mod flymode;
 
 // framework can be: Android, Glut, (iOS,.o.)
 // 'app_*' are hooks called from platform specific stub
@@ -34,15 +36,16 @@ pub mod rustwin;
 
 #[cfg(target_os = "android")]
 extern { fn android_log_print(lvl:c_int,  s:*const c_char);}
-
+/*
 mod common {
+
 	pub use std::vec;
 	pub use libc::{c_int,c_char};
 	pub use r3d::vecmath::*;
 	pub use r3d::gl::*;
 	pub use r3d::glut::*;
 }
-
+*/
 
 
 #[cfg(target_os = "android")]
@@ -78,33 +81,23 @@ extern { fn android_get_inputs()->AndroidInput; }
 // It might be nice to make a rust trait object for all this, 
 // however this is language independant. One can glue any other framework specifics ontop.
 
-extern "C" fn null_func() {
-}
 
-
+// rustic mainloop possible on desktop OS.
+// this is replaced with C/objC stub on android/iOS
 #[cfg(not(target_os = "android"))]
 pub fn main()
 {
 
 	unsafe {
 		let mut argc:c_int=0;
-		glutInit((&mut argc) as *mut c_int,0 as *const *const c_char );
+		render_glut_init(argc,0 as *const *const c_char);
 
-		glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
-		glutInitWindowSize(1280,800);
-		let win=verify!(glutCreateWindow(c_str("Rust ShaderTest")) isnt 0);
 
 		let mut app = app_create(0,0 as *const *const c_char,1280,800);
 		app_display_create(&mut *app);
-		glDrawBuffer(GL_BACK);
 
-		glutIdleFunc(null_func as *const u8);
-        glutDisplayFunc(null_func as *const u8); // osx impl requires some callback, even though we render manually here. for cleaner window handling, we should ensure this shows the backbuffer without redraw?
-		glutReshapeWindow(1024,1024);
-		glEnable(GL_DEPTH_TEST);
+// osx impl requires some callback, even though we render manually here. for cleaner window handling, we should ensure this shows the backbuffer without redraw?
 		dump!(argc);
-
-
 
 		loop {
 			glutMainLoopEvent();
@@ -121,33 +114,60 @@ pub fn main()
 #[no_mangle]
 pub extern "C" fn	app_render(s:&mut AppScreens) 
 {
+	if rustwin::get_key_state('z')!=0 {
+		dump!(rustwin::get_key_state('z'));
+	}
 	let mut screens=&mut s.screens;
-	screens.last().unwrap().render(&mut s.app);
+	screens.back().unwrap().render();
+
+	while {
+		let ev=get_event();
+		match ev {
+			EventNone=>false,
+			_ => {screens.back_mut().unwrap().win_event(ev);true},
+		}
+	} {}
 
 	//todo:fps timer	
 	let next_screen={
-		screens.mut_last().unwrap().update(&mut s.app)
+		screens.back_mut().unwrap().update()
 	};
+
+	change_screen(screens,next_screen);
+}
+fn change_screen<S:Deque<Box<Screen>>>(screens:&mut S,ns:NextScreen) {
 	unsafe {
-		match next_screen {
-			Pop=>{screens.pop();},
-			Push(x)=>{screens.push(x);},
-			Replace(x)=>{screens.pop();screens.push(x);},
-			_=>{}
+		match ns {
+			Continue=>{},
+			_=>{
+				screens.back_mut().unwrap().on_deselect();
+				match ns {
+					Root(x)=>{ while screens.len()>0 {
+							screens.back_mut().unwrap().on_deselect(); screens.pop_back();
+						}
+						screens.push_back(x);
+					}
+					Pop=>{screens.pop_back(); },
+					Push(x)=>{screens.push_back(x);},
+					Replace(x)=>{screens.pop_back();screens.push_back(x);},
+					CycleNext=>{let x=screens.pop_front().unwrap(); screens.push_back(x);}
+					CyclePrev=>{let x=screens.pop_back().unwrap(); screens.push_front(x);}
+					_=>{}
+				}
+				screens.back_mut().unwrap().on_select();
+			}
 		}
 	}
 }
 
 pub static mut g_resources_init:bool=false;
 
-struct AppScreens{
-	app:App,
-	screens:Vec<Box<Screen<App>>>
+pub struct AppScreens{
+	screens:RingBuf<Box<Screen>>
 }
 
 #[no_mangle]
 pub extern "C" fn app_display_create(s:&mut AppScreens) {
-	s.app.display_create();
 	for  screen in s.screens.mut_iter(){
 		screen.display_create();
 	}
@@ -167,27 +187,15 @@ pub extern "C" fn app_destroy(_:Box<AppScreens>) {
 #[no_mangle]
 pub extern "C" fn app_create(argc:c_int, argv:*const *const c_char, w:c_int,h:c_int)->Box<AppScreens> {
 	box AppScreens{
-		app:shadertest::App::new(),
-		screens:vec![box shadertest::ShaderTest as Box<Screen<App>>]
+		screens:{
+			let mut x=RingBuf::new();
+			x.push_back(box shadertest::ShaderTest::new() as Box<Screen>); 
+			x.push_back(box flymode::FlyMode::new() as Box<Screen>); 
+			x
+		}
 	}
 }
 
-
-pub fn render_clear()
-{
-	unsafe {
-//		glClearColor(g_fog_color.x()+(g_angle*2.0).sin(),g_fog_color.y(),g_fog_color.z(),g_fog_color.w());
-		glClearColor(0.5f32,0.5f32,0.5f32,1.0f32);
-
-		glClearDepthf(1.0f32);
-		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-		glEnable(GL_DEPTH_TEST);
-		glDepthMask(GL_TRUE);
-		glDepthFunc(GL_LEQUAL);
-
-		glEnable(GL_CULL_FACE);
-	}
-}
 
 
 

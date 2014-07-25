@@ -70,9 +70,10 @@ pub fn init() {
 		init_input();
 	}
 }
-
+static mut g_init_input:bool=false;
 pub fn get_event()->WinEvent {
 	unsafe {
+		if g_init_input==false {init_input() }
 		glutMainLoopEvent(); 
 //		println!("pop event from {:?}", g_rustwin);
 //		println!("pos={:?}",g_cursor);
@@ -298,8 +299,9 @@ extern "C" fn special_up(k:c_int,x:c_int,y:c_int) {
 	}
 }
 
-fn init_input() {
+pub fn init_input() {
 	unsafe {
+		g_init_input=true;
 		glutMouseFunc(mouse);
 		glutMotionFunc(motion);
 		glutPassiveMotionFunc(passive_motion);
@@ -327,127 +329,6 @@ fn init_window()
         glutDisplayFunc(null_func as *const u8);
 		glEnable(GL_DEPTH_TEST);
 	}
-}
-
-
-pub struct	InputSys;
-pub struct	RenderSys;
-
-
-pub trait App {	// app must be able to do various things.. ?
-}
-
-/// Viewable state of the entire application
-// todo - does it need compound screen concept eg menu superimposed on continuig action, or do we just do that each time..
-// heirachical screens
-
-
-/*
-APP - the whole programs' state (Model)
-ViewController - a state of rendering & input management.. 'Screen'/
-
-the APP is a generic parameter because its set at compile time,
-whilst ViewControllers are dynamic runtime transitions.
-Passing the APP around saves ViewControllers maintaining a back-pointer to their 'owning app',
-and allows the framework to communicate where it's appropriate to modify app data (ie not in rendering)
-
-Passing from above avoids creating global variables, which are deemed unsafe, increase coupling..
-
-*/
-pub trait ViewController<APP:App> {
-	fn on_activate(&mut self){}
-	fn on_deactivate(&mut self){}
-	// on enter/on leave?
-	fn win_event(&mut self,&mut APP, ev:&WinEvent) {}	// todo: win event proc might need screen navigation too.
-	fn update(&mut self, &mut APP, &mut InputSys)->NextViewController<APP> {Continue}
-	fn render(&self, &APP, &mut RenderSys) {}
-	fn dump(&self)->String { String::from_str("ViewController-?") }
-}
-pub enum NextViewController<App> {
-	Continue,
-	Pop,					// remove this from the stack, back to previous
-	Back,					// keep this on the stack, back to previous
-	Forward,				// forward to the next ..
-	CycleNext,
-	Push(Box<ViewController<App>>),		// push this screen onto the stack and view it
-	Replace(Box<ViewController<App>>),		// replace the current screen 
-	SetRoot(Box<ViewController<App>>),
-	Quit					// exit the whole program
-}
-
-// todo - Screen transitions - command to render a screen with a % fade
-
-pub fn main_loop<APP:App>(mut root:Box<ViewController<APP>>, app:&mut APP) {
-	let mut screens:Vec<Box<ViewController<APP>>> = vec![root];	// todo - use a list ?
-	main_loop_sub(screens,app);
-}
-pub fn main_loop_sub<APP:App>(mut screens:Vec<Box<ViewController<APP>>>, app:&mut APP) {
-
-	init();
-	
-	let mut quit:bool=false;
-	let mut screen_id:uint=0;
-
-	while !quit {
-		while {
-			let ev=get_event();
-			match ev {
-				EventNone=>false,
-				_ => {screens.get_mut(screen_id).win_event(app,&ev);true},
-			}
-		} {}
-
-		match screens.get_mut(screen_id).update(app,&mut InputSys)
-		{
-			Continue=>{},
-			Pop=>{if screen_id>0 {screen_id-=1}; screens.remove(screen_id);/*vec_remove(&screens, screen_id);*/},
-			Push(mut new_screen)=>{
-					screens.get_mut(screen_id).on_deactivate();
-					screen_id+=1;
-					screens.insert(screen_id,new_screen ); 
-					screens.get_mut(screen_id).on_activate();
-			},
-			Replace(mut new_screen)=>{
-				screens.get_mut(screen_id).on_deactivate();
-				*screens.get_mut(screen_id)=new_screen;
-				screens.get_mut(screen_id).on_activate();
-			},
-			Back=> if screen_id>0 {
-				screens.get_mut(screen_id).on_deactivate();
-				screen_id-=1;
-				screens.get_mut(screen_id).on_activate();
-			},
-			Forward=> if screen_id<screens.len() {
-				screens.get_mut(screen_id).on_deactivate();
-				screen_id+=1;
-				screens.get_mut(screen_id).on_activate();
-			},
-			CycleNext=> {
-				screens.get_mut(screen_id).on_deactivate();
-				screen_id=(screen_id+1)%screens.len();
-				screens.get_mut(screen_id).on_activate();
-			}
-			SetRoot(mut new_screen)=> {
-				screens.get_mut(screen_id).on_deactivate();
-				screens = vec![new_screen]; screen_id=0;
-				screens.get_mut(screen_id).on_activate();
-			}
-			Quit=>quit=true,
-		}
-		if screen_id<screens.len(){ 
-			println!("render screen {:?}/{:?}\n",screen_id,screens.len());
-			screens.get(screen_id).render(app,&mut RenderSys)
-		}
-		if screens.len()==0{quit=true}
-		unsafe {
-			glFlush();
-			glutSwapBuffers();
-		}
-	}
-}
-
-pub fn start_main_loop_cyclic<APP:App>(mut screens:Vec<Box<ViewController<APP>>>, app:&mut APP) {
-	main_loop_sub(screens,app);
 }
 
 extern "C" fn null_func() {}

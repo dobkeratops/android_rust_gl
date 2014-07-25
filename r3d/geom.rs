@@ -11,6 +11,7 @@ pub type AABB=Extents<Vec3<f32>>;
 
 pub trait Pos<V=Vec3<f32>> {
 	fn pos(&self)->V;
+	fn set_pos(&mut self,v:V) {fail!();}
 }
 
 struct Sphere<T=f32> {
@@ -172,6 +173,18 @@ pub static g_cuboid_edges:[[uint,..2],..12]=[
 	[4,5],[4,6],[5,7],[6,7],
 	[0,4],[1,5],[2,6],[3,7]];
 
+// entity:moving bounds.
 
+pub struct Entity {
+	pub matrix:Matrix4<Vec4<f32>>,
+	pub vel:Vec3,
+}
+impl Pos for Entity {
+	fn pos(&self)->Vec3 { self.matrix.aw().to_vec3()	}
+	fn set_pos(&mut self,v:Vec3) {let Matrix4(_,_,_,ref mut aw)=self.matrix;*aw=(v,one()).to_vec4();}
+}
+impl Entity {
+	
+}
 
 

@@ -340,7 +340,6 @@ impl BspHeader {
 
 pub type Point3s=(i16,i16,i16);
 pub type BBox=(Point3s,Point3s);
-pub struct Entity(u8);
 pub struct Plane {
 	pub normal:BspVec3,
 	pub dist:f32,
@@ -424,7 +423,7 @@ static AmbientNum:int = 4;
 enum Ambient {
 	AmbientWater=0,AmbientSky,AmbientSlime,AmbientLava
 }
-
+pub struct Entity(u8);
 pub struct Model {
 	pub bound:BBox,
 	pub origin:BspVec3,

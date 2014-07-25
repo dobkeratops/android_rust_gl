@@ -309,7 +309,65 @@ pub fn draw_quad_color_tex<V:GlVertex,C:GlColor>(
 	}
 
 }
+pub fn draw_grid_xz(scale:f32, count:int, color:u32) {
+	let mut f=-scale*(count/2) as f32;
+	let f0=f;
+	let f1=-f;
+	let zero=0.0f32;
+	draw_begin(GL_LINES);
+	for i in range(0,count+1) {
+		draw_line((f,zero,f0),(f,zero,f1),color);
+		draw_line((f0,zero,f),(f1,zero,f),color);
+		f+=scale;
+	}
+	draw_end();
+}
+pub fn draw_grid_xy(scale:f32, count:int, color:u32) {
+	let mut f=-scale*(count/2) as f32;
+	let f0=f;
+	let f1=-f;
+	let zero=0.0f32;
+	draw_begin(GL_LINES);
+	for i in range(0,count+1) {
+		draw_line((f,f0,zero),(f,f1,zero),color);
+		draw_line((f0,f,zero),(f1,f,zero),color);
+		f+=scale;
+	}
+	draw_end();
+}
+pub fn draw_grid_yz(scale:f32, count:int, color:u32) {
+	let mut f=-scale*(count/2) as f32;
+	let f0=f;
+	let f1=-f;
+	let zero=0.0f32;
+	draw_begin(GL_LINES);
+	for i in range(0,count+1) {
+		draw_line((zero,f,f0),(zero,f,f1),color);
+		draw_line((zero,f0,f),(zero,f1,f),color);
+		f+=scale;
+	}
+	draw_end();
+}
 
+pub fn draw_ground_grid() {
+	draw_grid_xz(1.0f32/256.0f32,32, 0xff707070);
+	draw_grid_xz(1.0f32/16.0f32,32, 0xff606060);
+	draw_grid_xz(1.0f32,32, 0xff505050);
+	draw_grid_xz(16.0f32,32, 0xff404040);
+	draw_grid_xz(256.0f32,32, 0xff303030);
+}
+
+pub fn draw_grid() {
+	draw_grid_xz(1.0f32/16.0f32,32, 0xff606060);
+	draw_grid_xz(1.0f32,32, 0xff505050);
+	draw_grid_xz(16.0f32,32, 0xff404040);
+	draw_grid_xy(1.0f32/16.0f32,32, 0xff606060);
+	draw_grid_xy(1.0f32,32, 0xff505050);
+	draw_grid_xy(16.0f32,32, 0xff404040);
+	draw_grid_yz(1.0f32/16.0f32,32, 0xff606060);
+	draw_grid_yz(1.0f32,32, 0xff505050);
+	draw_grid_yz(16.0f32,32, 0xff404040);
+}
 
 pub unsafe fn draw_init() {	
 	dump!();

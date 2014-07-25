@@ -1,5 +1,6 @@
 #![macro_escape]
 use super::gl::*;
+use super::glut::*;
 use super::ut::*;
 
 /// Defines a vertex structure with embedded  attribute index annotations & GL type enums; 
@@ -256,3 +257,40 @@ pub fn create_shader_program(ps:PixelShader,vs:VertexShader,f_bind_attribs:|p:Sh
 		prog
 	}
 }
+
+pub fn render_glut_init(arg_argc:c_int, argv:*const*const c_char) {
+	unsafe{
+		let mut argc=arg_argc;
+		glutInit((&mut argc) as *mut c_int,0 as *const *const c_char );
+		glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+		glutInitWindowSize(1280,800);
+		let win=verify!(glutCreateWindow(c_str("Rust ShaderTest")) isnt 0);
+		glutIdleFunc(null_func as *const u8);
+        glutDisplayFunc(null_func as *const u8); 
+		glDrawBuffer(GL_BACK);
+		glutReshapeWindow(1024,1024);
+		glEnable(GL_DEPTH_TEST);
+	}
+}
+
+pub fn render_clear()
+{
+	unsafe {
+//		glClearColor(g_fog_color.x()+(g_angle*2.0).sin(),g_fog_color.y(),g_fog_color.z(),g_fog_color.w());
+		glClearColor(0.5f32,0.5f32,0.5f32,1.0f32);
+
+		glClearDepthf(1.0f32);
+		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+		glEnable(GL_DEPTH_TEST);
+		glDepthMask(GL_TRUE);
+		glDepthFunc(GL_LEQUAL);
+
+		glEnable(GL_CULL_FACE);
+	}
+}
+
+extern "C" fn null_func() {
+}
+
+
+

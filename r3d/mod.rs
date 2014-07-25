@@ -1,6 +1,8 @@
 #![macro_escape]
-use std::c_str;
-use libc::{c_char,c_int,c_void};
+pub use std::c_str;
+pub use libc::{c_char,c_int,c_void};
+pub use std::collections::RingBuf;
+pub use std::collections::Deque;
 
 pub use self::vectypes::*;
 pub use self::vecmath::*;
@@ -44,26 +46,24 @@ pub trait Render {
 	fn render(&self);
 }
 
-pub enum WinEvent {
-	KeyDown(int),
-	KeyUp(int),
-	MouseMove((int,int)),
-	MouseDown((int,int),int),
-	MouseUp((int,int),int),
-	WinResize(int,int),
-	WinMove(int,int)
-}
-pub enum NextScreen<APP> {
+pub enum NextScreen {
 	Continue,
-	Push(Box<Screen<APP>>),
-	Replace(Box<Screen<APP>>),
-	Pop
+	Replace(Box<Screen>),
+	Push(Box<Screen>),
+	Root(Box<Screen>),
+	Pop,
+	CycleNext,
+	CyclePrev
 }
  
-pub trait Screen<APP> {
+pub trait Screen {
 	fn display_create(&mut self){}
-	fn render(&self,app:&mut APP)	{}
-	fn update(&mut self,app:&mut APP)->NextScreen<APP>	{Continue}
-	fn event(&mut self, ev:WinEvent,&mut APP){}
+	fn display_destroy(&mut self){}
+	fn on_select(&mut self){}
+	fn on_deselect(&mut self){}
+	fn render(&self)	{}
+	fn update(&mut self)->NextScreen	{Continue}
+	fn win_event(&mut self, ev: ::rustwin::WinEvent)->NextScreen{Continue}
+	fn dump(&self){}
 }
 

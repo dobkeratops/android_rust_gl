@@ -56,6 +56,7 @@ impl<'a, V> Axes<V> for  Matrix3<V> {
 	fn ay<'a>(&'a self)->&'a V { let Matrix3(_,ref r,_)=*self; r}
 	fn az<'a>(&'a self)->&'a V { let Matrix3(_,_,ref r)=*self; r}
 }
+
 // Accessor for axes, by value: may be efficeint to construct axes simultaneously.
 // individual acessors may be overriden if its' convenient
 pub trait ToAxes<V> {
@@ -64,11 +65,74 @@ pub trait ToAxes<V> {
 	fn axis_z(&self)->V {let (_,_,z)=self.axes(); z}
 	fn axes(&self)->(V,V,V);
 }
+pub trait SetAxes<V> {
+	fn set_ax(&mut self,a:V);
+	fn set_ay(&mut self,a:V);
+	fn set_az(&mut self,a:V);
+	fn set_axes(&mut self,ax:V,ay:V,az:V){ self.set_ax(ax);self.set_ay(ay); self.set_az(az);}
+}
 impl<V:Clone> ToAxes<V> for Matrix4<V> {
 	fn axes(&self)->(V,V,V) {
 		(self.ax().clone(),self.ay().clone(),self.az().clone())
 	}
 }
+impl<T:Float+Clone+Copy,V:ToVec3<T>> SetAxes<V> for Matrix4<Vec3<T>> {
+	fn set_ax(&mut self, a:V){
+		let Matrix4(ref mut ax,_,_,_)=*self;
+		*ax=a.to_vec3();
+	}
+	fn set_ay(&mut self, a:V){
+		let Matrix4(_,ref mut ay,_,_)=*self;
+		*ay=a.to_vec3();
+	}
+	fn set_az(&mut self, a:V){
+		let Matrix4(_,_,ref mut az,_)=*self;
+		*az=a.to_vec3();
+	}
+}
+impl<T:Float+Clone+Copy,V:ToVec4<T>> SetAxes<V> for Matrix4<Vec4<T>> {
+	fn set_ax(&mut self, a:V){
+		let Matrix4(ref mut ax,ref ay,ref az,ref aw)=*self;
+		*ax=a.to_vec4();
+	}
+	fn set_ay(&mut self, a:V){
+		let Matrix4(ref ax,ref mut ay,ref az,ref aw)=*self;
+		*ay=a.to_vec4();
+	}
+	fn set_az(&mut self, a:V){
+		let Matrix4(ref ax,ref ay,ref mut az,ref aw)=*self;
+		*az=a.to_vec4();
+	}
+}
+impl<T:Float+Clone+Copy,V:ToVec3<T>> SetAxes<V> for Matrix3<Vec3<T>> {
+	fn set_ax(&mut self, a:V){
+		let Matrix3(ref mut ax,_,_)=*self;
+		*ax=a.to_vec3();
+	}
+	fn set_ay(&mut self, a:V){
+		let Matrix3(_,ref mut ay,_)=*self;
+		*ay=a.to_vec3();
+	}
+	fn set_az(&mut self, a:V){
+		let Matrix3(_,_,ref mut az)=*self;
+		*az=a.to_vec3();
+	}
+}
+impl<T:Float+Clone+Copy,V:ToVec4<T>> SetAxes<V> for Matrix3<Vec4<T>> {
+	fn set_ax(&mut self, a:V){
+		let Matrix3(ref mut ax,_,_)=*self;
+		*ax=a.to_vec4();
+	}
+	fn set_ay(&mut self, a:V){
+		let Matrix3(_,ref mut ay,_)=*self;
+		*ay=a.to_vec4();
+	}
+	fn set_az(&mut self, a:V){
+		let Matrix3(_,_,ref mut az)=*self;
+		*az=a.to_vec4();
+	}
+}
+
 impl<V> Axes<V> for Matrix4<V> {
 	fn ax<'a>(&'a self)->&'a V { let Matrix4(ref r,_,_,_)=*self; r}
 	fn ay<'a>(&'a self)->&'a V { let Matrix4( _,ref r,_,_)=*self; r}
@@ -82,7 +146,14 @@ impl<V> Pos<V> for Matrix4<V> {
 	fn pos<'a>(&'a self)->&'a V { let Matrix4( _,_,_,ref r)=*self; r}
 }
 
-impl<T:Zero+One+Clone> Matrix4<Vec4<T>> {
+impl<T:Zero+One+Clone+Copy> Matrix4<Vec4<T>> {
+	pub fn from_vec4(ax:Vec4<T>,ay:Vec4<T>,az:Vec4<T>,aw:Vec4<T>)->Matrix4<Vec4<T>> {
+		Matrix4(ax,ay,az,aw)
+	}
+	pub fn from_vec3(ax:Vec3<T>,ay:Vec3<T>,az:Vec3<T>,aw:Vec3<T>)->Matrix4<Vec4<T>> {
+		Matrix4(ax.to_vec4(),ay.to_vec4(),az.to_vec4(),(aw,one()).to_vec4())
+	}
+
 	pub fn from_mat33(mat33:&Matrix3<Vec3<T>>)->Matrix4<Vec4<T>> {
 		Matrix4::from_mat33_pos(mat33,&Vec4(zero(),zero(),zero(),one()))
 	}
@@ -93,12 +164,12 @@ impl<T:Zero+One+Clone> Matrix4<Vec4<T>> {
 			Vec4::from_vec3(mat33.az(),zero()),
 			pos.clone())
 	}
-	pub fn from_mat43(mat33:&Matrix4<Vec3<T>>)->Matrix4<Vec4<T>> {
+	pub fn from_mat43(mat43:&Matrix4<Vec3<T>>)->Matrix4<Vec4<T>> {
 		Matrix4(
-			Vec4::from_vec3(mat33.ax(),zero()),
-			Vec4::from_vec3(mat33.ay(),zero()),
-			Vec4::from_vec3(mat33.az(),zero()),
-			Vec4::from_vec3(mat33.aw(),one()))
+			Vec4::from_vec3(mat43.ax(),zero()),
+			Vec4::from_vec3(mat43.ay(),zero()),
+			Vec4::from_vec3(mat43.az(),zero()),
+			Vec4::from_vec3(mat43.aw(),one()))
 	}
 	pub fn from_mat34_pos(mat33:&Matrix3<Vec4<T>>,pos:&Vec4<T>)->Matrix4<Vec4<T>> {
 		Matrix4(mat33.ax().clone(),mat33.ay().clone(),mat33.az().clone(),pos.clone())
@@ -164,17 +235,27 @@ impl<V:VecMath<T>,T:Float=f32> Matrix4<V> {
 			VecMath::axis(1),
 			VecMath::axis(2),
 			trans.clone())
-	}
-	
+	}	
 	pub fn look_along(pos:&V,fwd:&V,up:&V)->Matrix4<V>{
 		let az=fwd.normalize();
 		let ax=az.cross(up).normalize();
 		let ay=az.cross(&ax);
 		Matrix4(ax,ay,az,pos.clone())
 	}
+	// Variation of 'look-at' calculation that prioritizes upvector
+	pub fn look_up_along(pos:&V,up:&V,fwd:&V)->Matrix4<V>{
+		let ay=up.normalize();
+		let ax=fwd.cross(up).normalize();
+		let az=ax.cross(&ay);
+		Matrix4(ax,ay,az,pos.clone())
+	}
+
 	pub fn look_at(pos:&V,target:&V,up:&V)->Matrix4<V> { Matrix4::look_along(pos,&target.sub(pos),up) }
 	pub fn orthonormalize_zyx(self)->Matrix4<V> {
 		Matrix4::look_along(self.aw(),self.az(),self.ay())
+	}
+	pub fn orthonormalize_yzx(self)->Matrix4<V> {
+		Matrix4::look_up_along(self.aw(),self.ay(),self.az())
 	}
 	pub fn mul_point(&self,pt:&V)->V{	// 'point'=x,y,z,1
 		self.aw().mad(self.ax(),pt.x()).mad(self.ay(),pt.y()).mad(self.az(),pt.z())
@@ -204,11 +285,11 @@ impl<V:VecMath<T>,T:Float=f32> Matrix4<V> {
 	}
 	// matrix inverse with assumption of being orthonormalized.
 	pub fn inv_orthonormal(&self)->Matrix4<V> {
-		let ax=self.inv_mul_axis(self.ax());
-		let ay=self.inv_mul_axis(self.ay());
-		let az=self.inv_mul_axis(self.az());
-		let aw=self.inv_mul_point(self.aw());
-		Matrix4(ax,ay,az,aw)
+		let ax=XYZW::from_xyz(self.ax().x(),self.ay().x(),self.az().x(),);
+		let ay=XYZW::from_xyz(self.ax().y(),self.ay().y(),self.az().y(),);
+		let az=XYZW::from_xyz(self.ax().z(),self.ay().z(),self.az().z(),);
+		let aw=self.inv_mul_axis(&-*self.aw());
+		Matrix4(ax,ay,az,aw.to_point())
 	}
 	// todo: full 
 }
@@ -251,26 +332,31 @@ pub fn identity()->Matrix4<Vec4<f32>> {
 }
 
 //impl<F:Num+Zero+One> Matrix4<Vec4<F>> {
-pub fn projection<F:FloatMath=f32>(fov_radians:F, aspect:F, znear:F, zfar:F)->Matrix4<Vec4<F>> {
-	let xymax=znear * fov_radians.tan();
-	let ymin=-xymax;
-	let xmin=-xymax;
-	let width=xymax-xmin;
-	let height=xymax-ymin;
+pub fn projection<F:FloatMath=f32>(tan_half_fov:F, aspect:F, znear:F, zfar:F)->Matrix4<Vec4<F>> {
+	let xmax=znear * tan_half_fov;
+	let xmin=-xmax;
+	let ymin=xmin/aspect;
+	let ymax=xmax/aspect;
+	let width=xmax-xmin;
+	let height=ymax-ymin;
 
 	let depth = zfar-znear;
 	let q=-(zfar+znear)/depth;
 	let two = one::<F>()+one::<F>();
 	let qn=-two*(zfar*znear)/depth;
 	let w=two*znear/width;
-	let w= w/aspect;
+//	let w= w/aspect;
 	let h=two*znear/ height;
+	let a=(xmax+xmin)/(xmax-xmin);
+	let b=(ymax+ymin)/(ymax-ymin);
+	let c=-(zfar+znear)/(zfar-znear);
+	let d=-two*(zfar*znear)/(zfar-znear);
 	
 	Matrix4(
 		Vec4(w, zero(), zero(), zero()),
 		Vec4(zero(), h, zero(), zero()),
-		Vec4(zero(), zero(), q, -one::<F>()),
-		Vec4(zero(), zero(), qn, zero()),
+		Vec4(a, b, c, -one::<F>()),
+		Vec4(zero(), zero(), d, zero()),
 	)
 }
 
@@ -386,6 +472,13 @@ pub fn projection_frustum<F:Float=f32>(left:F,right:F, bottom:F, top:F, fov_radi
 	)
 }
 
+pub fn projection_default()->Matrix4<Vec4<f32>> {
+	let znear = 1.0f32/16.0f32;
+	let zfar = 1024.0f32;
+	projection_frustum(-0.5f32,0.5f32,-0.5f32,0.5f32, 90.0f32, 1.0f32, 0.5f32,5.0f32)
+}
+
+
 pub fn scale_rotate_translate<F:FloatMath=f32>(s:&Vec3<F>,r:&Vec3<F>,t:&Vec3<F>)->Matrix4<Vec4<F>> {
 	translate(t)*rotate_zyx(r)*scale_vec(s)
 }
@@ -476,8 +569,12 @@ impl<T:MyFloat,RHS,OUT> Mul<RHS,OUT> for Matrix3<Vec3<T>> {
 	fn mul(&self, other:&RHS)->OUT { other.vpre_mul_mat33(self) }
 }
 */
-
-
+impl<T:Float+Copy+Clone> Matrix4<Vec3<T>> {
+	pub fn from_mat44(src:&Matrix4<Vec4<T>>)->Matrix4<Vec3<T>> {
+		let Matrix4(ax,ay,az,aw)=*src;
+		Matrix4(ax.to_vec3(), ay.to_vec3(),az.to_vec3(),aw.to_vec3())
+	}
+}
 
 pub type Matrix33<T=f32> =Matrix3<Vec3<T>>;
 pub type Matrix43<T=f32> =Matrix4<Vec3<T>>;

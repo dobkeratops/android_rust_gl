@@ -5,32 +5,6 @@ use bsprender::*;
 use r3d::shaders::*;
 use r3d::vertex::*;
 
-pub struct App {
-	bsp:Option<Box<Blob<BspHeader>>>,
-	bsprender:Option<Box<BspRender>>,
-}
-impl App {
-	pub fn new()->App{
-		App{
-			bsp: Some(box Blob::<BspHeader>::read(&Path::new("data/e1m1.bsp"))),
-			bsprender:None,
-		}
-	}
-	pub fn display_create(&mut self) {
-		unsafe {
-			logi!("shadertest Create Resources \n");
-			create_shaders();
-			create_textures();
-			g_grid_mesh = RMesh::new_torus((16,16)); //new GridMesh(16,16);
-			::g_resources_init=true;
-			let bsp:Option<Box<Blob<BspHeader>>> =self.bsp.take();
-			if bsp.is_some() {
-				self.bsprender=Some(box BspRender::new(bsp.unwrap()));			
-			}
-		}
-
-	}
-}
 struct	RMesh 
 {
 //	bounds:Bounds,
@@ -215,29 +189,65 @@ static mut g_frame:int=0;
 
 static g_num_torus:int = 128;
 
-pub struct ShaderTest;
-impl Screen<App> for ShaderTest {
+pub struct ShaderTest {
+	bsp:Option<Box<Blob<BspHeader>>>,
+	bsprender:Option<Box<BspRender>>,
+}
 
-	fn render(&self, app:&mut App) {
+impl ShaderTest {
+	pub fn new()->ShaderTest{
+		ShaderTest{
+			bsp: Some(box Blob::<BspHeader>::read(&Path::new("data/e1m1.bsp"))),
+			bsprender:None,
+		}
+	}
+}
+
+impl Screen for ShaderTest {
+	fn display_create(&mut self) {
+		unsafe {
+			logi!("shadertest Create Resources \n");
+			create_shaders();
+			create_textures();
+			g_grid_mesh = RMesh::new_torus((16,16)); //new GridMesh(16,16);
+			::g_resources_init=true;
+			let bsp:Option<Box<Blob<BspHeader>>> =self.bsp.take();
+			if bsp.is_some() {
+				self.bsprender=Some(box BspRender::new(bsp.unwrap()));			
+			}
+		}
+	}
+
+	fn render(&self) {
 
 		unsafe {g_angle+=0.0025f32;}
 
 		::render_clear();
-		render_spinning_lisajous(app);
+		render_spinning_lisajous();
 		// render bsp level
 		
-		match app.bsprender {
-			Some(ref x)=>unsafe{render_at_centre(g_angle*1.0f32,&app.bsprender)},
+		match self.bsprender {
+			Some(ref x)=>unsafe{render_at_centre(g_angle*1.0f32,&self.bsprender)},
 			None=>{}
 		}
 	}
-	fn update(&mut self,app:&mut App)->NextScreen<App> {
+	fn update(&mut self)->NextScreen {
 		Continue
 	}
+	fn win_event(&mut self, ev: ::rustwin::WinEvent)->NextScreen {
+		match ev {
+			::rustwin::MouseMotion(ref win, ref keys,ref pos)=>{
+				dump!(win,keys,pos)
+			}
+			_=>{}
+		}
+		Continue
+	}
+
 }
 
 	//logw("render noswap");
-fn render_spinning_lisajous(app:&mut App) {
+pub fn render_spinning_lisajous(/*app:&ShaderTest*/) {
 	unsafe {
 
 		assert!(::g_resources_init==true)		//logi!("render_no_swap"); // once..
@@ -335,6 +345,7 @@ fn render_at_centre<R:Render>(a0:f32,x:&Option<Box<R>>) {
 					((x,y+s,z),0xffff0000u32,(1.0f32,0.0f32)));
 			}
 		}
+		draw_ground_grid();
 	}
 }
 
