@@ -222,6 +222,24 @@ pub fn draw_tri_iso_tex(
 		draw_end();
 	}
 }
+pub fn draw_tri_tex_xzy(
+		(v0,uv0):(&V3,V2), 
+		(v1,uv1):(&V3,V2),
+		(v2,uv2):(&V3,V2),
+		color:u32,scale:f32) {
+	unsafe {
+		draw_begin(GL_TRIANGLES);
+		gl_color(&color);
+		gl_tex0(&uv0);
+		gl_vertex(&v3scale(v0,scale).swap_yz());
+		gl_tex0(&uv1);
+		gl_vertex(&v3scale(v1,scale).swap_yz());
+		gl_tex0(&uv2);
+		gl_vertex(&v3scale(v2,scale).swap_yz());
+		draw_end();
+	}
+}
+
 pub fn draw_tri_tex(
 		(v0,uv0):(&V3,V2), 
 		(v1,uv1):(&V3,V2),
@@ -350,11 +368,9 @@ pub fn draw_grid_yz(scale:f32, count:int, color:u32) {
 }
 
 pub fn draw_ground_grid() {
-	draw_grid_xz(1.0f32/256.0f32,32, 0xff707070);
 	draw_grid_xz(1.0f32/16.0f32,32, 0xff606060);
 	draw_grid_xz(1.0f32,32, 0xff505050);
 	draw_grid_xz(16.0f32,32, 0xff404040);
-	draw_grid_xz(256.0f32,32, 0xff303030);
 }
 
 pub fn draw_grid() {

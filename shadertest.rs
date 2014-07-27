@@ -190,6 +190,7 @@ static mut g_frame:int=0;
 static g_num_torus:int = 128;
 
 pub struct ShaderTest {
+	cam: ::flymode::Camera,
 	bsp:Option<Box<Blob<BspHeader>>>,
 	bsprender:Option<Box<BspRender>>,
 }
@@ -197,6 +198,7 @@ pub struct ShaderTest {
 impl ShaderTest {
 	pub fn new()->ShaderTest{
 		ShaderTest{
+			cam: ::flymode::Camera::new(),
 			bsp: Some(box Blob::<BspHeader>::read(&Path::new("data/e1m1.bsp"))),
 			bsprender:None,
 		}
@@ -223,15 +225,19 @@ impl Screen for ShaderTest {
 		unsafe {g_angle+=0.0025f32;}
 
 		::render_clear();
-		render_spinning_lisajous();
 		// render bsp level
 		
 		match self.bsprender {
-			Some(ref x)=>unsafe{render_at_centre(g_angle*1.0f32,&self.bsprender)},
+			Some(ref x)=>unsafe{
+				render_from(&self.cam, &self.bsprender);
+				//render_at_centre(g_angle*1.0f32,&self.bsprender)
+			},
 			None=>{}
 		}
+		render_spinning_lisajous(&self.cam.view_matrix());
 	}
 	fn update(&mut self)->NextScreen {
+		self.cam.update(1.0f32/60.0f32);
 		Continue
 	}
 	fn win_event(&mut self, ev: ::rustwin::WinEvent)->NextScreen {
@@ -247,7 +253,7 @@ impl Screen for ShaderTest {
 }
 
 	//logw("render noswap");
-pub fn render_spinning_lisajous(/*app:&ShaderTest*/) {
+pub fn render_spinning_lisajous(cam_mat:&Matrix4) {
 	unsafe {
 
 		assert!(::g_resources_init==true)		//logi!("render_no_swap"); // once..
@@ -295,12 +301,13 @@ pub fn render_spinning_lisajous(/*app:&ShaderTest*/) {
 
 			gl_matrix_projection(&matP);
 			gl_matrix_modelview(&rot_trans);
+			let render_mat=cam_mat * rot_trans;
 
 			glUseProgram(g_shader_program);
 			match g_uniform_table {
 				Some(ref ut)=>{
 					glUniformMatrix4fvARB(ut.uMatProj, 1,  GL_FALSE, matP.ax().ref0());
-					glUniformMatrix4fvARB(ut.uMatModelView, 1, GL_FALSE, rot_trans.ax().ref0());
+					glUniformMatrix4fvARB(ut.uMatModelView, 1, GL_FALSE, render_mat.ax().ref0());
 				},
 				None=>{assert!(false,"no shader uniforms")}
 			}
@@ -317,6 +324,21 @@ pub fn render_spinning_lisajous(/*app:&ShaderTest*/) {
 	}
 }
 
+fn render_from<R:Render>(cam:&::flymode::Camera,x:&Option<Box<R>>) {
+	unsafe {
+		glUseProgram(0);
+
+		let matP = matrix::projection(1.0f32,1.0f32,0.1f32,2048.0f32);
+		gl_matrix_projection(&matP);
+
+
+
+		let cam_mat=cam.view_matrix();
+		gl_matrix_modelview(&cam_mat);
+		match *x{ Some(ref x)=>(**x).render(), None=>{}}
+		draw_ground_grid();
+	}
+}
 
 fn render_at_centre<R:Render>(a0:f32,x:&Option<Box<R>>) {
 	unsafe {

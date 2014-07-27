@@ -49,7 +49,8 @@ pub fn main()
 				draw_set_texture(0,*tex_array.get(txi));
 			
 				fn applytx<'a>(tx:&'a TexInfo,v:&'a BspVec3)->(&'a BspVec3,(f32,f32)){
-					(v, (v3dot(&tx.axis_s,v)+tx.ofs_s,v3dot(&tx.axis_t,v)+tx.ofs_t) )
+					let s=1.0f32/256.0f32;
+					(v, (s*(v3dot(&tx.axis_s,v)+tx.ofs_s),s*(v3dot(&tx.axis_t,v)+tx.ofs_t)) )
 				}
 				draw_tri_iso_tex(applytx(txinfo,v0),applytx(txinfo,v1),applytx(txinfo,v2), 0xffffff, 1.0/2000.0)
 			}

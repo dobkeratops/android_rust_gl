@@ -694,6 +694,7 @@ pub trait ToVec3<T> {
 }
 pub trait ToVec4<T> {
 	fn to_vec4(&self)->Vec4<T>;
+	fn to_vec4_pos(&self)->Vec4<T>;
 }
 
 impl<T:Copy+Zero> ToVec2<T> for (T,T){
@@ -702,8 +703,9 @@ impl<T:Copy+Zero> ToVec2<T> for (T,T){
 impl<T:Copy+Zero> ToVec3<T> for (T,T,T){
 	fn to_vec3(&self)->Vec3<T>{Vec3(self.val0(),self.val1(),self.val2())}
 }
-impl<T:Copy+Zero> ToVec4<T> for (T,T,T,T){
+impl<T:Copy+Zero+One> ToVec4<T> for (T,T,T,T){
 	fn to_vec4(&self)->Vec4<T>{Vec4(self.val0(),self.val1(),self.val2(),self.val3())}
+	fn to_vec4_pos(&self)->Vec4<T>{Vec4(self.val0(),self.val1(),self.val2(),one())}
 }
 
 impl<T:Copy+Zero> ToVec2<T> for [T,..2]{
@@ -712,8 +714,9 @@ impl<T:Copy+Zero> ToVec2<T> for [T,..2]{
 impl<T:Copy+Zero> ToVec3<T> for [T,..3]{
 	fn to_vec3(&self)->Vec3<T>{Vec3(self[0],self[1],self[2])}
  }
-impl<T:Copy+Zero> ToVec4<T> for [T,..4]{
+impl<T:Copy+Zero+One> ToVec4<T> for [T,..4]{
 	fn to_vec4(&self)->Vec4<T>{Vec4(self[0],self[1],self[2],self[3])}
+	fn to_vec4_pos(&self)->Vec4<T>{Vec4(self[0],self[1],self[2],one())}
 }
 impl<T:Copy+Clone+Zero+One> ToVec3<T> for Vec4<T> {
 	fn to_vec3(&self)->Vec3<T>{ Vec3(self.x(),self.y(),self.z()) }
@@ -726,20 +729,25 @@ impl<T:Copy+Clone+Zero+One> ToVec3<T> for Vec2<T> {
 }
 impl<T:Copy+Clone+Zero+One> ToVec4<T> for Vec4<T> {
 	fn to_vec4(&self)->Vec4<T>{ Vec4(self.x(),self.y(),self.z(),self.w()) }
+	fn to_vec4_pos(&self)->Vec4<T>{ Vec4(self.x(),self.y(),self.z(),one()) }
 }
 impl<T:Copy+Clone+Zero+One> ToVec4<T> for Vec3<T> {
 	fn to_vec4(&self)->Vec4<T>{ Vec4(self.x(),self.y(),self.z(),zero()) }
+	fn to_vec4_pos(&self)->Vec4<T>{ Vec4(self.x(),self.y(),self.z(),one()) }
 }
 
 
 impl<T:Copy+Zero+One> ToVec4<T> for (Vec3<T>,T){
 	fn to_vec4(&self)->Vec4<T>{let (Vec3(x,y,z), w)=*self;Vec4(x,y,z,w)}
+	fn to_vec4_pos(&self)->Vec4<T>{let (Vec3(x,y,z), w)=*self;Vec4(x,y,z,one())}
 }
 impl<T:Copy+Zero+One> ToVec4<T> for ((T,T,T),T){
 	fn to_vec4(&self)->Vec4<T>{let ((x,y,z),w)=*self;Vec4(x,y,z,w)}
+	fn to_vec4_pos(&self)->Vec4<T>{let ((x,y,z),w)=*self;Vec4(x,y,z,one()) }
 }
 impl<T:Copy+Zero+One> ToVec4<T> for ([T,..3],T){
 	fn to_vec4(&self)->Vec4<T>{let ([x,y,z],w)=*self;Vec4(x,y,z,w)}
+	fn to_vec4_pos(&self)->Vec4<T>{let ([x,y,z],w)=*self;Vec4(x,y,z,one())}
 }
 
 

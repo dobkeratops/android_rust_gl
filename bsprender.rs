@@ -51,10 +51,12 @@ impl Render for BspRender {
 					}
 			
 					fn applytx<'a>(tx:&'a TexInfo,v:&'a BspVec3)->(&'a BspVec3,(f32,f32)){
-						(v, (v3dot(&tx.axis_s,v)+tx.ofs_s,v3dot(&tx.axis_t,v)+tx.ofs_t) )
+						let s=1.0f32/64.0f32;
+						//let rpos=v.swap_yz();
+						(v, (s*(v3dot(&tx.axis_s,v)+tx.ofs_s),s*(v3dot(&tx.axis_t,v)+tx.ofs_t)) )
 					}
-					let scale=1.0f32/2000.0f32;
-					draw_tri_tex(applytx(txinfo,v0),applytx(txinfo,v2),applytx(txinfo,v1), 0xffffff,scale)
+					let scale=1.0f32;//1.0f32/2000.0f32;
+					draw_tri_tex_xzy(applytx(txinfo,v0),applytx(txinfo,v1),applytx(txinfo,v2), 0xffffff,scale)
 				}
 			}
 		);
