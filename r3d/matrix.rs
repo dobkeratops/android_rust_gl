@@ -34,9 +34,6 @@ struct RotateX<T>(T);
 struct RotateY<T>(T);
 struct RotateZ<T>(T);
 
-pub trait Pos<V=Vec3> {
-	fn pos<'a>(&'a self)->&'a V;
-}
 pub trait GetAxes<V=Vec3> {
 	fn ax<'a>(&'a self)->&'a V;
 	fn ay<'a>(&'a self)->&'a V;
@@ -145,8 +142,9 @@ impl<V> GetAxes<V> for Matrix4<V> {
 impl<V> Matrix4<V> {
 	pub fn aw<'a>(&'a self)->&'a V { let Matrix4( _,_,_,ref r)=*self; r}
 }
-impl<V> Pos<V> for Matrix4<V> {
-	fn pos<'a>(&'a self)->&'a V { let Matrix4( _,_,_,ref r)=*self; r}
+impl<T:Float+Zero+One+Copy+Clone,V:XYZW<T>> Pos<V> for Matrix4<V> {
+	fn pos(&self)->V { let Matrix4( _,_,_,r)=*self; r}
+	fn set_pos(&mut self ,v:&V) { let Matrix4( _,_,_,ref mut r)=*self; *r=v.to_point();}
 }
 
 impl<T:Zero+One+Clone+Copy> Matrix4<Vec4<T>> {
@@ -246,7 +244,7 @@ impl<T:Float> Transpose<Matrix3<Vec3<T>>> for Matrix3<Vec3<T>> {
 	}
 }
 
-impl<V:VecMath<T>,T:Float=f32> Matrix4<V> {
+impl<V:VecMath<T>+ToVec3<T>+ToVec4<T>,T:Float=f32> Matrix4<V> {
 	pub fn identity()->Matrix4<V>{
 		Matrix4(
 			VecMath::axis(0),
@@ -282,11 +280,14 @@ impl<V:VecMath<T>,T:Float=f32> Matrix4<V> {
 	pub fn orthonormalize_yzx(&self)->Matrix4<V> {
 		Matrix4::look_up_along(self.aw(),self.ay(),self.az())
 	}
+	pub fn mul_vec(&self,pt:&V)->V{	// 'vec'=x,y,z,w
+		self.ax().scale(pt.x()).mad(self.ay(),pt.y()).mad(self.az(),pt.z()).mad(self.aw(),pt.w())
+	}
 	pub fn mul_point(&self,pt:&V)->V{	// 'point'=x,y,z,1
 		self.aw().mad(self.ax(),pt.x()).mad(self.ay(),pt.y()).mad(self.az(),pt.z())
 	}
 	pub fn mul_axis(&self,pt:&V)->V{	// 'axis'=x,y,z,0
-		self.mul_vec3(pt)
+		self.ax().scale(pt.x()).mad(self.ay(),pt.y()).mad(self.az(),pt.z())
 	}
 	pub fn inv_mul_point(&self,pt:&V)->V{
 		let ofs=pt.sub(self.aw());
@@ -295,18 +296,24 @@ impl<V:VecMath<T>,T:Float=f32> Matrix4<V> {
 	pub fn inv_mul_axis(&self,axis:&V)->V{
 		XYZW::from_xyz(axis.dot(self.ax()),axis.dot(self.ay()),axis.dot(self.az()))
 	}
-	pub fn mul_vec3(&self,pt:&V)->V{
-		self.ax().scale(pt.x()).mad(self.ay(),pt.y()).mad(self.az(),pt.z())
+	pub fn mul_vec3_w0(&self,pt:&Vec3<T>)->Vec3<T>{
+		let Vec3(x,y,z)=*pt;
+		self.ax().scale(x).mad(self.ay(),y).mad(self.az(),z).to_vec3()
 	}
-	pub fn mul_vec4(&self,pt:&V)->V{
-		self.ax().scale(pt.x()).mad(self.ay(),pt.y()).mad(self.az(),pt.z()).mad(self.aw(),pt.w())
+	pub fn mul_vec3_w1(&self,pt:&Vec3<T>)->Vec3<T>{
+		let Vec3(x,y,z)=*pt;
+		self.aw().mad(self.ax(),x).mad(self.ay(),y).mad(self.az(),z).to_vec3()
+	}
+	pub fn mul_vec4(&self,pt:&Vec4<T>)->Vec4<T>{
+		let Vec4(x,y,z,w)=*pt;		
+		self.ax().scale(x).mad(self.ay(),y).mad(self.az(),z).mad(self.aw(),w).to_vec4()
 	}
 	pub fn mul_matrix(&self,other:&Matrix4<V>)->Matrix4<V> {
 		Matrix4(
-			self.mul_vec4(other.ax()),
-			self.mul_vec4(other.ay()),
-			self.mul_vec4(other.az()),
-			self.mul_vec4(other.aw()))
+			self.mul_vec(other.ax()),
+			self.mul_vec(other.ay()),
+			self.mul_vec(other.az()),
+			self.mul_vec(other.aw()))
 	}
 	// matrix inverse with assumption of being orthonormalized.
 	pub fn inv_orthonormal(&self)->Matrix4<V> {
@@ -551,7 +558,7 @@ pub trait PreMulMat33<T,OUT> {
 }
 
 impl<T:Float> PreMulMat43<T,Vec3<T>> for Vec3<T> {
-	fn pre_mul_mat43(&self, mat:&Matrix4<Vec3<T>>)->Vec3<T> {mat.mul_vec3(self)}
+	fn pre_mul_mat43(&self, mat:&Matrix4<Vec3<T>>)->Vec3<T> {mat.mul_vec3_w0(self)}
 }
 // Multiplying a Matrix44 ..
 

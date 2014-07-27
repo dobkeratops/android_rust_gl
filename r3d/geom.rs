@@ -9,10 +9,6 @@ pub struct Extents<T=Vec3<f32>> {
 }
 pub type AABB=Extents<Vec3<f32>>;
 
-pub trait Pos<V=Vec3<f32>> {
-	fn pos(&self)->V;
-	fn set_pos(&mut self,v:V) {fail!();}
-}
 
 struct Sphere<T=f32> {
 	pos:Vec3<T>,
@@ -150,7 +146,7 @@ pub fn triangle_extents<T:PartialOrd+Num+Clone,V:VecCmp<T>+Clone+Num>((v0,v1,v2)
 	ex
 }
 
-pub fn cuboid_vertices<V1:VecMath,V2:XYZW>(mat:&Matrix4<V1>, size:&V2)->[V1,..8] {
+pub fn cuboid_vertices<V1:VecMath+Copy,V2:XYZW>(mat:&Matrix4<V1>, size:&V2)->[V1,..8] {
 	let vx = mat.ax().scale(size.x());
 	let vy = mat.ay().scale(size.y());
 	let vz = mat.az().scale(size.z());
@@ -180,8 +176,8 @@ pub struct Entity {
 	pub vel:Vec3,
 }
 impl Pos for Entity {
-	fn pos(&self)->Vec3 { self.matrix.aw().to_vec3()	}
-	fn set_pos(&mut self,v:Vec3) {let Matrix4(_,_,_,ref mut aw)=self.matrix;*aw=(v,one()).to_vec4();}
+	fn pos(&self)->Vec3 { self.matrix.pos().to_vec3()	}
+	fn set_pos(&mut self,v:&Vec3) {self.matrix.set_pos(&v.to_vec4_pos())}
 }
 impl Entity {
 	

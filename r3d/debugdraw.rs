@@ -92,9 +92,9 @@ pub fn draw_line<V:GlVertex,C:GlColor>(a:V,b:V, color:C) {
 
 pub fn draw_axes_sized(a:&Matrix4,f:f32) {
 	draw_begin(GL_LINES);
-	draw_line(*a.pos(), (a.pos()+a.ax()*f), 0xff0000ffu32);
-	draw_line(*a.pos(), (a.pos()+a.ay()*f), 0xff00ff00u32);
-	draw_line(*a.pos(), (a.pos()+a.az()*f), 0xffff0000u32);
+	draw_line(a.pos(), (a.pos()+a.ax()*f), 0xff0000ffu32);
+	draw_line(a.pos(), (a.pos()+a.ay()*f), 0xff00ff00u32);
+	draw_line(a.pos(), (a.pos()+a.az()*f), 0xffff0000u32);
 	draw_end();
 }
 pub fn draw_oobb<V:VecMath+Copy,C:GlColor>(m:&Matrix4<V>, sz:Vec3, c:C) {
