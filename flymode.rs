@@ -26,7 +26,7 @@ impl Camera{
 	pub fn new()->Camera {
 		Camera{
 			ent:Entity{
-				matrix:matrix::translate(&Vec4(2.0f32,2.0f32,-2.0f32,1.0f32)),
+				matrix:matrix::translate(&Vec4(0.0f32,0.0f32,0.0f32,1.0f32)),
 				vel:Vec3(1.0f32,0.0f32,0.0f32),
 			},
 			angvel:Vec3(0.0f32,0.0f32,0.0f32),

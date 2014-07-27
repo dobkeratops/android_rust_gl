@@ -227,14 +227,17 @@ impl Screen for ShaderTest {
 		::render_clear();
 		// render bsp level
 		
+		let matP = matrix::projection(1.0f32,1.0f32,0.1f32,2048.0f32);
+		let view_mat=self.cam.view_matrix();
+
 		match self.bsprender {
 			Some(ref x)=>unsafe{
-				render_from(&self.cam, &self.bsprender);
+				render_from(&matP,&view_mat, &self.bsprender);
 				//render_at_centre(g_angle*1.0f32,&self.bsprender)
 			},
 			None=>{}
 		}
-		render_spinning_lisajous(&self.cam.view_matrix());
+		render_spinning_lisajous(&matP,&view_mat);
 	}
 	fn update(&mut self)->NextScreen {
 		self.cam.update(1.0f32/60.0f32);
@@ -253,15 +256,15 @@ impl Screen for ShaderTest {
 }
 
 	//logw("render noswap");
-pub fn render_spinning_lisajous(cam_mat:&Matrix4) {
+pub fn render_spinning_lisajous(matP:&Matrix4, cam_mat:&Matrix4) {
 	unsafe {
 
 		assert!(::g_resources_init==true)		//logi!("render_no_swap"); // once..
 		g_angle+=0.0025f32;
 
 		let matI = matrix::identity();
-		let matP = matrix::projection_frustum(-0.5f32,0.5f32,-0.5f32,0.5f32, 90.0f32, 1.0f32, 0.5f32,5.0f32);
-		gl_matrix_projection(&matP);
+		//let matP = matrix::projection_frustum(-0.5f32,0.5f32,-0.5f32,0.5f32, 90.0f32, 1.0f32, 0.5f32,5.0f32);
+		gl_matrix_projection(matP);
 
 
 		let pi=3.14159265f32;
@@ -285,23 +288,25 @@ pub fn render_spinning_lisajous(cam_mat:&Matrix4) {
 
 		// render spinning tori
 		for i in range(0,g_num_torus) {
-
-			let matT = matrix::translate_xyz(
-				a0.cos()*r0+a3.cos()*r1, 
-				a1.cos()*r0+a4.cos()*r1, 
-				a2.cos()*r0+a5.cos()*r1 -2.0*r0);
+			let lsr=1.0f32;
+			let mat_t = matrix::translate_xyz(
+				lsr*(a0.cos()*r0+a3.cos()*r1), 
+				lsr*(a1.cos()*r0+a4.cos()*r1), 
+				lsr*(a2.cos()*r0+a5.cos()*r1) -2.0*r0);
 
 			let rot_x = matrix::rotate_x(a0);
 			let rot_y = matrix::rotate_x(a1*0.245f32);
 			let rot_xy=rot_x.mul_matrix(&rot_y);
-			let rot_trans = matT.mul_matrix(&rot_xy);
+			let rot_trans = mat_t.mul_matrix(&rot_xy);
 	
-			let matMV = matT;	// toodo - combine rotation...
+			let mat_mv = mat_t;	// toodo - combine rotation...
 			//io::println(format!("{:?}", g_shader_program));
 
-			gl_matrix_projection(&matP);
-			gl_matrix_modelview(&rot_trans);
-			let render_mat=cam_mat * rot_trans;
+			let  mut render_mat=cam_mat * rot_trans;
+			render_mat=cam_mat*rot_trans;
+
+			gl_matrix_projection(matP);
+			gl_matrix_modelview(&render_mat);
 
 			glUseProgram(g_shader_program);
 			match g_uniform_table {
@@ -324,17 +329,13 @@ pub fn render_spinning_lisajous(cam_mat:&Matrix4) {
 	}
 }
 
-fn render_from<R:Render>(cam:&::flymode::Camera,x:&Option<Box<R>>) {
+fn render_from<R:Render>(matP:&Matrix4, cam_mat:&Matrix4,x:&Option<Box<R>>) {
 	unsafe {
 		glUseProgram(0);
 
-		let matP = matrix::projection(1.0f32,1.0f32,0.1f32,2048.0f32);
-		gl_matrix_projection(&matP);
+		gl_matrix_projection(matP);
 
-
-
-		let cam_mat=cam.view_matrix();
-		gl_matrix_modelview(&cam_mat);
+		gl_matrix_modelview(cam_mat);
 		match *x{ Some(ref x)=>(**x).render(), None=>{}}
 		draw_ground_grid();
 	}
