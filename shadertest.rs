@@ -22,13 +22,6 @@ static g_vertex_attr_empty:VertexAttr=VertexAttr{
 	pos:-1,color:-1,norm:-1,tex0:-1,tex1:-1,joints:-1,weights:-1,tangent:-1,binormal:-1
 };
 
-//static mut g_vertex_shader_attrib:VertexAttr=g_vertex_attr_empty;
-
-//static mut g_shader_uniforms:UniformTable=g_uniform_table_empty;
-
-// Paired pixel and vertex shaders.
-
-
 pub static g_fog_color:Vec4<f32> =Vec4(0.25,0.5,0.5,1.0);
 
 
@@ -189,19 +182,11 @@ static mut g_frame:int=0;
 
 static g_num_torus:int = 128;
 
-pub struct ShaderTest {
-	cam: ::flymode::Camera,
-	bsp:Option<Box<Blob<BspHeader>>>,
-	bsprender:Option<Box<BspRender>>,
-}
+pub struct ShaderTest;
 
 impl ShaderTest {
 	pub fn new()->ShaderTest{
-		ShaderTest{
-			cam: ::flymode::Camera::new(),
-			bsp: Some(box Blob::<BspHeader>::read(&Path::new("data/e1m1.bsp"))),
-			bsprender:None,
-		}
+		ShaderTest
 	}
 }
 
@@ -213,10 +198,6 @@ impl Screen for ShaderTest {
 			create_textures();
 			g_grid_mesh = RMesh::new_torus((16,16)); //new GridMesh(16,16);
 			::g_resources_init=true;
-			let bsp:Option<Box<Blob<BspHeader>>> =self.bsp.take();
-			if bsp.is_some() {
-				self.bsprender=Some(box BspRender::new(bsp.unwrap()));			
-			}
 		}
 	}
 
@@ -225,22 +206,12 @@ impl Screen for ShaderTest {
 		unsafe {g_angle+=0.0025f32;}
 
 		::render_clear();
-		// render bsp level
 		
 		let matP = matrix::projection(1.0f32,1.0f32,0.1f32,2048.0f32);
-		let view_mat=self.cam.view_matrix();
-
-		match self.bsprender {
-			Some(ref x)=>unsafe{
-				render_from(&matP,&view_mat, &self.bsprender);
-				//render_at_centre(g_angle*1.0f32,&self.bsprender)
-			},
-			None=>{}
-		}
+		let view_mat=matrix::identity();
 		render_spinning_lisajous(&matP,&view_mat);
 	}
 	fn update(&mut self)->NextScreen {
-		self.cam.update(1.0f32/60.0f32);
 		Continue
 	}
 	fn win_event(&mut self, ev: ::rustwin::WinEvent)->NextScreen {
@@ -255,7 +226,6 @@ impl Screen for ShaderTest {
 
 }
 
-	//logw("render noswap");
 pub fn render_spinning_lisajous(matP:&Matrix4, cam_mat:&Matrix4) {
 	unsafe {
 
@@ -263,7 +233,6 @@ pub fn render_spinning_lisajous(matP:&Matrix4, cam_mat:&Matrix4) {
 		g_angle+=0.0025f32;
 
 		let matI = matrix::identity();
-		//let matP = matrix::projection_frustum(-0.5f32,0.5f32,-0.5f32,0.5f32, 90.0f32, 1.0f32, 0.5f32,5.0f32);
 		gl_matrix_projection(matP);
 
 
@@ -329,13 +298,14 @@ pub fn render_spinning_lisajous(matP:&Matrix4, cam_mat:&Matrix4) {
 	}
 }
 
-fn render_from<R:Render>(matP:&Matrix4, cam_mat:&Matrix4,x:&Option<Box<R>>) {
+pub fn render_from_at<R:Render>(matP:&Matrix4, cam_mat:&Matrix4, obj_mat:&Matrix4,x:&Option<Box<R>>) {
 	unsafe {
 		glUseProgram(0);
 
 		gl_matrix_projection(matP);
+		let render_mat:Matrix4 = *cam_mat * *obj_mat;
 
-		gl_matrix_modelview(cam_mat);
+		gl_matrix_modelview(&render_mat);
 		match *x{ Some(ref x)=>(**x).render(), None=>{}}
 		draw_ground_grid();
 	}

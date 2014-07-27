@@ -189,9 +189,9 @@ pub extern "C" fn app_create(argc:c_int, argv:*const *const c_char, w:c_int,h:c_
 	box AppScreens{
 		screens:{
 			let mut x=RingBuf::new();
-			x.push_back(box flymode::FlyMode::new() as Box<Screen>);
+			
 			x.push_back(box shadertest::ShaderTest::new() as Box<Screen>); 
- 
+			x.push_back(box flymode::FlyMode::new() as Box<Screen>);
 			x
 		}
 	}

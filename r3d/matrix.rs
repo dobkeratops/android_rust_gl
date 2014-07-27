@@ -265,7 +265,7 @@ impl<V:VecMath<T>,T:Float=f32> Matrix4<V> {
 		let az=fwd.normalize();
 		let ax=up.cross(&az).normalize();
 		let ay=az.cross(&ax);
-		Matrix4(ax,ay,az,pos.clone())
+		Matrix4(ax,ay,az,pos.clone().to_point())
 	}
 	// Variation of 'look-at' calculation that prioritizes upvector
 	pub fn look_up_along(pos:&V,up:&V,fwd:&V)->Matrix4<V>{

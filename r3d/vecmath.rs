@@ -56,8 +56,26 @@ impl<T:Clone+Num> Vec2<T> {
 		let f2=f(src,x.clone());
 		f(f2,y.clone())
 	}
-
 }
+
+	// componentwise conversion
+impl<T:ToPrimitive+Copy+Clone+Zero+One> Vec4<T> {
+	pub fn to_f32(&self)->Vec4<f32> {
+		Vec4(self.x().to_f32().unwrap(),self.y().to_f32().unwrap(),self.z().to_f32().unwrap(),self.w().to_f32().unwrap())
+	}
+	pub fn to_i32(&self)->Vec4<i32> {
+		Vec4(self.x().to_i32().unwrap(),self.y().to_i32().unwrap(),self.z().to_i32().unwrap(),self.w().to_i32().unwrap())
+	}
+}
+impl<T:ToPrimitive+Copy+Clone+Zero+One> Vec3<T>{
+	pub fn to_f32(&self)->Vec3<f32> {
+		Vec3(self.x().to_f32().unwrap(),self.y().to_f32().unwrap(),self.z().to_f32().unwrap())
+	}
+	pub fn to_i32(&self)->Vec3<i32> {
+		Vec3(self.x().to_i32().unwrap(),self.y().to_i32().unwrap(),self.z().to_i32().unwrap())
+	}
+}
+
 impl<T:Clone+Zero+One> Vec3<T> {
 
 	pub fn from_vec2(xy:&Vec2<T>,z:T)->Vec3<T> {Vec3::<T>(xy.x().clone(),xy.y().clone(),z.clone())}
@@ -105,19 +123,30 @@ pub trait XYZW<T:Zero+One+Clone=f32> {
 	fn y(&self)->T;
 	fn z(&self)->T;
 	fn w(&self)->T;
+
 	fn from_xyzw(x:T,y:T,z:T,w:T)->Self;
 	fn from_xyz(x:T,y:T,z:T)->Self { XYZW::<T>::from_xyzw(x,y,z,zero::<T>()) }
+	fn from_xyz1(x:T,y:T,z:T)->Self { XYZW::<T>::from_xyzw(x,y,z,one::<T>()) }
 	fn from_xy(x:T,y:T)->Self { XYZW::<T>::from_xyzw(x,y,zero::<T>(),zero::<T>()) }
+	fn xyzw(&self)->(T,T,T,T) {(self.x(),self.y(),self.z(),self.w())}
+
 	fn splat(f:T)->Self { XYZW::<T>::from_xyzw(f.clone(),f.clone(),f.clone(),f.clone()  )}
 	fn splat_x(&self)->Self { XYZW::<T>::splat(self.x())}
 	fn splat_y(&self)->Self { XYZW::<T>::splat(self.y())}
 	fn splat_z(&self)->Self { XYZW::<T>::splat(self.z())}
 	fn splat_w(&self)->Self { XYZW::<T>::splat(self.w())}
 
-	fn swap_yz(&self)->Self { XYZW::<T>::from_xyzw(self.x(),self.z(),self.y(),self.w())}
-	fn set_w(&self,w:T)->Self {XYZW::<T>::from_xyzw(self.x(),self.y(),self.z(),w)}
+	fn set_x(&self,f:T)->Self {XYZW::<T>::from_xyzw(f,self.y(),self.z(),self.w())}
+	fn set_y(&self,f:T)->Self {XYZW::<T>::from_xyzw(self.x(),f,self.z(),self.w())}
+	fn set_z(&self,f:T)->Self {XYZW::<T>::from_xyzw(self.x(),self.y(),f,self.w())}
+	fn set_w(&self,f:T)->Self {XYZW::<T>::from_xyzw(self.x(),self.y(),self.z(),f)}
 	fn to_point(&self)->Self {self.set_w(one())}
 	fn to_axis(&self)->Self {self.set_w(zero())}
+
+
+	fn swap_yz(&self)->Self { XYZW::<T>::from_xyzw(self.x(),self.z(),self.y(),self.w())}
+	fn swap_xyz(&self)->Self { XYZW::<T>::from_xyzw(self.z(),self.y(),self.x(),self.w())}
+	fn swap_xyzw(&self)->Self { XYZW::<T>::from_xyzw(self.w(),self.z(),self.y(),self.x())}
 
 }
 
@@ -336,6 +365,7 @@ impl<T:PartialEq+Clone+Zero+One> PartialEq for Vec3<T> {
 impl<T:PartialEq+Clone+Zero+One> PartialEq for Vec4<T> {
 	fn eq(&self,rhs:&Vec4<T>)->bool { return self.x()==rhs.x() && self.y()==rhs.y() && self.z()==rhs.z() && self.w()==rhs.w() }
 }
+
 
 // todo: satisfy if Num+Clone only
 impl<T:Num+Clone+Float> Num for Vec2<T> {}
@@ -697,6 +727,43 @@ pub trait ToVec4<T> {
 	fn to_vec4_pos(&self)->Vec4<T>;
 }
 
+impl<T:Copy+Zero+One,V:Vec3To<T>> To<V> for Vec3<T>{
+	fn to(&self)->V { Vec3To::vec3_to(self)}
+}
+impl<T:Copy+Zero+One,V:Vec4To<T>> To<V> for Vec4<T>{
+	fn to(&self)->V { Vec4To::vec4_to(self)}
+}
+trait Vec3To<T> {
+	fn vec3_to(s:&Vec3<T>)->Self;
+}
+trait Vec4To<T> {
+	fn vec4_to(s:&Vec4<T>)->Self;
+}
+impl<T:Copy+Zero+One> Vec3To<T> for Vec3<T>{
+	fn vec3_to(s:&Vec3<T>)->Vec3<T> { *s}
+}
+impl<T:Copy+Zero+One> Vec4To<T> for Vec4<T>{
+	fn vec4_to(s:&Vec4<T>)->Vec4<T> { *s}
+}
+// Componentwise conversion for vector
+/*
+impl<A:To<B>+Clone+Zero+One, B:Clone+Zero+One> To<Vec3<B>> for Vec3<A> {
+	fn to(&self)->Vec3<B> { Vec3( self.x().to(),	self.y().to(),  self.z().to() )}
+}
+impl<A:To<B>+Clone+Zero+One, B:Clone+Zero+One> To<Vec4<B>> for Vec4<A> {
+	fn to(&self)->Vec4<B> { Vec4( self.x().to(),	self.y().to(),  self.z().to(), self.w().to() )}
+}
+*/
+
+
+impl<T:Copy+Clone+Zero+One> Vec3To<T> for Vec4<T>{
+	fn vec3_to(s:&Vec3<T>)->Vec4<T> { Vec4(s.x(),s.y(),s.z(),zero())}
+}
+impl<T:Copy+Clone+Zero+One> Vec4To<T> for Vec3<T>{
+	fn vec4_to(s:&Vec4<T>)->Vec3<T> { Vec3(s.x(),s.y(),s.z())}
+}
+
+
 impl<T:Copy+Zero> ToVec2<T> for (T,T){
 	fn to_vec2(&self)->Vec2<T>{Vec2(self.val0(),self.val1())}
 }
@@ -751,13 +818,6 @@ impl<T:Copy+Zero+One> ToVec4<T> for ([T,..3],T){
 }
 
 
-// Componentwise conversion for vector
-impl<A:To<B>+Clone+Zero+One, B:Clone+Zero+One> To<Vec3<B>> for Vec3<A> {
-	fn to(&self)->Vec3<B> { Vec3( self.x().to(),	self.y().to(),  self.z().to() )}
-}
-impl<A:To<B>+Clone+Zero+One, B:Clone+Zero+One> To<Vec4<B>> for Vec4<A> {
-	fn to(&self)->Vec4<B> { Vec4( self.x().to(),	self.y().to(),  self.z().to(), self.w().to() )}
-}
 
 // app_render
 #[cfg(run)]
