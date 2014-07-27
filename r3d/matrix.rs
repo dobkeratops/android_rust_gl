@@ -2,13 +2,13 @@ pub use super::vectypes::*;
 pub use super::vecmath::*;
 pub use std::cmp::*;
 
-#[deriving(Clone,Show)]
+#[deriving(Copy,Show)]
 pub struct Matrix2<AXIS=Vec2<f32>> (pub AXIS,pub AXIS);
 
-#[deriving(Clone,Show)]
+#[deriving(Copy,Show)]
 pub struct Matrix3<AXIS=Vec3<f32>> (pub AXIS,pub AXIS,pub AXIS);
 
-#[deriving(Clone,Show)]
+#[deriving(Copy,Show)]
 pub struct Matrix4<AXISVEC=Vec4<f32>,POSVEC=AXISVEC> (pub AXISVEC,pub AXISVEC,pub AXISVEC,pub POSVEC);
 
 // todo: Write all matrix maths in terms of this interface
@@ -71,12 +71,12 @@ pub trait SetAxes<V> {
 trait Axes<V>:GetAxes<V>+SetAxes<V>{}
 impl<V:Copy,M:GetAxes<V>+SetAxes<V>> Axes<V> for M{}
 
-impl<V:Clone> ToAxes<V> for Matrix4<V> {
+impl<V:Copy> ToAxes<V> for Matrix4<V> {
 	fn axes(&self)->(V,V,V) {
-		(self.ax().clone(),self.ay().clone(),self.az().clone())
+		(*self.ax(),*self.ay(),*self.az())
 	}
 }
-impl<T:Float+Clone+Copy,V:ToVec3<T>> SetAxes<V> for Matrix4<Vec3<T>> {
+impl<T:Float+Copy,V:ToVec3<T>> SetAxes<V> for Matrix4<Vec3<T>> {
 	fn set_ax(&mut self, a:V){
 		let Matrix4(ref mut ax,_,_,_)=*self;
 		*ax=a.to_vec3();
@@ -90,7 +90,7 @@ impl<T:Float+Clone+Copy,V:ToVec3<T>> SetAxes<V> for Matrix4<Vec3<T>> {
 		*az=a.to_vec3();
 	}
 }
-impl<T:Float+Clone+Copy,V:ToVec4<T>> SetAxes<V> for Matrix4<Vec4<T>> {
+impl<T:Float+Copy,V:ToVec4<T>> SetAxes<V> for Matrix4<Vec4<T>> {
 	fn set_ax(&mut self, a:V){
 		let Matrix4(ref mut ax,ref ay,ref az,ref aw)=*self;
 		*ax=a.to_vec4();
@@ -104,7 +104,7 @@ impl<T:Float+Clone+Copy,V:ToVec4<T>> SetAxes<V> for Matrix4<Vec4<T>> {
 		*az=a.to_vec4();
 	}
 }
-impl<T:Float+Clone+Copy,V:ToVec3<T>> SetAxes<V> for Matrix3<Vec3<T>> {
+impl<T:Float+Copy,V:ToVec3<T>> SetAxes<V> for Matrix3<Vec3<T>> {
 	fn set_ax(&mut self, a:V){
 		let Matrix3(ref mut ax,_,_)=*self;
 		*ax=a.to_vec3();
@@ -118,7 +118,7 @@ impl<T:Float+Clone+Copy,V:ToVec3<T>> SetAxes<V> for Matrix3<Vec3<T>> {
 		*az=a.to_vec3();
 	}
 }
-impl<T:Float+Clone+Copy,V:ToVec4<T>> SetAxes<V> for Matrix3<Vec4<T>> {
+impl<T:Float+Copy,V:ToVec4<T>> SetAxes<V> for Matrix3<Vec4<T>> {
 	fn set_ax(&mut self, a:V){
 		let Matrix3(ref mut ax,_,_)=*self;
 		*ax=a.to_vec4();
@@ -142,12 +142,12 @@ impl<V> GetAxes<V> for Matrix4<V> {
 impl<V> Matrix4<V> {
 	pub fn aw<'a>(&'a self)->&'a V { let Matrix4( _,_,_,ref r)=*self; r}
 }
-impl<T:Float+Zero+One+Copy+Clone,V:XYZW<T>> Pos<V> for Matrix4<V> {
+impl<T:Float+Copy,V:XYZW<T>> Pos<V> for Matrix4<V> {
 	fn pos(&self)->V { let Matrix4( _,_,_,r)=*self; r}
 	fn set_pos(&mut self ,v:&V) { let Matrix4( _,_,_,ref mut r)=*self; *r=v.to_point();}
 }
 
-impl<T:Zero+One+Clone+Copy> Matrix4<Vec4<T>> {
+impl<T:Zero+One+Copy> Matrix4<Vec4<T>> {
 	pub fn from_vec4(ax:Vec4<T>,ay:Vec4<T>,az:Vec4<T>,aw:Vec4<T>)->Matrix4<Vec4<T>> {
 		Matrix4(ax,ay,az,aw)
 	}
@@ -163,7 +163,7 @@ impl<T:Zero+One+Clone+Copy> Matrix4<Vec4<T>> {
 			Vec4::from_vec3(mat33.ax(),zero()),
 			Vec4::from_vec3(mat33.ay(),zero()),
 			Vec4::from_vec3(mat33.az(),zero()),
-			pos.clone())
+			*pos)
 	}
 	pub fn from_mat43(mat43:&Matrix4<Vec3<T>>)->Matrix4<Vec4<T>> {
 		Matrix4(
@@ -173,7 +173,7 @@ impl<T:Zero+One+Clone+Copy> Matrix4<Vec4<T>> {
 			Vec4::from_vec3(mat43.aw(),one()))
 	}
 	pub fn from_mat34_pos(mat33:&Matrix3<Vec4<T>>,pos:&Vec4<T>)->Matrix4<Vec4<T>> {
-		Matrix4(mat33.ax().clone(),mat33.ay().clone(),mat33.az().clone(),pos.clone())
+		Matrix4(*mat33.ax(),*mat33.ay(),*mat33.az(),*pos)
 	}
 	pub fn mat33(&self)->Matrix3<Vec3<T>> {
 		Matrix3(self.ax().xyz(),self.ay().xyz(),self.az().xyz())
@@ -182,7 +182,7 @@ impl<T:Zero+One+Clone+Copy> Matrix4<Vec4<T>> {
 		Matrix4(self.ax().xyz(),self.ay().xyz(),self.az().xyz(),self.aw().xyz())
 	}
 	pub fn mat34(&self)->Matrix3<Vec4<T>> {
-		Matrix3(self.ax().clone(),self.ay().clone(),self.az().clone())
+		Matrix3(*self.ax(),*self.ay(),*self.az())
 	}
 }
 
@@ -200,7 +200,7 @@ impl<T:Float, OUT, RHS:PreMulMat33<T,OUT> > Mul<RHS,OUT> for Matrix3<Vec3<T>> {
 //	fn mul(&self, rhs:&RHS)->OUT { rhs.pre_mul_mat4(self) } 
 //}
 
-impl<T:Clone+Float> Transpose<Matrix4<Vec4<T>,Vec4<T>>> for Matrix4<Vec4<T>> {
+impl<T:Float> Transpose<Matrix4<Vec4<T>,Vec4<T>>> for Matrix4<Vec4<T>> {
 	fn transpose(&self)->Matrix4<Vec4<T>> {
 		// todo-SIMD 2x2 shuffles
 		Matrix4(
@@ -211,7 +211,7 @@ impl<T:Clone+Float> Transpose<Matrix4<Vec4<T>,Vec4<T>>> for Matrix4<Vec4<T>> {
 		)
 	}
 }
-impl<T:Clone+Float> Transpose<Matrix3<Vec4<T>>> for Matrix4<Vec3<T>> {
+impl<T:Copy+Float> Transpose<Matrix3<Vec4<T>>> for Matrix4<Vec3<T>> {
 	fn transpose(&self)->Matrix3<Vec4<T>> {
 		// todo-SIMD..
 		Matrix3(
@@ -221,7 +221,7 @@ impl<T:Clone+Float> Transpose<Matrix3<Vec4<T>>> for Matrix4<Vec3<T>> {
 		)
 	}
 }
-impl<T:Clone+Float> Transpose<Matrix4<Vec3<T>,Vec3<T>>> for Matrix3<Vec4<T>> {
+impl<T:Float> Transpose<Matrix4<Vec3<T>,Vec3<T>>> for Matrix3<Vec4<T>> {
 	fn transpose(&self)->Matrix4<Vec3<T>> {
 		// todo-SIMD..
 		Matrix4(
@@ -257,20 +257,20 @@ impl<V:VecMath<T>+ToVec3<T>+ToVec4<T>,T:Float=f32> Matrix4<V> {
 			VecMath::axis(0),
 			VecMath::axis(1),
 			VecMath::axis(2),
-			trans.clone())
+			*trans)
 	}	
 	pub fn look_along(pos:&V,fwd:&V,up:&V)->Matrix4<V>{
 		let az=fwd.normalize();
 		let ax=up.cross(&az).normalize();
 		let ay=az.cross(&ax);
-		Matrix4(ax,ay,az,pos.clone().to_point())
+		Matrix4(ax,ay,az,pos.to_point())
 	}
 	// Variation of 'look-at' calculation that prioritizes upvector
 	pub fn look_up_along(pos:&V,up:&V,fwd:&V)->Matrix4<V>{
 		let ay=up.normalize();
 		let ax=fwd.cross(up).normalize();
 		let az=ax.cross(&ay);
-		Matrix4(ax,ay,az,pos.clone())
+		Matrix4(ax,ay,az,pos.to_point())
 	}
 
 	pub fn look_at(pos:&V,target:&V,up:&V)->Matrix4<V> { Matrix4::look_along(pos,&target.sub(pos),up) }
@@ -392,7 +392,7 @@ pub fn projection<F:FloatMath=f32>(tan_half_fov:F, aspect:F, znear:F, zfar:F)->M
 	)
 }
 
-pub fn rotate_x<F:FloatMath+Clone=f32>(a:F)->Matrix4<Vec4<F>> {
+pub fn rotate_x<F:FloatMath=f32>(a:F)->Matrix4<Vec4<F>> {
 	let (s,c)=a.sin_cos(); let one=one(); let zero=zero();
 	Matrix4(
 		XYZW::from_xyzw(one,	zero,	zero,	zero),
@@ -400,7 +400,7 @@ pub fn rotate_x<F:FloatMath+Clone=f32>(a:F)->Matrix4<Vec4<F>> {
 		XYZW::from_xyzw(zero,	-s,		c,	zero),
 		XYZW::from_xyzw(zero,	zero,	zero,	one))
 }
-pub fn rotate_y<F:FloatMath+Clone=f32>(a:F)->Matrix4<Vec4<F>> {
+pub fn rotate_y<F:FloatMath=f32>(a:F)->Matrix4<Vec4<F>> {
 	let (s,c)=a.sin_cos(); let one=one(); let zero=zero();
 	Matrix4(
 		Vec4(c,		zero,	s,	zero),
@@ -408,7 +408,7 @@ pub fn rotate_y<F:FloatMath+Clone=f32>(a:F)->Matrix4<Vec4<F>> {
 		Vec4(-s,		zero,	c,	zero),
 		Vec4(zero,	zero,	zero,	one))
 }
-pub fn rotate_z<F:FloatMath+Clone=f32>(a:F)->Matrix4<Vec4<F>> {
+pub fn rotate_z<F:FloatMath=f32>(a:F)->Matrix4<Vec4<F>> {
 	let (s,c)=a.sin_cos(); let one=one(); let zero=zero();
 	Matrix4(
 		Vec4(c,		s,	zero,	zero),
@@ -416,16 +416,16 @@ pub fn rotate_z<F:FloatMath+Clone=f32>(a:F)->Matrix4<Vec4<F>> {
 		Vec4(zero,	zero,	one,	zero),
 		Vec4(zero,	zero,	zero,	one))
 }
-pub fn rotate_xyz<F:FloatMath+Clone=f32, V:XYZW<F>=Vec3<F>>(r:&V)->Matrix4<Vec4<F>> {
+pub fn rotate_xyz<F:FloatMath=f32, V:XYZW<F>=Vec3<F>>(r:&V)->Matrix4<Vec4<F>> {
 	rotate_x(r.x())*rotate_y(r.y())*rotate_z(r.z())
 }
-pub fn rotate_xzy<F:FloatMath+Clone=f32,V:VecMath<F>=Vec4<F>>(r:&V)->Matrix4<Vec4<F>> {
+pub fn rotate_xzy<F:FloatMath=f32,V:VecMath<F>=Vec4<F>>(r:&V)->Matrix4<Vec4<F>> {
 	rotate_x(r.x())*rotate_z(r.z())*rotate_y(r.y())
 }
-pub fn rotate_zyx<F:FloatMath+Clone=f32, V:VecMath<F>=Vec4<F>>(r:&V)->Matrix4<Vec4<F>> {
+pub fn rotate_zyx<F:FloatMath=f32, V:VecMath<F>=Vec4<F>>(r:&V)->Matrix4<Vec4<F>> {
 	rotate_z(r.z())*rotate_y(r.y())*rotate_x(r.x())
 }
-pub fn rotate_yzx<F:FloatMath+Clone=f32 , V:XYZW<F>=Vec4<F>>(r:&V)->Matrix4<Vec4<F>> {
+pub fn rotate_yzx<F:FloatMath=f32 , V:XYZW<F>=Vec4<F>>(r:&V)->Matrix4<Vec4<F>> {
 	rotate_y(r.y())*rotate_z(r.z())*rotate_x(r.x())
 }
 
@@ -446,7 +446,7 @@ pub fn translate<V:XYZW<F>,F:FloatMath+One=f32>(trans:&V)->Matrix4<Vec4<F>> {
 		Vec4(trans.x(),trans.y(),trans.z(),one))
 }
 
-pub fn scale_x<V:XYZW<F>,F:FloatMath+One=f32>(scale:F)->Matrix4<Vec4<F>> {
+pub fn scale_x<V:XYZW<F>,F:FloatMath=f32>(scale:F)->Matrix4<Vec4<F>> {
 	let one=one(); let zero=zero();
 	Matrix4(
 		Vec4(scale,	zero,	zero,	zero),
@@ -454,7 +454,7 @@ pub fn scale_x<V:XYZW<F>,F:FloatMath+One=f32>(scale:F)->Matrix4<Vec4<F>> {
 		Vec4(zero,	zero,	one,	zero),
 		Vec4(zero,zero,zero,one))
 }
-pub fn scale_y<V:XYZW<F>,F:FloatMath+One=f32>(scale:F)->Matrix4<Vec4<F>> {
+pub fn scale_y<V:XYZW<F>,F:FloatMath=f32>(scale:F)->Matrix4<Vec4<F>> {
 	let one=one(); let zero=zero();
 	Matrix4(
 		Vec4(one,	zero,	zero,	zero),
@@ -462,7 +462,7 @@ pub fn scale_y<V:XYZW<F>,F:FloatMath+One=f32>(scale:F)->Matrix4<Vec4<F>> {
 		Vec4(zero,	zero,	one,	zero),
 		Vec4(zero,zero,zero,one))
 }
-pub fn scale_z<V:XYZW<F>,F:FloatMath+One=f32>(scale:F)->Matrix4<Vec4<F>> {
+pub fn scale_z<V:XYZW<F>,F:FloatMath=f32>(scale:F)->Matrix4<Vec4<F>> {
 	let one=one(); let zero=zero();
 	Matrix4(
 		Vec4(one,	zero,	zero,	zero),
@@ -480,7 +480,7 @@ pub fn scale<F:FloatMath+One=f32>(scale:F)->Matrix4<Vec4<F>> {
 		Vec4(zero,zero,zero,one))
 }
 
-pub fn scale_vec<V:XYZW<F>,F:FloatMath+One=f32>(s:&V)->Matrix4<Vec4<F>> {
+pub fn scale_vec<V:XYZW<F>,F:FloatMath=f32>(s:&V)->Matrix4<Vec4<F>> {
 	let one=one(); let zero=zero();
 	Matrix4(
 		Vec4(s.x(),	zero,	zero,	zero),
@@ -601,7 +601,7 @@ impl<T:MyFloat,RHS,OUT> Mul<RHS,OUT> for Matrix3<Vec3<T>> {
 	fn mul(&self, other:&RHS)->OUT { other.vpre_mul_mat33(self) }
 }
 */
-impl<T:Float+Copy+Clone> Matrix4<Vec3<T>> {
+impl<T:Float+Copy+Copy> Matrix4<Vec3<T>> {
 	pub fn from_mat44(src:&Matrix4<Vec4<T>>)->Matrix4<Vec3<T>> {
 		let Matrix4(ax,ay,az,aw)=*src;
 		Matrix4(ax.to_vec3(), ay.to_vec3(),az.to_vec3(),aw.to_vec3())

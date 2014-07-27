@@ -63,9 +63,9 @@ struct Triangle<V>{
 	v0:V, v1:V, v2:V
 }
 
-impl<T:Float> Plane<T> {
+impl<T:Float+Copy> Plane<T> {
 	fn from_point(v0:&Vec3<T>, norm:&Vec3<T>)->Plane<T> {
-		Plane{norm:norm.clone(),dist:v0.dot(norm)}
+		Plane{norm:*norm,dist:v0.dot(norm)}
 	}
 	fn from_triangle(v0:&Vec3<T>,v1:&Vec3<T>,v2:&Vec3<T>)->Plane<T> {
 		let norm=(v1.sub(v0)).cross(&(v2.sub(v0))).normalize();
@@ -123,8 +123,8 @@ pub trait Centre<V> {
 impl<V:Num> Centre<V> for Extents<V> {
 	fn centre(&self)->V { (self.min+self.max)*(one::<V>()/(one::<V>()+one::<V>())) }
 }
-impl<T:Clone> Centre<Vec3<T>> for Sphere<T> {
-	fn centre(&self)->Vec3<T> { self.pos.clone() }
+impl<T:Copy> Centre<Vec3<T>> for Sphere<T> {
+	fn centre(&self)->Vec3<T> { self.pos }
 }
 
 impl<T:Num+PartialOrd,V:VecCmp<T>> Extents<V> { 
