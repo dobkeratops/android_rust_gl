@@ -1,13 +1,13 @@
-/// Wraps GLUT in an event queue using Rust enums
-/// hides use of callbacks acessing a global, allows users to poll input events from
-/// a user implemented mainloop.
-/// provides a tablet/console oriented MVC framework
+// Wraps GLUT in an event queue using Rust enums
+// hides use of callbacks acessing a global, allows users to poll input events from
+// a user implemented mainloop.
+// provides a tablet/console oriented MVC framework
 
 
 use r3d::*;
 use std::ptr;
 use collections::*;
-//use collections::dlist::DList;
+use collections::dlist::DList;
 
 #[deriving(Show,Clone,PartialEq)]
 pub struct Window{handle:i32}	// todo - a trait object ?

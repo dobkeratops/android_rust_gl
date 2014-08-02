@@ -46,14 +46,14 @@ pub trait Render {
 	fn render(&self);
 }
 
-pub enum NextScreen {
-	Continue,
-	Replace(Box<Screen>),
-	Push(Box<Screen>),
-	Root(Box<Screen>),
-	Pop,
-	CycleNext,
-	CyclePrev
+pub enum ScreenChange {
+	ScContinue,
+	ScReplace(Box<Screen>),
+	ScPush(Box<Screen>),
+	ScRoot(Box<Screen>),
+	ScPop,
+	ScCycleNext,
+	ScCyclePrev
 }
  
 pub trait Screen {
@@ -62,8 +62,8 @@ pub trait Screen {
 	fn on_select(&mut self){}
 	fn on_deselect(&mut self){}
 	fn render(&self)	{}
-	fn update(&mut self)->NextScreen	{Continue}
-	fn win_event(&mut self, ev: ::rustwin::WinEvent)->NextScreen{Continue}
+	fn update(&mut self)->ScreenChange	{ScContinue}
+	fn win_event(&mut self, ev: ::rustwin::WinEvent)->ScreenChange{ScContinue}
 	fn dump(&self){}
 }
 

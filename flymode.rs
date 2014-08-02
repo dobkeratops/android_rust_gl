@@ -1,14 +1,12 @@
+use r3d;
 use r3d::*;
-use bsp::*;
+use bsp::{BspHeader,Blob};
 use bsprender::*;
-
-use r3d::shaders::*;
-use r3d::vertex::*;
-use r3d::geom::Entity;
 use rustwin::*;
+//use shadertest::*;
 
 pub struct Camera {
-	pub ent:Entity,
+	pub ent: r3d::Entity,
 	pub angvel:Vec3,
 }
 
@@ -32,7 +30,7 @@ impl Camera{
 
 	pub fn new()->Camera {
 		Camera{
-			ent:Entity{
+			ent:r3d::Entity{
 				matrix:matrix::translate(&Vec4(0.0f32,0.0f32,0.0f32,1.0f32)),
 				vel:Vec3(1.0f32,0.0f32,0.0f32),
 			},
@@ -81,14 +79,14 @@ impl ::r3d::Screen for FlyMode {
 			_=>{},
 		}
 	}
-	fn update(&mut self)->NextScreen {
+	fn update(&mut self)->ScreenChange {
 		let dt=1.0f32/60.0f32;
 		let cam=&mut self.cam;
 		cam.update(dt);
 //		let newpos=ent.pos()+ent.vel*dt;
 //		ent.set_pos(newpos);
 		
-		Continue
+		ScContinue
 	} 
 	fn render(&self) {
 		::render_clear();
@@ -103,7 +101,7 @@ impl ::r3d::Screen for FlyMode {
 	//	draw_ground_grid();
 		draw_grid_xz(4.0f32,32,0x000000u32);
 //		::shadertest::render_spinning_lisajous();
-		::shadertest::render_from_at(&mat_proj,&mat_to_cam, &matrix::identity(), &self.bsprender);
+		::render_from_at(&mat_proj,&mat_to_cam, &matrix::identity(), &self.bsprender);
 
 	}
 

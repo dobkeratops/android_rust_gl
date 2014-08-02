@@ -4,6 +4,7 @@ use bsp::*;
 use bsprender::*;
 use r3d::shaders::*;
 use r3d::vertex::*;
+use everywhere::*;
 
 struct	RMesh 
 {
@@ -211,19 +212,24 @@ impl Screen for ShaderTest {
 		let view_mat=matrix::identity();
 		render_spinning_lisajous(&matP,&view_mat);
 	}
-	fn update(&mut self)->NextScreen {
-		Continue
+	fn update(&mut self)->ScreenChange {
+		ScContinue
 	}
-	fn win_event(&mut self, ev: ::rustwin::WinEvent)->NextScreen {
+	fn win_event(&mut self, ev: ::rustwin::WinEvent)->ScreenChange {
+		dump!(ev)
 		match ev {
+			::rustwin::KeyDown(_,k,_,_)=>{
+				match (k as u8 as char)  {
+					_=>{return ScCycleNext}
+				}
+			}
 			::rustwin::MouseMotion(ref win, ref keys,ref pos)=>{
 				dump!(win,keys,pos)
 			}
 			_=>{}
 		}
-		Continue
+		ScContinue
 	}
-
 }
 
 pub fn render_spinning_lisajous(matP:&Matrix4, cam_mat:&Matrix4) {
@@ -253,6 +259,7 @@ pub fn render_spinning_lisajous(matP:&Matrix4, cam_mat:&Matrix4) {
 		let da2=tau*0.081f32*sda;
 		let da3=tau*0.091f32*sda;
 		let da4=tau*0.153f32*sda;
+
 		let da5=tau*0.1621f32*sda;
 
 		// render spinning tori

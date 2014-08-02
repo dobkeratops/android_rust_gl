@@ -281,13 +281,13 @@ impl<V:VecMath<T>+ToVec3<T>+ToVec4<T>,T:Float=f32> Matrix4<V> {
 		Matrix4::look_up_along(self.aw(),self.ay(),self.az())
 	}
 	pub fn mul_vec(&self,pt:&V)->V{	// 'vec'=x,y,z,w
-		self.ax().scale(pt.x()).mad(self.ay(),pt.y()).mad(self.az(),pt.z()).mad(self.aw(),pt.w())
+		self.ax().scale(pt.x()).macc(self.ay(),pt.y()).macc(self.az(),pt.z()).macc(self.aw(),pt.w())
 	}
 	pub fn mul_point(&self,pt:&V)->V{	// 'point'=x,y,z,1
-		self.aw().mad(self.ax(),pt.x()).mad(self.ay(),pt.y()).mad(self.az(),pt.z())
+		self.aw().macc(self.ax(),pt.x()).macc(self.ay(),pt.y()).macc(self.az(),pt.z())
 	}
 	pub fn mul_axis(&self,pt:&V)->V{	// 'axis'=x,y,z,0
-		self.ax().scale(pt.x()).mad(self.ay(),pt.y()).mad(self.az(),pt.z())
+		self.ax().scale(pt.x()).macc(self.ay(),pt.y()).macc(self.az(),pt.z())
 	}
 	pub fn inv_mul_point(&self,pt:&V)->V{
 		let ofs=pt.sub(self.aw());
@@ -298,15 +298,15 @@ impl<V:VecMath<T>+ToVec3<T>+ToVec4<T>,T:Float=f32> Matrix4<V> {
 	}
 	pub fn mul_vec3_w0(&self,pt:&Vec3<T>)->Vec3<T>{
 		let Vec3(x,y,z)=*pt;
-		self.ax().scale(x).mad(self.ay(),y).mad(self.az(),z).to_vec3()
+		self.ax().scale(x).macc(self.ay(),y).macc(self.az(),z).to_vec3()
 	}
 	pub fn mul_vec3_w1(&self,pt:&Vec3<T>)->Vec3<T>{
 		let Vec3(x,y,z)=*pt;
-		self.aw().mad(self.ax(),x).mad(self.ay(),y).mad(self.az(),z).to_vec3()
+		self.aw().macc(self.ax(),x).macc(self.ay(),y).macc(self.az(),z).to_vec3()
 	}
 	pub fn mul_vec4(&self,pt:&Vec4<T>)->Vec4<T>{
 		let Vec4(x,y,z,w)=*pt;		
-		self.ax().scale(x).mad(self.ay(),y).mad(self.az(),z).mad(self.aw(),w).to_vec4()
+		self.ax().scale(x).macc(self.ay(),y).macc(self.az(),z).macc(self.aw(),w).to_vec4()
 	}
 	pub fn mul_matrix(&self,other:&Matrix4<V>)->Matrix4<V> {
 		Matrix4(
@@ -335,9 +335,7 @@ impl<T:Float> Matrix3<Vec3<T>> {
 	}
 	pub fn mul_vec3(&self,pt:&Vec3<T>)->Vec3<T>{
 		let ax:&Vec3<T>=self.ax();
-		let f=pt.x();
-		ax.mad(ax,f);
-		self.ax().scale(pt.x()).mad(self.ay(),pt.y()).mad(self.az(),pt.z())
+		self.ax().mul_x(pt).add_mul_y(self.ay(),pt).add_mul_z(self.az(),pt)
 	}
 	pub fn mul_matrix(&self,other:&Matrix3<Vec3<T>>)->Matrix3<Vec3<T>> {
 		Matrix3(

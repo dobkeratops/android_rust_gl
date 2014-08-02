@@ -148,7 +148,9 @@ pub trait XYZW<T:Zero+One+Copy=f32> :Copy{
 	fn set_y(&self,f:T)->Self {XYZW::<T>::from_xyzw(self.x(),f,self.z(),self.w())}
 	fn set_z(&self,f:T)->Self {XYZW::<T>::from_xyzw(self.x(),self.y(),f,self.w())}
 	fn set_w(&self,f:T)->Self {XYZW::<T>::from_xyzw(self.x(),self.y(),self.z(),f)}
-	fn to_point(&self)->Self {self.set_w(one())}
+	fn set_w1(&self,f:T)->Self {XYZW::<T>::from_xyzw(self.x(),self.y(),self.z(),one())}
+	fn set_w0(&self,f:T)->Self {XYZW::<T>::from_xyzw(self.x(),self.y(),self.z(),zero())}
+	fn to_point(&self)->Self {self.set_w(one())}	// synonymous with 'w=1'
 	fn to_axis(&self)->Self {self.set_w(zero())}
 
 
@@ -395,9 +397,25 @@ pub trait VecMath<T:Float=f32>:XYZW<T>+Num+VecCmp<T>+Sum<T> {
 //	}
 	fn longest_axis(&self)->uint{ self.mul(self).max_elem_index()}
 
+	// abstractions may help keeping in SIMD regs with direct impl, generic provided here
+	// optimized versions might multiply by splatted x,y,z,w instead of scalar.
+	fn mul_x(&self, b:&Self)->Self { self.scale(b.x()) }
+	fn mul_y(&self, b:&Self)->Self { self.scale(b.y()) }
+	fn mul_z(&self, b:&Self)->Self { self.scale(b.z()) }
+	fn mul_w(&self, b:&Self)->Self { self.scale(b.w()) }
+	fn add_mul_x(&self, b:&Self,c:&Self)->Self { self.macc(b,c.x()) }
+	fn add_mul_y(&self, b:&Self,c:&Self)->Self { self.macc(b,c.y()) }
+	fn add_mul_z(&self, b:&Self,c:&Self)->Self { self.macc(b,c.z()) }
+	fn add_mul_w(&self, b:&Self,c:&Self)->Self { self.macc(b,c.w()) }
+	// transform self by axes
+	fn mul_xyzw_sum(&self, ax:&Self,ay:&Self,az:&Self,aw:&Self)->Self {
+		ax.mul_x(self).add_mul_y(ay,self).add_mul_z(az,self).add_mul_w(aw,self)
+	}
+
 	// todo: 'cross' could use permutes. However, we dont want this trait to depend on 'VecPermute'
 	// because that needs the v2,v3,v4 versions
 	// do we have a special set of permutes for exp
+
 	fn cross(&self,b:&Self)->Self	{XYZW::<T>::from_xyz(self.y()*b.z()-self.z()*b.y(),self.z()*b.x()-self.x()*b.z(),self.x()*b.y()-self.y()*b.x())}
 
 	fn scale(&self,f:T)->Self	{ XYZW::<T>::from_xyzw(self.x()*f,self.y()*f,self.z()*f,self.w()*f) }
@@ -406,8 +424,10 @@ pub trait VecMath<T:Float=f32>:XYZW<T>+Num+VecCmp<T>+Sum<T> {
 
 	fn neg(&self)->Self {self.scale(-one::<T>())}
 	fn avr(&self,b:&Self)->Self {self.add(b).scale(one::<T>()/(one::<T>()+one::<T>()))}
-	fn mad(&self,b:&Self,f:T)->Self	{self.add(&b.scale(f))}
-	fn lerp(&self,b:&Self,f:T)->Self	{self.mad(&b.sub(self),f)}
+	fn macc(&self,b:&Self,f:T)->Self	{self.add(&b.scale(f))} //'Multiply-Accumulate' we prefer base+ofs*scale to a*b+c
+	fn add_scale(&self,b:&Self,f:T)->Self{self.macc(b,f)} // synonymous. 
+	fn add_mul(&self,b:&Self,c:&Self)->Self{self.add(&b.mul(c))} // 
+	fn lerp(&self,b:&Self,f:T)->Self	{self.macc(&b.sub(self),f)}
 	fn sqr(&self)->T { self.dot(self)} //todo:ambiguous, maybe a*a which is componentwise.
 	fn length(&self)->T { self.sqr().sqrt()}
 	fn length_squared(&self)->T { self.dot(self)}
@@ -419,7 +439,7 @@ pub trait VecMath<T:Float=f32>:XYZW<T>+Num+VecCmp<T>+Sum<T> {
 	fn sub_norm(&self,b:&Self)->Self { self.sub(b).normalize() }
 	//pub fn axisScale(i:int,f:VScalar)->Self;
 	// { VecOps::axis(i).vscale(f)} how?
-	fn reflect(&self,a:&Self)->Self { self.mad(a, self.dot(a)*(one::<T>()+one::<T>())) }
+	fn reflect(&self,a:&Self)->Self { self.macc(a, self.dot(a)*(one::<T>()+one::<T>())) }
 
 	fn para_perp(&self,vaxis:&Self)->(Self,Self) {
 		let vpara=self.para(vaxis);
@@ -440,10 +460,10 @@ fn bilerp<F:Float,V:VecMath<F>>(((v00,v01),(v10,v11)):((V,V),(V,V)),(s,t):(F,F))
 // free function interface to vec maths
 pub fn vadd<T:Float,V:VecMath<T>>(a:&V,b:&V)->V { a.add(b)}
 pub fn vsub<T:Float,V:VecMath<T>>(a:&V,b:&V)->V { a.sub(b)}
-pub fn vmad<T:Float,V:VecMath<T>>(a:&V,b:&V,f:T)->V { a.mad(b,f)}
+pub fn vmacc<T:Float,V:VecMath<T>>(a:&V,b:&V,f:T)->V { a.macc(b,f)}
 pub fn vmul<T:Float,V:VecMath<T>>(a:&V,b:&V)->V { a.mul(b)}
 pub fn vsqr<T:Float,V:VecMath<T>>(a:&V)->T { a.sqr()}
-pub fn vlerp<T:Float,V:VecMath<T>>( a:&V,b:&V,f:T)->V { vmad(a, &vsub(b,a), f) }
+pub fn vlerp<T:Float,V:VecMath<T>>( a:&V,b:&V,f:T)->V { vmacc(a, &vsub(b,a), f) }
 pub fn vdot<T:Float,V:VecMath<T>>( a:&V,b:&V)->T { a.dot(b)}
 pub fn vlength<T:Float,V:VecMath<T>>( a:&V)->T { a.mul(a).sum().sqrt()}
 pub fn vnormalize<T:Float,V:VecMath<T>>( a:&V)->V { a.normalize() }
@@ -708,8 +728,6 @@ impl<T:Copy+Zero+One> XYZW<T> for Vec4<T>
 	fn w(&self)->T {let Vec4(x,y,z,w)=*self;w}
 	fn from_xyzw(x:T,y:T,z:T,w:T)->Vec4<T> { Vec4(x,y,z,w) }
 }
-
-
 
 // todo - math UT, ask if they can go in the stdlib.
 

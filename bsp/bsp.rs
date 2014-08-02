@@ -280,6 +280,10 @@ impl BspHeader {
 		)};
 		tx
 	}
+	pub fn get_texture_size(&self,i:uint)->(u32,u32) {
+		let t=self.get_texture(i);
+		(t.width as u32 ,t.height as u32)
+	}
 	pub fn swap_yz(&mut self) {
 		self.visit_vertices_mut(|i,v|{ let (x,y,z)=v.clone(); *v=(x,z,y);})
 	}

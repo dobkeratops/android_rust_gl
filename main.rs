@@ -18,7 +18,6 @@ extern crate debug;
 extern crate libc;
 extern crate collections;
 
-//use common::*;
 pub use shadertest::*;
 pub use r3d::*;
 pub use rustwin::*;
@@ -29,6 +28,7 @@ pub mod bsp;
 pub mod bsprender;
 pub mod rustwin;
 pub mod flymode;
+pub mod everywhere;
 
 // framework can be: Android, Glut, (iOS,.o.)
 // 'app_*' are hooks called from platform specific stub
@@ -124,7 +124,7 @@ pub extern "C" fn	app_render(s:&mut AppScreens)
 		let ev=get_event();
 		match ev {
 			EventNone=>false,
-			_ => {screens.back_mut().unwrap().win_event(ev);true},
+			_ => {let chg=screens.back_mut().unwrap().win_event(ev); change_screen(screens,chg); true},
 		}
 	} {}
 
@@ -135,23 +135,23 @@ pub extern "C" fn	app_render(s:&mut AppScreens)
 
 	change_screen(screens,next_screen);
 }
-fn change_screen<S:Deque<Box<Screen>>>(screens:&mut S,ns:NextScreen) {
+fn change_screen<S:Deque<Box<Screen>>>(screens:&mut S,ns:ScreenChange) {
 	unsafe {
 		match ns {
-			Continue=>{},
+			ScContinue=>{},
 			_=>{
 				screens.back_mut().unwrap().on_deselect();
 				match ns {
-					Root(x)=>{ while screens.len()>0 {
+					ScRoot(x)=>{ while screens.len()>0 {
 							screens.back_mut().unwrap().on_deselect(); screens.pop_back();
 						}
 						screens.push_back(x);
 					}
-					Pop=>{screens.pop_back(); },
-					Push(x)=>{screens.push_back(x);},
-					Replace(x)=>{screens.pop_back();screens.push_back(x);},
-					CycleNext=>{let x=screens.pop_front().unwrap(); screens.push_back(x);}
-					CyclePrev=>{let x=screens.pop_back().unwrap(); screens.push_front(x);}
+					ScPop=>{screens.pop_back(); },
+					ScPush(x)=>{screens.push_back(x);},
+					ScReplace(x)=>{screens.pop_back();screens.push_back(x);},
+					ScCycleNext=>{let x=screens.pop_front().unwrap(); screens.push_back(x);}
+					ScCyclePrev=>{let x=screens.pop_back().unwrap(); screens.push_front(x);}
 					_=>{}
 				}
 				screens.back_mut().unwrap().on_select();
@@ -190,12 +190,13 @@ pub extern "C" fn app_create(argc:c_int, argv:*const *const c_char, w:c_int,h:c_
 		screens:{
 			let mut x=RingBuf::new();
 			
-			x.push_back(box shadertest::ShaderTest::new() as Box<Screen>); 
 			x.push_back(box flymode::FlyMode::new() as Box<Screen>);
+			x.push_back(box shadertest::ShaderTest::new() as Box<Screen>); 
 			x
 		}
 	}
 }
+
 
 
 
