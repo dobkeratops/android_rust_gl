@@ -1,5 +1,5 @@
-pub use super::vectypes::*;
-pub use super::vecmath::*;
+use super::vectypes::*;
+use super::vecmath::*;
 pub use std::cmp::*;
 
 #[deriving(Copy,Show)]

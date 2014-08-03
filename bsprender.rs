@@ -36,6 +36,7 @@ impl BspRender {
 }
 
 impl Render for BspRender {
+	// unoptimized immiediate mode rendering
 	fn render(&self) {
 		let mut curr_texid=0xffff;
 		draw_begin(GL_TRIANGLES);

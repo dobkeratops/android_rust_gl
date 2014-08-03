@@ -1,5 +1,5 @@
 #![allow(non_snake_case_functions)]
-pub use super::gl::*;
+use super::gl::*;
 extern
 {
 

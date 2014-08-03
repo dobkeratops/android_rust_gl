@@ -185,6 +185,7 @@ pub extern "C" fn app_destroy(_:Box<AppScreens>) {
 
 
 #[no_mangle]
+#[cfg(not(target_os = "android"))]
 pub extern "C" fn app_create(argc:c_int, argv:*const *const c_char, w:c_int,h:c_int)->Box<AppScreens> {
 	box AppScreens{
 		screens:{
@@ -197,6 +198,17 @@ pub extern "C" fn app_create(argc:c_int, argv:*const *const c_char, w:c_int,h:c_
 	}
 }
 
+#[no_mangle]
+#[cfg(target_os = "android")]
+pub extern "C" fn app_create(argc:c_int, argv:*const *const c_char, w:c_int,h:c_int)->Box<AppScreens> {
+	box AppScreens{
+		screens:{
+			let mut x=RingBuf::new();
+			x.push_back(box shadertest::ShaderTest::new() as Box<Screen>); 
+			x
+		}
+	}
+}
 
 
 

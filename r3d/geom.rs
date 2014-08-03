@@ -1,5 +1,6 @@
 use super::macros::*;
 use super::ut::*;
+use super::vectypes::*;
 use super::vecmath::*;
 use super::matrix::*;
 
