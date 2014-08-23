@@ -11,8 +11,6 @@ use super::to::To;
 pub use std::num;
 pub use std::f32::*;
 pub use std::num::*;
-pub use std::num::Float;
-pub use std::num::Float;
 use std::io;
 
 /// TODO: Split into XYZW interface+VecTypes,& Vecath dependant on XYZW interfaces

@@ -2,6 +2,7 @@
 //pub use r3d::mesh::*;
 
 #![feature(globs)]
+#![feature(import_shadowing)]
 #![feature(macro_rules)]
 #![allow(unused_attribute)]
 #![feature(default_type_params)]

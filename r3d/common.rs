@@ -3,7 +3,7 @@ pub use std::vec;
 pub use std::mem;
 pub use std::cmp;
 pub use std::c_str;
-pub use libc::c_void;
+pub use libc::types::common::c95::c_void;
 pub use std::vec::Vec;
 pub use std::io;
 pub use std::str::raw::*;

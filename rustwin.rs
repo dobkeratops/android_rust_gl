@@ -5,8 +5,10 @@
 
 
 use r3d::*;
+use r3d::{glut,gl};
 use std::ptr;
 use collections::*;
+use r3d::vectypes::Vec2f;
 use collections::dlist::DList;
 
 #[deriving(Show,Clone,PartialEq)]
@@ -74,7 +76,7 @@ static mut g_init_input:bool=false;
 pub fn get_event()->WinEvent {
 	unsafe {
 		if g_init_input==false {init_input() }
-		glutMainLoopEvent(); 
+		glut::glutMainLoopEvent(); 
 //		println!("pop event from {:?}", g_rustwin);
 //		println!("pos={:?}",g_cursor);
 
@@ -228,7 +230,7 @@ pub fn get_mouse()->MouseState{
 }
 
 fn special_key_to_mask(k:c_int)->i32 {
-	println!("special key: {}",k.to_str());
+	println!("special key: {}",k);
 	0
 }
 
@@ -302,32 +304,32 @@ extern "C" fn special_up(k:c_int,x:c_int,y:c_int) {
 pub fn init_input() {
 	unsafe {
 		g_init_input=true;
-		glutMouseFunc(mouse);
-		glutMotionFunc(motion);
-		glutPassiveMotionFunc(passive_motion);
-		glutKeyboardFunc(keyboard);
-		glutKeyboardUpFunc(keyboard_up);
-		glutSpecialFunc(special);
-		glutSpecialUpFunc(special_up);
-		glutTabletMotionFunc(tablet_motion);
-		glutTabletButtonFunc(tablet_button);
+		glut::glutMouseFunc(mouse);
+		glut::glutMotionFunc(motion);
+		glut::glutPassiveMotionFunc(passive_motion);
+		glut::glutKeyboardFunc(keyboard);
+		glut::glutKeyboardUpFunc(keyboard_up);
+		glut::glutSpecialFunc(special);
+		glut::glutSpecialUpFunc(special_up);
+		glut::glutTabletMotionFunc(tablet_motion);
+		glut::glutTabletButtonFunc(tablet_button);
 	}
 }
 
 fn init_window()
 {
 	unsafe {
-		glutInit(&mut 0 as *mut c_int,0 as *const *const c_char);
-		glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH|GLUT_MULTISAMPLE);
-		glutInitWindowSize(640,480);
-		glutInitWindowPosition(0,0);
-		glutSetKeyRepeat(0);
+		glut::glutInit(&mut 0 as *mut c_int,0 as *const *const c_char);
+		glut::glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH|GLUT_MULTISAMPLE);
+		glut::glutInitWindowSize(640,480);
+		glut::glutInitWindowPosition(0,0);
+		glut::glutSetKeyRepeat(0);
 		//	c_glut_init();
-		glutCreateWindow(c_str("rust window"));
-		glutPopWindow();
-		glutIdleFunc(null_func as *const u8);
-        glutDisplayFunc(null_func as *const u8);
-		glEnable(GL_DEPTH_TEST);
+		glut::glutCreateWindow(c_str("rust window"));
+		glut::glutPopWindow();
+		glut::glutIdleFunc(null_func as *const u8);
+        glut::glutDisplayFunc(null_func as *const u8);
+		gl::glEnable(GL_DEPTH_TEST);
 	}
 }
 

@@ -1,6 +1,9 @@
 #![macro_escape]
+#![feature(import_shadowing)]
+
 pub use std::c_str;
-pub use libc::{c_char,c_int,c_void};
+pub use libc::types::os::arch::c95::{c_char,c_int};
+pub use libc::types::common::c95::{c_void};
 pub use std::collections::RingBuf;
 pub use std::collections::Deque;
 
@@ -21,6 +24,7 @@ pub use self::geom::*;
 pub use self::array3d::*;
 pub use self::half::*;
 pub use self::render::*;
+pub use rustwin::WinEvent;
 
 pub mod macros;
 pub mod to;
@@ -64,7 +68,7 @@ pub trait Screen {
 	fn on_deselect(&mut self){}
 	fn render(&self)	{}
 	fn update(&mut self)->ScreenChange	{ScContinue}
-	fn win_event(&mut self, ev: ::rustwin::WinEvent)->ScreenChange{ScContinue}
+	fn win_event(&mut self, ev: WinEvent)->ScreenChange{ScContinue}
 	fn dump(&self){}
 }
 

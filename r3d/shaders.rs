@@ -304,9 +304,9 @@ def_uniform_table!{
 		uTex1
 	}
 }
-pub type VertexShader=GLuint;
-pub type PixelShader=GLuint;
-pub type ShaderProgram=GLuint;
+//pub type VertexShader=GLuint;
+//pub type PixelShader=GLuint;
+//pub type ShaderProgram=GLuint;
 
 
 pub unsafe fn	compile_shader_program(

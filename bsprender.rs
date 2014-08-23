@@ -1,5 +1,5 @@
 use r3d::*;
-use bsp::*;
+use bsp::bsp::{Blob,BspHeader,TexInfo,BspVec3};
 
 // renderable version of a bsp..
 pub struct BspRender {

@@ -1,4 +1,7 @@
 #![macro_escape]
+#![feature(import_shadowing)]
+
+use r3d::render;
 use r3d::*;
 use bsp::*;
 use bsprender::*;
@@ -206,7 +209,7 @@ impl Screen for ShaderTest {
 
 		unsafe {g_angle+=0.0025f32;}
 
-		::render_clear();
+		render::render_clear();
 		
 		let matP = matrix::projection(1.0f32,1.0f32,0.1f32,2048.0f32);
 		let view_mat=matrix::identity();

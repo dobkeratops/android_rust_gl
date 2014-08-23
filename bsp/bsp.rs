@@ -421,10 +421,11 @@ pub struct Edge {
 	pub vertex0:u16,pub vertex1:u16
 }
 
-enum Max{
-	MaxMapHulls=4
-}
-static AmbientNum:int = 4;
+//enum Max {
+//	MaxMapHulls=4
+//}
+static AmbientNum:uint = 4;
+static MaxMapHulls:uint = 4;
 enum Ambient {
 	AmbientWater=0,AmbientSky,AmbientSlime,AmbientLava
 }

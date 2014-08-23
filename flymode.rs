@@ -1,9 +1,10 @@
-use r3d;
+#![feature(import_shadowing)]
+//use r3d;
 use r3d::*;
-use bsp::{BspHeader,Blob};
+use bsp::bsp::{BspHeader,Blob};
 use bsprender::*;
 use rustwin::*;
-//use shadertest::*;
+use shadertest::*;
 
 pub struct Camera {
 	pub ent: r3d::Entity,

@@ -4,7 +4,7 @@ use super::matrix::*;
 use super::formats::*;
 use super::glut::*;
 use std::mem::size_of;
-use libc::c_char;
+
 
 pub fn gl_matrix_projection(mat:&Matrix4) {
 	unsafe{glMatrixMode(GL_PROJECTION);glLoadMatrixf(mat.ax().ref0());
