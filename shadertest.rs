@@ -8,6 +8,7 @@ use bsprender::*;
 use r3d::shaders::*;
 use r3d::vertex::*;
 use everywhere::*;
+use rustwin::*;
 
 struct	RMesh 
 {

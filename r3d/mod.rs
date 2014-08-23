@@ -24,7 +24,7 @@ pub use self::geom::*;
 pub use self::array3d::*;
 pub use self::half::*;
 pub use self::render::*;
-pub use rustwin::WinEvent;
+//pub use rustwin::WinEvent;
 
 pub mod macros;
 pub mod to;
@@ -51,24 +51,5 @@ pub trait Render {
 	fn render(&self);
 }
 
-pub enum ScreenChange {
-	ScContinue,
-	ScReplace(Box<Screen>),
-	ScPush(Box<Screen>),
-	ScRoot(Box<Screen>),
-	ScPop,
-	ScCycleNext,
-	ScCyclePrev
-}
- 
-pub trait Screen {
-	fn display_create(&mut self){}
-	fn display_destroy(&mut self){}
-	fn on_select(&mut self){}
-	fn on_deselect(&mut self){}
-	fn render(&self)	{}
-	fn update(&mut self)->ScreenChange	{ScContinue}
-	fn win_event(&mut self, ev: WinEvent)->ScreenChange{ScContinue}
-	fn dump(&self){}
-}
+
 

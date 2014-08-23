@@ -7,7 +7,7 @@ use rustwin::*;
 use shadertest::*;
 
 pub struct Camera {
-	pub ent: r3d::Entity,
+	pub ent: Entity,
 	pub angvel:Vec3,
 }
 
@@ -31,7 +31,7 @@ impl Camera{
 
 	pub fn new()->Camera {
 		Camera{
-			ent:r3d::Entity{
+			ent: Entity{
 				matrix:matrix::translate(&Vec4(0.0f32,0.0f32,0.0f32,1.0f32)),
 				vel:Vec3(1.0f32,0.0f32,0.0f32),
 			},
@@ -72,7 +72,7 @@ impl Camera{
 	}
 }
 
-impl ::r3d::Screen for FlyMode {
+impl Screen for FlyMode {
 
 	fn display_create(&mut self) {
 		match self.bsp.take() {

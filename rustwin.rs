@@ -333,4 +333,27 @@ fn init_window()
 	}
 }
 
+
+pub enum ScreenChange {
+	ScContinue,
+	ScReplace(Box<Screen>),
+	ScPush(Box<Screen>),
+	ScRoot(Box<Screen>),
+	ScPop,
+	ScCycleNext,
+	ScCyclePrev
+}
+ 
+pub trait Screen {
+	fn display_create(&mut self){}
+	fn display_destroy(&mut self){}
+	fn on_select(&mut self){}
+	fn on_deselect(&mut self){}
+	fn render(&self)	{}
+	fn update(&mut self)->ScreenChange	{ScContinue}
+	fn win_event(&mut self, ev: WinEvent)->ScreenChange{ScContinue}
+	fn dump(&self){}
+}
+
+
 extern "C" fn null_func() {}
