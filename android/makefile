@@ -1,6 +1,6 @@
 ANDROID_CXX  = /opt/ndk_standalone/bin/arm-linux-androideabi-gcc
 
-
+#see jni/Android.mk aswell
 ndk_build: jni/librust_android.a
 	echo "building ndk sample, including rust code"
 	ndk-build
@@ -19,11 +19,12 @@ ndk_build: jni/librust_android.a
 
 jni/librust_android.a: ../main.rs ../shadertest.rs
 	echo "[1] build Rust source as a library .."
-	rustc --target=arm-linux-androideabi ../main.rs --android-cross-path=/opt/ndk_standalone -C linker=/opt/ndk_standalone/bin/arm-linux-androideabi-gcc --crate-type=staticlib -o jni/librust_android.a
+#	rustc --target=arm-linux-androideabi ../main.rs --android-cross-path=/opt/ndk_standalone --crate-type=staticlib -o jni/librust_android.a
+	rustc --target=arm-linux-androideabi ../main.rs  -C linker=/opt/ndk_standalone/bin/arm-linux-androideabi-gcc --crate-type=staticlib  -o jni/librust_android.a
 
 
 clean:
+	rm jni/*.a
 	rm libs/armeabi/libnative-activity.so
 	rm obj/local/armeabi/objs/native-activity/main.o
-	rm jni/*.a
 

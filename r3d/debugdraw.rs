@@ -437,8 +437,12 @@ pub fn random_color(a:uint)->u32 {
 	(a^(a<<3)^(a<<8)*(a<<2)^(a<<19)^(a<<22)*(a<<13) )as u32
 }
 
+// stubb functions for unavailable fixed functoin GL stuff on GL|ES
+// these are used in debug-rendering.. should be replaced with some sort of emulation
 
-
+#[cfg(target_os = "android")]
+fn glTexCoord2f(x:f32,y:f32) {
+}
 
 
 
