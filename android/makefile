@@ -1,4 +1,5 @@
-ANDROID_CXX  = /opt/ndk_standalone/bin/arm-linux-androideabi-gcc
+ANDROID_CROSS_PATH = /opt/ndk_standalone
+ANDROID_CXX  = $(ANDROID_CROSS_PATH)/bin/arm-linux-androideabi-g++
 
 #see jni/Android.mk aswell
 ndk_build: jni/librust_android.a
@@ -20,7 +21,7 @@ ndk_build: jni/librust_android.a
 jni/librust_android.a: ../main.rs ../shadertest.rs
 	echo "[1] build Rust source as a library .."
 #	rustc --target=arm-linux-androideabi ../main.rs --android-cross-path=/opt/ndk_standalone --crate-type=staticlib -o jni/librust_android.a
-	rustc --target=arm-linux-androideabi ../main.rs  -C linker=/opt/ndk_standalone/bin/arm-linux-androideabi-gcc --crate-type=staticlib  -o jni/librust_android.a
+	rustc --target=arm-linux-androideabi ../main.rs  -C linker=/opt/ndk_standalone/bin/arm-linux-androideabi-g++ -C ar=/opt/ndk_standalone/bin/arm-linux-androideabi-ar --crate-type=staticlib  -o jni/librust_android.a
 
 
 clean:

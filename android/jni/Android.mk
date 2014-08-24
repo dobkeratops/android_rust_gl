@@ -29,7 +29,7 @@ LOCAL_SRC_FILES := main.c desktop_gl_emu.c
 #LOCAL_LDLIBS    :=  -llog -landroid -lEGL -lGLESv2
 #.. we tried this as a random attempt based on error messages recomending 'dl log gcc c m'
 # further we removed '-lgcc' because it warns us
-LOCAL_LDLIBS    := -ldl -llog -lc -lm -landroid -lEGL -lGLESv2
+LOCAL_LDLIBS    := -ldl -llog -lgcc -lc -lm -landroid -lEGL -lGLESv2
 LOCAL_STATIC_LIBRARIES +=  android_native_app_glue rust-prebuilt
 
 include $(BUILD_SHARED_LIBRARY)
