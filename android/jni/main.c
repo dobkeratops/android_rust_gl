@@ -36,12 +36,12 @@
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
 
-void _Unwind_GetIP(){
-}
-void _Unwind_SetIP(){
-}
-void _Unwind_SetGR(){
-}
+// Dummy functions to patch around missing link informatoin- 
+// these are evidently only used in the case of Rust task failiure which will be broken.
+// TODO - get the makefile working and delete these.
+void _Unwind_GetIP(){}
+void _Unwind_SetIP(){}
+void _Unwind_SetGR(){}
 
 // statically linked hooks for the main application to interact with the activity cycle.
 // user of this framework passes an application object.
