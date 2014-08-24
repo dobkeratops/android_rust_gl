@@ -12,9 +12,14 @@ ndk_build: jni/librust_android.a
 	adb shell am start -n com.example.native_activity/android.app.NativeActivity
 
 
+#TODO - this was -C android_cross_path=/opt/ndk_standalone.
+#we've changed it to -C linker=...  
+#we still get errors linking with _Unwind_... stuff. we dont know why
+#
+
 jni/librust_android.a: ../main.rs ../shadertest.rs
 	echo "[1] build Rust source as a library .."
-	rustc --target=arm-linux-androideabi ../main.rs -C android-cross-path=/opt/ndk_standalone --crate-type=staticlib -o jni/librust_android.a
+	rustc --target=arm-linux-androideabi ../main.rs -C linker=/opt/ndk_standalone/bin/arm-linux-androideabi-gcc --crate-type=staticlib -o jni/librust_android.a
 
 
 clean:
