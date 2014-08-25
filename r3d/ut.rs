@@ -27,7 +27,7 @@ trait ToVoidPtr {
 }
 impl<T> ToVoidPtr for Vec<T> {
 	unsafe fn as_void_ptr(&self)->*const c_void {
-		self.get(0) as *const _ as *const c_void
+		&self[0] as *const _ as *const c_void
 	}
 	unsafe fn byte_ofs<I:Int>(&self,ofs:I)->*const c_void {
 		self.as_void_ptr().offset(ofs.to_int().unwrap())

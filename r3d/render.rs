@@ -110,10 +110,10 @@ pub unsafe fn create_index_buffer_from_ptr(size:GLsizei, data:*const c_void)->GL
 }
 
 pub unsafe fn create_vertex_buffer<T>(data:&Vec<T>)->GLuint {
-	create_buffer(data.len()as GLsizei *mem::size_of::<T>() as GLsizei, as_void_ptr(data.get(0)), GL_ARRAY_BUFFER)
+	create_buffer(data.len()as GLsizei *mem::size_of::<T>() as GLsizei, as_void_ptr(&data[0]), GL_ARRAY_BUFFER)
 }
 pub unsafe fn create_index_buffer<T>(data:&Vec<T>)->GLuint {
-	create_buffer(data.len()as GLsizei *mem::size_of::<T>() as GLsizei, as_void_ptr(data.get(0)), GL_ELEMENT_ARRAY_BUFFER)
+	create_buffer(data.len()as GLsizei *mem::size_of::<T>() as GLsizei, as_void_ptr(&data[0]), GL_ELEMENT_ARRAY_BUFFER)
 }
 
 
@@ -135,8 +135,8 @@ pub unsafe fn	create_and_compile_shader(shader_type:GLenum, source:&Vec<&str>) -
 	let	shader_id = glCreateShader(shader_type );
 	dump!(shader_id);
 
-	let sources_as_c_str=Vec::from_fn(source.len(), |x|c_str(*source.get(x)) );
-	let length:Vec<c_int> = Vec::from_fn(source.len() , |x|source.get(x).len() as c_int );
+	let sources_as_c_str=Vec::from_fn(source.len(), |x|c_str(source[x]) );
+	let length:Vec<c_int> = Vec::from_fn(source.len() , |x|source[x].len() as c_int );
 	let src_len:uint=source.len();
 	let mut iter_len: ::std::iter::Range<uint> =::std::iter::range(0u,src_len as uint);
 
@@ -146,15 +146,15 @@ pub unsafe fn	create_and_compile_shader(shader_type:GLenum, source:&Vec<&str>) -
 	loop {
 		match iter_len.next() {
 			Some(i)=>{
-				let s=*sources_as_c_str.get(i);
-				let len=*length.get(i);
+				let s=sources_as_c_str[i];
+				let len=length[i];
 				logi!("source adr={} source len={} ",s,len) 
 			},
 			None=> break
 		}
 	};
 	
-	glShaderSource(shader_id, source.len() as GLsizei, sources_as_c_str.get(0), 0 as *const c_int/*(&length[0])*/);
+	glShaderSource(shader_id, source.len() as GLsizei, &sources_as_c_str[0], 0 as *const c_int/*(&length[0])*/);
 	glCompileShader(shader_id);
 	let	mut sh_status:c_int=0;
 	glGetShaderiv(shader_id,GL_COMPILE_STATUS,&mut sh_status);
