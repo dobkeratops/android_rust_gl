@@ -68,7 +68,7 @@ pub struct Blob<HEADER> {
 
 impl<T> Deref<T> for Blob<T> {
 	fn deref<'s>(&'s self)->&'s T {
-		unsafe {	&*(self.data.get(0)as*const _ as*const T)
+		unsafe {	&*(&self.data[0]as*const _ as*const T)
 		}
 	}
 }
@@ -276,7 +276,7 @@ impl BspHeader {
 	pub fn get_texture<'a>(&'a self, i:uint)->&'a MipTex {
 		let txh=self.miptex.get(self,0);
 		let tx = unsafe {&*(
-			(txh as *const _ as *const u8).offset(*txh.miptex_offset.unsafe_ref(i as uint) as int) as *const MipTex
+			(txh as *const _ as *const u8).offset(*txh.miptex_offset.unsafe_get(i as uint) as int) as *const MipTex
 		)};
 		tx
 	}
