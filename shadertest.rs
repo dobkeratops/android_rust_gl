@@ -82,7 +82,7 @@ impl RMesh {
 			RMesh{
 				num_vertices:num_vertices as GLuint,
 				num_indices:num_indices as GLuint,
-				vertex_size: mem::size_of_val(vertices.get(0)) as GLsizei,
+				vertex_size: mem::size_of_val(&vertices[0]) as GLsizei,
 				vbo: create_vertex_buffer(&vertices),
 				ibo: create_index_buffer(&indices)
 			}
@@ -223,7 +223,7 @@ impl Screen for ShaderTest {
 		dump!(ev)
 		match ev {
 			::rustwin::KeyDown(_,k,_,_)=>{
-				match (k as u8 as char)  {
+				match k as u8 as char {
 					_=>{return ScCycleNext}
 				}
 			}
@@ -282,8 +282,7 @@ pub fn render_spinning_lisajous(matP:&Matrix4, cam_mat:&Matrix4) {
 			let mat_mv = mat_t;	// toodo - combine rotation...
 			//io::println(format!("{:?}", g_shader_program));
 
-			let  mut render_mat=cam_mat * rot_trans;
-			render_mat=cam_mat*rot_trans;
+			let render_mat=cam_mat*rot_trans;
 
 			gl_matrix_projection(matP);
 			gl_matrix_modelview(&render_mat);
@@ -372,7 +371,7 @@ fn	create_textures() {
 				(i+j*256+255*256*256) as u32
 			});
 		for i in range(0 as GLint,8 as GLint) {
-			glTexImage2D(GL_TEXTURE_2D, i, GL_RGB as GLint, usize as GLint,vsize as GLint, 0, GL_RGB, GL_UNSIGNED_BYTE, buffer.get(0)as*const _ as*const c_void);
+			glTexImage2D(GL_TEXTURE_2D, i, GL_RGB as GLint, usize as GLint,vsize as GLint, 0, GL_RGB, GL_UNSIGNED_BYTE, &buffer[0]as*const _ as*const c_void);
 			glGenerateMipmap(GL_TEXTURE_2D);
 		}
 		glBindTexture(GL_TEXTURE_2D,0);

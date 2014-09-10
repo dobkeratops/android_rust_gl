@@ -28,7 +28,7 @@ impl<'a,T> Vec3d<T> {
 		lin_index_sub(self.size, ijk)
 	}
 	pub fn get(&'a self,ijk:(int,int,int))->&'a T {
-		self.data.get(self.linear_index(ijk) as uint)
+		&self.data[self.linear_index(ijk) as uint]
 	}
 	pub fn get_mut(&'a mut self,ijk:(int,int,int))->&'a mut T {
 		let idx=self.linear_index(ijk);

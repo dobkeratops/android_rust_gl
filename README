@@ -13,4 +13,6 @@ make in the project root should run the same rendering code on desktop.
 
 android/jni/desktop_emu_gl.c  provides empty stub functions for linking.
 
+the C mainloop in jni/main.c calls Rust entrypoints: main.rs app_create() app_display_create() app_render() app_display_destroy() app_destroy()
 
+'shadertest.rs' implements a 'Screen' trait with update/render functions called by these.

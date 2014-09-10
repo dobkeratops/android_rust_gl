@@ -48,7 +48,7 @@ impl Render for BspRender {
 					let fu=usize as f32; let fv=vsize as f32;
 					if curr_texid!=txi {
 						draw_end();
-						draw_set_texture(0,*self.textures.get(txi));
+						draw_set_texture(0,self.textures[txi]);
 						curr_texid=txi;
 						draw_begin(GL_TRIANGLES);
 					}

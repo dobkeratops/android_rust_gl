@@ -144,15 +144,15 @@ fn change_screen<S:Deque<Box<Screen+'static>>>(screens:&mut S,ns:ScreenChange) {
 				screens.back_mut().unwrap().on_deselect();
 				match ns {
 					ScRoot(x)=>{ while screens.len()>0 {
-							screens.back_mut().unwrap().on_deselect(); screens.pop_back();
+							screens.back_mut().unwrap().on_deselect(); screens.pop();
 						}
-						screens.push_back(x);
+						screens.push(x);
 					}
-					ScPop=>{screens.pop_back(); },
-					ScPush(x)=>{screens.push_back(x);},
-					ScReplace(x)=>{screens.pop_back();screens.push_back(x);},
-					ScCycleNext=>{let x=screens.pop_front().unwrap(); screens.push_back(x);}
-					ScCyclePrev=>{let x=screens.pop_back().unwrap(); screens.push_front(x);}
+					ScPop=>{screens.pop(); },
+					ScPush(x)=>{screens.push(x);},
+					ScReplace(x)=>{screens.pop();screens.push(x);},
+					ScCycleNext=>{let x=screens.pop_front().unwrap(); screens.push(x);}
+					ScCyclePrev=>{let x=screens.pop().unwrap(); screens.push_front(x);}
 					_=>{}
 				}
 				screens.back_mut().unwrap().on_select();
@@ -192,8 +192,8 @@ pub extern "C" fn app_create(argc:c_int, argv:*const *const c_char, w:c_int,h:c_
 		screens:{
 			let mut x=RingBuf::new();
 			
-			x.push_back(box flymode::FlyMode::new() as Box<Screen>);
-			x.push_back(box shadertest::ShaderTest::new() as Box<Screen>); 
+			x.push(box flymode::FlyMode::new() as Box<Screen>);
+			x.push(box shadertest::ShaderTest::new() as Box<Screen>); 
 			x
 		}
 	}
@@ -205,7 +205,7 @@ pub extern "C" fn app_create(argc:c_int, argv:*const *const c_char, w:c_int,h:c_
 	box AppScreens{
 		screens:{
 			let mut x=RingBuf::new();
-			x.push_back(box shadertest::ShaderTest::new() as Box<Screen>); 
+			x.push(box shadertest::ShaderTest::new() as Box<Screen>); 
 			x
 		}
 	}
