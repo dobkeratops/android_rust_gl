@@ -336,9 +336,9 @@ fn init_window()
 
 pub enum ScreenChange {
 	ScContinue,
-	ScReplace(Box<Screen>),
-	ScPush(Box<Screen>),
-	ScRoot(Box<Screen>),
+	ScReplace(Box<Screen+ 'static>),
+	ScPush(Box<Screen+ 'static>),
+	ScRoot(Box<Screen+ 'static>),
 	ScPop,
 	ScCycleNext,
 	ScCyclePrev

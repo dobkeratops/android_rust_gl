@@ -136,7 +136,7 @@ pub extern "C" fn	app_render(s:&mut AppScreens)
 
 	change_screen(screens,next_screen);
 }
-fn change_screen<S:Deque<Box<Screen>>>(screens:&mut S,ns:ScreenChange) {
+fn change_screen<S:Deque<Box<Screen+'static>>>(screens:&mut S,ns:ScreenChange) {
 	unsafe {
 		match ns {
 			ScContinue=>{},
@@ -164,7 +164,7 @@ fn change_screen<S:Deque<Box<Screen>>>(screens:&mut S,ns:ScreenChange) {
 pub static mut g_resources_init:bool=false;
 
 pub struct AppScreens{
-	screens:RingBuf<Box<Screen>>
+	screens:RingBuf<Box<Screen+'static>>
 }
 
 #[no_mangle]

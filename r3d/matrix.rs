@@ -599,7 +599,7 @@ impl<T:MyFloat,RHS,OUT> Mul<RHS,OUT> for Matrix3<Vec3<T>> {
 	fn mul(&self, other:&RHS)->OUT { other.vpre_mul_mat33(self) }
 }
 */
-impl<T:Float+Copy+Copy> Matrix4<Vec3<T>> {
+impl<T:Float+Copy> Matrix4<Vec3<T>> {
 	pub fn from_mat44(src:&Matrix4<Vec4<T>>)->Matrix4<Vec3<T>> {
 		let Matrix4(ax,ay,az,aw)=*src;
 		Matrix4(ax.to_vec3(), ay.to_vec3(),az.to_vec3(),aw.to_vec3())

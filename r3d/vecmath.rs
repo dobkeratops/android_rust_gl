@@ -629,7 +629,7 @@ impl<T:Copy+Zero+One> XYZW<T> for [T,..3] {
 	fn w(&self)->T { zero() }
 	fn from_xyzw(x:T,y:T,z:T,w:T)->[T,..3]{ [x,y,z] }
 }
-impl<T:Copy+Copy+Zero+One> XYZW<T> for [T,..4] {
+impl<T:Copy+Zero+One> XYZW<T> for [T,..4] {
 	fn x(&self)->T { self[0] }
 	fn y(&self)->T { self[1] }
 	fn z(&self)->T { self[2] }

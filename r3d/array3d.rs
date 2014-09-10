@@ -10,7 +10,7 @@ pub struct Vec3d<T>{
 	data:Vec<T>,
 }
 
-struct Vec3dIter<'a,T> {
+struct Vec3dIter<'a,T:'a> {
 	src:&'a Vec3d<T>,
 	i:int,
 	j:int,
