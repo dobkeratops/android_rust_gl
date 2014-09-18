@@ -4,6 +4,7 @@
 #![feature(globs)]
 #![feature(import_shadowing)]
 #![feature(macro_rules)]
+#![feature(tuple_indexing)]
 #![allow(unused_attribute)]
 #![feature(default_type_params)]
 #![allow(unused_imports)]
@@ -88,6 +89,10 @@ extern { fn android_get_inputs()->AndroidInput; }
 #[cfg(not(target_os = "android"))]
 pub fn main()
 {
+
+	let v = Vec3(1.0f32,2.0f32,3.0f32);
+	dump!(v.0, v.1, v.2);
+	dump!(v);
 
 	unsafe {
 		let mut argc:c_int=0;

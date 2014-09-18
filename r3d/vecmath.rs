@@ -225,22 +225,22 @@ pub trait VecCmp<T:PartialOrd> {
 // componentwise multiplication operator for vectors
 impl<F:Mul<F,F>+Copy+Zero+One> Mul<Vec2<F>,Vec2<F>> for Vec2<F> {
 	fn mul(&self,b:&Vec2<F>)->Vec2<F> {
-		Vec2(self.x()*b.x(),self.y()*b.y())
+		Vec2(self.0*b.0,self.1*b.1)
 	}
 }
 impl<F:Div<F,F>+Copy+Zero+One> Div<Vec2<F>,Vec2<F>> for Vec2<F> {
 	fn div(&self,b:&Vec2<F>)->Vec2<F> {
-		Vec2(self.x()/b.x(),self.y()/b.y())
+		Vec2(self.0/b.0,self.1/b.1)
 	}
 }
 impl<F:Div<F,F>+Copy+Zero+One> Div<Vec3<F>,Vec3<F>> for Vec3<F> {
 	fn div(&self,b:&Vec3<F>)->Vec3<F> {
-		Vec3(self.x()/b.x(),self.y()/b.y(),self.z()/b.z())
+		Vec3(self.0/b.0,self.1/b.1,self.2/b.2)
 	}
 }
 impl<F:Div<F,F>+Copy+Zero+One> Div<Vec4<F>,Vec4<F>> for Vec4<F> {
 	fn div(&self,b:&Vec4<F>)->Vec4<F> {
-		Vec4(self.x()/b.x(),self.y()/b.y(),self.z()/b.z(),self.w()/b.w())
+		Vec4(self.0/b.0,self.1/b.1,self.2/b.2,self.3/b.3)
 	}
 }
 
@@ -249,11 +249,11 @@ pub trait PreMulVec2<T,RESULT> {
 	fn pre_mul_vec2(&self,&Vec2<T>)->RESULT;
 }
 impl<T:Mul<T,T>+Copy+Zero+One> PreMulVec2<T,Vec2<T>> for Vec2<T> {
-	fn pre_mul_vec2(&self, lhs:&Vec2<T>)->Vec2<T> { Vec2(lhs.x()*self.x(),lhs.y()*self.y()) }
+	fn pre_mul_vec2(&self, lhs:&Vec2<T>)->Vec2<T> { Vec2(lhs.0*self.0,lhs.1*self.1) }
 }
 // TODO: At the minute, this tells us 'conflicting impl' if we do for generic T:Float
 impl PreMulVec2<f32,Vec2<f32>> for f32 {
-	fn pre_mul_vec2(&self, lhs:&Vec2<f32>)->Vec2<f32> { Vec2(lhs.x()**self,lhs.y()**self) }
+	fn pre_mul_vec2(&self, lhs:&Vec2<f32>)->Vec2<f32> { Vec2(lhs.0**self,lhs.1**self) }
 }
 // TODO: At the minute, this tells us 'conflicting impl' if we do for generic T:Float
 impl PreMulVec2<f64,Vec2<f64>> for f64 {
@@ -263,11 +263,11 @@ pub trait PreDivVec2<T,RESULT> {
 	fn pre_div_vec2(&self,&Vec2<T>)->RESULT;
 }
 impl<T:Div<T,T>+Copy+Zero+One> PreDivVec2<T,Vec2<T>> for Vec2<T> {
-	fn pre_div_vec2(&self, lhs:&Vec2<T>)->Vec2<T> { Vec2(lhs.x()/self.x(),lhs.y()/self.y()) }
+	fn pre_div_vec2(&self, lhs:&Vec2<T>)->Vec2<T> { Vec2(lhs.0/self.0,lhs.1/self.1) }
 }
 // TODO: At the minute, this tells us 'conflicting impl' if we do for generic T:Float
 impl PreDivVec2<f32,Vec2<f32>> for f32 {
-	fn pre_div_vec2(&self, lhs:&Vec2<f32>)->Vec2<f32> { Vec2(lhs.x()/ *self,lhs.y()/ *self) }
+	fn pre_div_vec2(&self, lhs:&Vec2<f32>)->Vec2<f32> { Vec2(lhs.0/ *self,lhs.1/ *self) }
 }
 
 impl<T:Rem<T,T>+Copy+Zero+One> Rem<Vec2<T>,Vec2<T>> for Vec2<T> {
@@ -282,18 +282,18 @@ impl<T:Rem<T,T>+Copy+Zero+One> Rem<Vec3<T>,Vec3<T>> for Vec3<T> {
 }
 impl<T:Rem<T,T>+Copy+Zero+One> Rem<Vec4<T>,Vec4<T>> for Vec4<T> {
 	fn rem(&self,rhs:&Vec4<T>)->Vec4<T> {
-		Vec4(self.x()%rhs.x(),self.y()%rhs.y(),self.z()%rhs.z(),self.w()%rhs.w())
+		Vec4(self.0%rhs.0,self.1%rhs.1,self.2%rhs.2,self.3%rhs.3)
 	}
 }
 
 impl<T:Neg<T>+Copy+Zero+One> Neg<Vec2<T>> for Vec2<T> {
-	fn neg(&self)->Vec2<T> { Vec2(-self.x(),-self.y()) }
+	fn neg(&self)->Vec2<T> { Vec2(-self.0,-self.1) }
 }
 impl<T:Neg<T>+Copy+Zero+One> Neg<Vec3<T>> for Vec3<T> {
-	fn neg(&self)->Vec3<T> { Vec3(-self.x(),-self.y(),-self.z()) }
+	fn neg(&self)->Vec3<T> { Vec3(-self.0,-self.1,-self.2) }
 }
 impl<T:Neg<T>+Copy+Zero+One> Neg<Vec4<T>> for Vec4<T> {
-	fn neg(&self)->Vec4<T> { Vec4(-self.x(),-self.y(),-self.z(),-self.w()) }
+	fn neg(&self)->Vec4<T> { Vec4(-self.0,-self.1,-self.2,-self.3) }
 }
 
 impl<T,OUT,RHS:PreMulVec3<T,OUT>> Mul<RHS,OUT> for Vec3<T> {
@@ -315,25 +315,25 @@ pub trait PreMulVec3<T,RESULT> {
 	fn pre_mul_vec3(&self,&Vec3<T>)->RESULT;
 }
 impl<T:Float+Copy> PreMulVec3<T,Vec3<T>> for Vec3<T> {
-	fn pre_mul_vec3(&self, lhs:&Vec3<T>)->Vec3<T> { Vec3(lhs.x()*self.x(),lhs.y()*self.y(),lhs.z()*self.z()) }
+	fn pre_mul_vec3(&self, lhs:&Vec3<T>)->Vec3<T> { Vec3(lhs.0*self.0,lhs.1*self.1,lhs.2*self.2) }
 }
 // TODO: At the minute, this tells us 'conflicting impl' if we do for generic T:Float
 impl PreMulVec3<f64,Vec3<f64>> for f64 {
-	fn pre_mul_vec3(&self/*=rhs*/, lhs:&Vec3<f64>)->Vec3<f64> { Vec3(lhs.x()**self,lhs.y()**self,lhs.z()**self) }
+	fn pre_mul_vec3(&self/*=rhs*/, lhs:&Vec3<f64>)->Vec3<f64> { Vec3(lhs.0**self,lhs.1**self,lhs.2**self) }
 }
 impl PreMulVec3<f32,Vec3<f32>> for f32 {
-	fn pre_mul_vec3(&self, lhs:&Vec3<f32>)->Vec3<f32> { Vec3(lhs.x()**self,lhs.y()**self,lhs.z()**self) }
+	fn pre_mul_vec3(&self, lhs:&Vec3<f32>)->Vec3<f32> { Vec3(lhs.0**self,lhs.1**self,lhs.2**self) }
 }
 
 pub trait PreDivVec3<T,RESULT> {
 	fn pre_div_vec3(&self,&Vec3<T>)->RESULT;
 }
 impl<T:Float+Copy> PreDivVec3<T,Vec3<T>> for Vec3<T> {
-	fn pre_div_vec3(&self, lhs:&Vec3<T>)->Vec3<T> { Vec3(lhs.x()/self.x(),lhs.y()/self.y(),lhs.z()/self.z()) }
+	fn pre_div_vec3(&self, lhs:&Vec3<T>)->Vec3<T> { Vec3(lhs.0/self.0,lhs.1/self.1,lhs.2/self.2) }
 }
 // TODO: At the minute, this tells us 'conflicting impl' if we do for generic T:Float
 impl PreDivVec3<f32,Vec3<f32>> for f32 {
-	fn pre_div_vec3(&self, lhs:&Vec3<f32>)->Vec3<f32> { Vec3(lhs.x()/ *self,lhs.y()/ *self,lhs.z()/ *self) }
+	fn pre_div_vec3(&self, lhs:&Vec3<f32>)->Vec3<f32> { Vec3(lhs.0/ *self,lhs.1/ *self,lhs.2/ *self) }
 }
 
 
@@ -342,36 +342,36 @@ pub trait PreMulVec4<T,RESULT> {
 	fn pre_mul_vec4(&self,lhs:&Vec4<T>)->RESULT;
 }
 impl<T:Float+Copy> PreMulVec4<T,Vec4<T>> for Vec4<T> {
-	fn pre_mul_vec4(&self, lhs:&Vec4<T>)->Vec4<T> { Vec4(lhs.x()*self.x(),lhs.y()*self.y(),lhs.z()*self.z(),lhs.w()*self.w()) }
+	fn pre_mul_vec4(&self, lhs:&Vec4<T>)->Vec4<T> { Vec4(lhs.0*self.0,lhs.1*self.1,lhs.2*self.2,lhs.3*self.3) }
 }
 // TODO: At the minute, this tells us 'conflicting impl' if we do for generic T:Float
 impl PreMulVec4<f32,Vec4<f32>> for f32 {
-	fn pre_mul_vec4(&self, lhs:&Vec4<f32>)->Vec4<f32> { Vec4(lhs.x()**self,lhs.y()**self,lhs.z()**self,lhs.w()**self) }
+	fn pre_mul_vec4(&self, lhs:&Vec4<f32>)->Vec4<f32> { Vec4(lhs.0**self,lhs.1**self,lhs.2**self,lhs.3**self) }
 }
 // TODO: At the minute, this tells us 'conflicting impl' if we do for generic T:Float
 impl PreMulVec4<f64,Vec4<f64>> for f64 {
-	fn pre_mul_vec4(&self, lhs:&Vec4<f64>)->Vec4<f64> { Vec4(lhs.x()**self,lhs.y()**self,lhs.z()**self,lhs.w()**self) }
+	fn pre_mul_vec4(&self, lhs:&Vec4<f64>)->Vec4<f64> { Vec4(lhs.0**self,lhs.1**self,lhs.2**self,lhs.3**self) }
 }
 
 pub trait PreDivVec4<T,RESULT> {
 	fn pre_div_vec4(&self,lhs:&Vec4<T>)->RESULT;
 }
 impl<T:Div<T,T>+Copy+Zero+One> PreDivVec4<T,Vec4<T>> for Vec4<T> {
-	fn pre_div_vec4(&self, lhs:&Vec4<T>)->Vec4<T> { Vec4(lhs.x()/self.x(),lhs.y()/self.y(),lhs.z()/self.z(),lhs.w()/self.w()) }
+	fn pre_div_vec4(&self, lhs:&Vec4<T>)->Vec4<T> { Vec4(lhs.0/self.0,lhs.1/self.1,lhs.2/self.2,lhs.3/self.3) }
 }
 // TODO: At the minute, this tells us 'conflicting impl' if we do for generic T:Float
 impl PreDivVec4<f32,Vec4<f32>> for f32 {
-	fn pre_div_vec4(&self, lhs:&Vec4<f32>)->Vec4<f32> { Vec4(lhs.x()/ *self,lhs.y()/ *self,lhs.z()/ *self,lhs.w()/ *self) }
+	fn pre_div_vec4(&self, lhs:&Vec4<f32>)->Vec4<f32> { Vec4(lhs.0/ *self,lhs.1/ *self,lhs.2/ *self,lhs.3/ *self) }
 }
 
 impl<T:PartialEq+Copy+Zero+One> PartialEq for Vec2<T> {
-	fn eq(&self,rhs:&Vec2<T>)->bool { return self.x()==rhs.x() && self.y()==rhs.y() }
+	fn eq(&self,rhs:&Vec2<T>)->bool { return self.0==rhs.0 && self.1==rhs.1 }
 }
 impl<T:PartialEq+Copy+Zero+One> PartialEq for Vec3<T> {
-	fn eq(&self,rhs:&Vec3<T>)->bool { return self.x()==rhs.x() && self.y()==rhs.y() && self.z()==rhs.z() }
+	fn eq(&self,rhs:&Vec3<T>)->bool { return self.0==rhs.0 && self.1==rhs.1 && self.2==rhs.2 }
 }
 impl<T:PartialEq+Copy+Zero+One> PartialEq for Vec4<T> {
-	fn eq(&self,rhs:&Vec4<T>)->bool { return self.x()==rhs.x() && self.y()==rhs.y() && self.z()==rhs.z() && self.w()==rhs.w() }
+	fn eq(&self,rhs:&Vec4<T>)->bool { return self.0==rhs.0 && self.1==rhs.1 && self.2==rhs.2 && self.3==rhs.3 }
 }
 
 
@@ -661,8 +661,8 @@ impl<T:Copy+Zero+One> XYZW<T> for (T,T,T,T) {
 }
 
 impl<T:Copy+Zero+One> Vec4<T> {
-	pub fn to_array(&self)->[T,..4] { [self.x(),self.y(),self.z(),self.w()] }
-	pub fn to_tuple(&self)->(T,T,T,T) { (self.x(),self.y(),self.z(),self.w()) }
+	pub fn to_array(&self)->[T,..4] { [self.0,self.1,self.2,self.3] }
+	pub fn to_tuple(&self)->(T,T,T,T) { (self.0,self.1,self.2,self.3) }
 
 	pub fn from_array([x,y,z,w]:[T,..4])->Vec4<T> {Vec4(x,y,z,w)}
 	pub fn from_tuple((x,y,z,w):(T,T,T,T))->Vec4<T> {
@@ -670,15 +670,15 @@ impl<T:Copy+Zero+One> Vec4<T> {
 	}
 }
 impl<T:Copy+Zero+One> Vec3<T> {
-	pub fn to_array(&self)->[T,..3] { [self.x(),self.y(),self.z()] }
-	fn to_tuple(&self)->(T,T,T) { (self.x(),self.y(),self.z()) }
+	pub fn to_array(&self)->[T,..3] { [self.0,self.1,self.2] }
+	fn to_tuple(&self)->(T,T,T) { (self.0,self.1,self.2) }
 
 	pub fn from_array([x,y,z]:[T,..3])->Vec3<T> {Vec3(x,y,z)}
 	fn from_tuple((x,y,z):(T,T,T))->Vec3<T> { Vec3(x,y,z) }
 }
 impl<T:Copy+Zero+One> Vec2<T> {
-	pub fn to_array(&self)->[T,..2] { [self.x(),self.y()] }
-	fn to_tuple(&self)->(T,T) { (self.x(),self.y()) }
+	pub fn to_array(&self)->[T,..2] { [self.0,self.1] }
+	fn to_tuple(&self)->(T,T) { (self.0,self.1) }
 	pub fn from_array([x,y]:[T,..2])->Vec2<T> {Vec2(x,y)}
 	fn from_tuple((x,y):(T,T))->Vec2<T> { Vec2(x,y) }
 }
