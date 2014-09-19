@@ -335,13 +335,13 @@ impl<T:Float> Matrix3<Vec3<T>> {
 	}
 	pub fn mul_vec3(&self,pt:&Vec3<T>)->Vec3<T>{
 		let ax:&Vec3<T>=self.ax();
-		self.ax().mul_x(pt).add_mul_y(self.ay(),pt).add_mul_z(self.az(),pt)
+		self.0.mul_x(pt).add_mul_y(&self.1,pt).add_mul_z(&self.2,pt)
 	}
 	pub fn mul_matrix(&self,other:&Matrix3<Vec3<T>>)->Matrix3<Vec3<T>> {
 		Matrix3(
-			self.mul_vec3(other.ax()),
-			self.mul_vec3(other.ay()),
-			self.mul_vec3(other.az()))
+			self.mul_vec3(&other.0),
+			self.mul_vec3(&other.1),
+			self.mul_vec3(&other.2))
 	}
 }
 
@@ -350,10 +350,10 @@ impl<T:Float> Matrix3<Vec3<T>> {
 impl<T:Float> PreMulVec4<T,Vec4<T>> for Matrix4<Vec4<T>> {
 	fn pre_mul_vec4(&self,v: &Vec4<T>)->Vec4<T> {
 		Vec4(
-			v.dot(self.ax()),
-			v.dot(self.ay()),
-			v.dot(self.az()),
-			v.dot(self.aw()))
+			v.dot(&self.0),
+			v.dot(&self.1),
+			v.dot(&self.2),
+			v.dot(&self.3))
 	}
 }
 
