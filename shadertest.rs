@@ -87,7 +87,6 @@ impl RMesh {
 				ibo: create_index_buffer(&indices)
 			}
 		}
-
 	}
 }
 
@@ -236,7 +235,7 @@ impl Screen for ShaderTest {
 	}
 }
 
-pub fn render_spinning_lisajous(matP:&Matrix4, cam_mat:&Matrix4) {
+pub fn render_spinning_lisajous(matP:&Matrix44, cam_mat:&Matrix44) {
 	unsafe {
 
 		assert!(::g_resources_init==true)		//logi!("render_no_swap"); // once..
@@ -290,8 +289,8 @@ pub fn render_spinning_lisajous(matP:&Matrix4, cam_mat:&Matrix4) {
 			glUseProgram(g_shader_program);
 			match g_uniform_table {
 				Some(ref ut)=>{
-					glUniformMatrix4fvARB(ut.uMatProj, 1,  GL_FALSE, matP.ax().ref0());
-					glUniformMatrix4fvARB(ut.uMatModelView, 1, GL_FALSE, render_mat.ax().ref0());
+					glUniformMatrix4fvARB(ut.uMatProj, 1,  GL_FALSE, &matP.0 .0);
+					glUniformMatrix4fvARB(ut.uMatModelView, 1, GL_FALSE, &render_mat.0 .0);
 				},
 				None=>{assert!(false,"no shader uniforms")}
 			}
@@ -308,12 +307,12 @@ pub fn render_spinning_lisajous(matP:&Matrix4, cam_mat:&Matrix4) {
 	}
 }
 
-pub fn render_from_at<R:Render>(matP:&Matrix4, cam_mat:&Matrix4, obj_mat:&Matrix4,x:&Option<Box<R>>) {
+pub fn render_from_at<R:Render>(matP:&Matrix44, cam_mat:&Matrix44, obj_mat:&Matrix44,x:&Option<Box<R>>) {
 	unsafe {
 		glUseProgram(0);
 
 		gl_matrix_projection(matP);
-		let render_mat:Matrix4 = *cam_mat * *obj_mat;
+		let render_mat:Matrix44 = *cam_mat * *obj_mat;
 
 		gl_matrix_modelview(&render_mat);
 		match *x{ Some(ref x)=>(**x).render(), None=>{}}
@@ -329,7 +328,7 @@ fn render_at_centre<R:Render>(a0:f32,x:&Option<Box<R>>) {
 		let rot_y = matrix::rotate_y(a0*0.245f32);
 		let swap_yz=matrix::rotate_x(1.51);
 		let rot_xy=rot_x.mul_matrix(&rot_y).mul_matrix(&swap_yz);
-		let trans=matrix::translate(&Vec4(0.0f32,0.0f32,-1.0f32,1.0f32));
+		let trans=matrix::translate(&Vec3(0.0f32,0.0f32,-1.0f32));
 		let rt=trans*rot_xy;
 		gl_matrix_modelview(&rt);
 		match *x{ Some(ref x)=>(**x).render(), None=>{}}
@@ -365,13 +364,13 @@ fn	create_textures() {
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT  as GLint);
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT  as GLint);
 
-		let	(usize,vsize)=(256,256);
-		let buffer = Vec::<u32>::from_fn(usize*vsize,|index|{
-				let (i,j)=num::div_rem(index,usize);
+		let	size=(256,256);
+		let buffer = Vec::<u32>::from_fn(size.0*size.1,|index|{
+				let (i,j)=num::div_rem(index,size.0);
 				(i+j*256+255*256*256) as u32
 			});
 		for i in range(0 as GLint,8 as GLint) {
-			glTexImage2D(GL_TEXTURE_2D, i, GL_RGB as GLint, usize as GLint,vsize as GLint, 0, GL_RGB, GL_UNSIGNED_BYTE, &buffer[0]as*const _ as*const c_void);
+			glTexImage2D(GL_TEXTURE_2D, i, GL_RGB as GLint, size.0 as GLint,size.1 as GLint, 0, GL_RGB, GL_UNSIGNED_BYTE, &buffer[0]as*const _ as*const c_void);
 			glGenerateMipmap(GL_TEXTURE_2D);
 		}
 		glBindTexture(GL_TEXTURE_2D,0);

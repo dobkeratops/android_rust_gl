@@ -33,7 +33,7 @@ pub enum WinEvent {
 	KeyDown(Window,Key_t,Modifiers,ScreenPos),
 	KeyUp(Window,Key_t,Modifiers,ScreenPos),
 	Accelerometer(Window,(i32,i32,i32)),
-	Joypad(Window,Vec2d,Vec2d,Buttons),
+	JoypadEvent(Window,Vec2d,Vec2d,Buttons),
 	MultiTouchDown(Window,(TouchId,ScreenPos)),
 	MultiTouchUp(Window,(TouchId,ScreenPos)),
 	MultiTouchMove(Window,(TouchId,ScreenPos)),

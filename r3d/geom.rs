@@ -32,7 +32,7 @@ struct Plane<T=f32> {
 }
 
 struct OOBB {
-	mat:Matrix44f,
+	mat:Matrix44,
 	ext:Extents<Vec3f>,
 }
 
@@ -135,7 +135,7 @@ impl<T:Num+PartialOrd,V:VecCmp<T>> Extents<V> {
 	}
 }
 
-pub fn triangle_norm<T:Float,V:VecMath<T>>((v0,v1,v2):(&V,&V,&V))->V{
+pub fn triangle_norm<T:Float>((v0,v1,v2):(&Vec4<T>,&Vec4<T>,&Vec4<T>))->Vec4<T>{
 	let edge01=*v1-*v0;
 	let edge12=*v2-*v1;
 	return edge01.cross(&edge12);
@@ -147,13 +147,13 @@ pub fn triangle_extents<T:PartialOrd+Num+Clone,V:VecCmp<T>+Clone+Num>((v0,v1,v2)
 	ex
 }
 
-pub fn cuboid_vertices<V1:VecMath+Copy,V2:XYZW>(mat:&Matrix4<V1>, size:&V2)->[V1,..8] {
-	let vx = mat.ax().scale(size.x());
-	let vy = mat.ay().scale(size.y());
-	let vz = mat.az().scale(size.z());
+pub fn cuboid_vertices(mat:&Matrix44, size:&Vec3)->[Vec4,..8] {
+	let vx = mat.0.scale(size.0);
+	let vy = mat.1.scale(size.1);
+	let vz = mat.2.scale(size.2);
 
-	let v0 = mat.pos() .sub(&vx);
-	let v1 = mat.pos() .add(&vx);
+	let v0 = mat.3 .sub(&vx);
+	let v1 = mat.3 .add(&vx);
 	let v00 = v0 -vy;
 	let v01 = v0 +vy;
 	let v10 =v1 - vy;
@@ -173,7 +173,7 @@ pub static g_cuboid_edges:[[uint,..2],..12]=[
 // entity:moving bounds.
 
 pub struct Entity {
-	pub matrix:Matrix4<Vec4<f32>>,
+	pub matrix:Matrix44<f32>,
 	pub vel:Vec3,
 }
 impl Pos for Entity {

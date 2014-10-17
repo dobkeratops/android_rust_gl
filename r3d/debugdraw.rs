@@ -6,12 +6,12 @@ use super::glut::*;
 use std::mem::size_of;
 
 
-pub fn gl_matrix_projection(mat:&Matrix4) {
-	unsafe{glMatrixMode(GL_PROJECTION);glLoadMatrixf(mat.ax().ref0());
+pub fn gl_matrix_projection(mat:&Matrix44<f32>) {
+	unsafe{glMatrixMode(GL_PROJECTION);glLoadMatrixf(&mat.0 .0);
 	}
 }
-pub fn gl_matrix_modelview(mat:&Matrix4) {
-	unsafe {glMatrixMode(GL_MODELVIEW);	glLoadMatrixf(mat.ax().ref0());
+pub fn gl_matrix_modelview(mat:&Matrix44<f32>) {
+	unsafe {glMatrixMode(GL_MODELVIEW);	glLoadMatrixf(&mat.0 .0);
 	}
 }
 
@@ -37,10 +37,10 @@ impl GlColor for u32  {
 		}
 	}
 }
-trait GlColor:Copy{
+pub trait GlColor:Copy{
 	fn gl_color(&self)	{fail!()}
 }
-trait GlVertex:Copy{
+pub trait GlVertex:Copy{
 	fn gl_normal(&self)	{fail!()}
 	fn gl_texcoord(&self){fail!()}
 	fn gl_vertex(&self)	{fail!()}
@@ -90,14 +90,14 @@ pub fn draw_line<V:GlVertex,C:GlColor>(a:V,b:V, color:C) {
 	}
 }
 
-pub fn draw_axes_sized(a:&Matrix4,f:f32) {
+pub fn draw_axes_sized(a:&Matrix44,f:f32) {
 	draw_begin(GL_LINES);
-	draw_line(a.pos(), (a.pos()+a.ax()*f), 0xff0000ffu32);
-	draw_line(a.pos(), (a.pos()+a.ay()*f), 0xff00ff00u32);
-	draw_line(a.pos(), (a.pos()+a.az()*f), 0xffff0000u32);
+	draw_line(a.3, (a.3+a.0*f), 0xff0000ffu32);
+	draw_line(a.3, (a.3+a.1*f), 0xff00ff00u32);
+	draw_line(a.3, (a.3+a.2*f), 0xffff0000u32);
 	draw_end();
 }
-pub fn draw_oobb<V:VecMath+Copy,C:GlColor>(m:&Matrix4<V>, sz:Vec3, c:C) {
+pub fn draw_oobb<C:GlColor>(m:&Matrix44, sz:Vec3, c:C) {
 	
 	let vertices=super::geom::cuboid_vertices(m,&sz);
 
@@ -106,9 +106,6 @@ pub fn draw_oobb<V:VecMath+Copy,C:GlColor>(m:&Matrix4<V>, sz:Vec3, c:C) {
 		draw_line(vertices[edge[0]],vertices[edge[1]],c);
 	}
 	draw_end()
-}
-pub fn draw_aabb<V:VecMath,C:GlVertex>(a:&V,b:&V,c:&C) {
-	
 }
 
 

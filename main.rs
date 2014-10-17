@@ -5,6 +5,7 @@
 #![feature(import_shadowing)]
 #![feature(macro_rules)]
 #![feature(tuple_indexing)]
+#![feature(associated_types)]
 #![allow(unused_attribute)]
 #![feature(default_type_params)]
 #![allow(unused_imports)]

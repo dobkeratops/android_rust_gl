@@ -424,8 +424,8 @@ pub struct Edge {
 //enum Max {
 //	MaxMapHulls=4
 //}
-static AmbientNum:uint = 4;
-static MaxMapHulls:uint = 4;
+const AmbientNum:uint = 4;
+const MaxMapHulls:uint = 4;
 enum Ambient {
 	AmbientWater=0,AmbientSky,AmbientSlime,AmbientLava
 }

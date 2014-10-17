@@ -32,19 +32,19 @@ impl Camera{
 	pub fn new()->Camera {
 		Camera{
 			ent: Entity{
-				matrix:matrix::translate(&Vec4(0.0f32,0.0f32,0.0f32,1.0f32)),
+				matrix:matrix::translate(&Vec3(0.0f32,0.0f32,0.0f32)),
 				vel:Vec3(1.0f32,0.0f32,0.0f32),
 			},
 			angvel:Vec3(0.0f32,0.0f32,0.0f32),
 		}
 	}
-	pub fn view_matrix(&self)->Matrix4 {
+	pub fn view_matrix(&self)->Matrix44 {
 		self.ent.matrix.inv_orthonormal()
 	}
 	pub fn update(&mut self, dt:f32) {
-		let ax = self.ent.matrix.ax().to_vec3();
-		let ay = self.ent.matrix.ay().to_vec3();
-		let az = self.ent.matrix.az().to_vec3();
+		let ax = self.ent.matrix.0.to_vec3();
+		let ay = self.ent.matrix.1.to_vec3();
+		let az = self.ent.matrix.2.to_vec3();
 		let mut pos=self.ent.pos();
 		let mut vel=self.ent.vel;
 
@@ -56,15 +56,15 @@ impl Camera{
 		let dz = ctrl_axis('w','s') * move_acc;
 		let dy = ctrl_axis('q','e') * move_acc;
 
-		let rx = self.angvel.x()*0.95f32+ctrl_axis('l','j') * rot_acc;
-		let ry = self.angvel.y()*0.95f32+ctrl_axis('i','k') * rot_acc;
-		let rz = self.angvel.z()*0.95f32+ctrl_axis('o','u') * rot_acc;
+		let rx = self.angvel.0*0.95f32+ctrl_axis('l','j') * rot_acc;
+		let ry = self.angvel.1*0.95f32+ctrl_axis('i','k') * rot_acc;
+		let rz = self.angvel.2*0.95f32+ctrl_axis('o','u') * rot_acc;
 
 		vel=vel*0.98f32 + ax * dx + az * dz + ay*dy;
 		self.ent.vel=vel;
 		self.angvel=Vec3(rx,ry,rz);
 
-		self.ent.matrix = Matrix4::look_along(
+		self.ent.matrix = Matrix44::look_along(
 			&(pos+vel*dt).to_vec4().set_w(one()),
 			&(az+ax*rx*dt+ay*ry*dt).to_vec4(),
 			&Vec3(zero(),one(),zero()).to_vec4());
