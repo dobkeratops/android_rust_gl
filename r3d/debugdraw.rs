@@ -46,7 +46,7 @@ pub trait GlVertex:Copy{
 	fn gl_vertex(&self)	{fail!()}
 }
 
-impl<V:XYZW<f32>+Copy> GlVertex for V {
+impl<V:Vector<f32>+Copy> GlVertex for V {
 	fn gl_vertex(&self){ unsafe{glVertex3f(self.x(),self.y(),self.z());}}
 	fn gl_texcoord(&self){ unsafe{glTexCoord2f(self.x(),self.y());}}
 	fn gl_normal(&self){ unsafe{glNormal3f(self.x(),self.y(),self.z());}}
