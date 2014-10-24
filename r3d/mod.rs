@@ -2,13 +2,7 @@
 #![feature(import_shadowing)]
 
 
-pub use std::c_str;
-pub use libc::types::os::arch::c95::{c_char,c_int};
-pub use libc::types::common::c95::{c_void};
-pub use std::collections::RingBuf;
-pub use std::collections::Deque;
 
-pub use self::common::*;
 pub use self::macros::*;
 pub use self::to::*;
 pub use self::vecmath::*;
@@ -49,21 +43,25 @@ pub mod geom;
 /// External context brought in by all submodules
 /// created to avoid needing circular super::*
 mod common {
+	pub use libc::{c_void,c_char};
 	pub use std::num;
+	pub use std::num::*;
+	pub use std::f32::*;
 	pub use std::vec;
+	pub use std::vec::Vec;
 	pub use std::mem;
 	pub use std::cmp;
-	pub use std::c_str;
-	pub use libc::types::common::c95::c_void;
-	pub use std::vec::Vec;
 	pub use std::io;
 	pub use std::str::raw::*;
 	pub use std::ops::Deref;
+	pub use std::c_str;
 	pub use std::c_str::CString;
 	pub use std::intrinsics::{size_of,offset};
-	pub use std::collections::hashmap::HashSet;
-	pub use std::f32::*;
-	pub use std::num::*;
+	pub use libc::types::os::arch::c95::{c_char,c_int};
+	pub use libc::types::common::c95::{c_void};
+	pub use std::collections::hashmap::{HashSet};
+	pub use std::collections::{RingBuf,Deque};
+
 }
 
 
