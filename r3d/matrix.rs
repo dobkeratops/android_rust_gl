@@ -3,19 +3,19 @@ use super::vecmath::*;
 pub use std::cmp::*;
 
 // fuck this shit.
-#[deriving(Copy,Show)]
+#[deriving(Copy,Clone,Show)]
 pub struct Matrix2<AXIS=Vec2<f32>> (pub AXIS,pub AXIS);
 
-#[deriving(Copy,Show)]
+#[deriving(Copy,Clone,Show)]
 pub struct Matrix33<T=f32> (pub Vec3<T>,pub Vec3<T>,pub Vec3<T>);
 
-#[deriving(Copy,Show)]
+#[deriving(Copy,Clone,Show)]
 pub struct Matrix34<T=f32> (pub Vec4<T>,pub Vec4<T>,pub Vec4<T>);
 
-#[deriving(Copy,Show)]
+#[deriving(Copy,Clone,Show)]
 pub struct Matrix44<T=f32> (pub Vec4<T>,pub Vec4<T>,pub Vec4<T>, pub Vec4<T>);
 
-#[deriving(Copy,Show)]
+#[deriving(Copy,Clone,Show)]
 pub struct Matrix43<T=f32> (pub Vec3<T>,pub Vec3<T>,pub Vec3<T>, pub Vec3<T>);
 
 // todo: Write all matrix maths in terms of this interface
@@ -819,6 +819,21 @@ impl<T:Float+Copy> Matrix43<T> {
 	pub fn from_mat44(src:&Matrix44<T>)->Matrix43<T> {
 		Matrix43(src.0 .to_vec3(), src.1 .to_vec3(),src.2 .to_vec3(),src.3 .to_vec3())
 	}
+}
+
+pub trait LookAt<T> {
+	fn look_along(&self,axis:&Self,up:&Self)->Matrix44<T>;
+	fn look_at(&self,axis:&Self,up:&Self)->Matrix44<T>;
+}
+
+impl<T:Float> LookAt<T> for Vec4<T> {
+	fn look_along(&self,at:&Vec4<T>,up:&Vec4<T>)->Matrix44<T>{Matrix44::look_along(self,at,up)}
+	fn look_at(&self,at:&Vec4<T>,up:&Vec4<T>)->Matrix44<T>{Matrix44::look_at(self,at,up)}
+}
+
+impl<T:Float> LookAt<T> for Vec3<T> {
+	fn look_along(&self,at:&Vec3<T>,up:&Vec3<T>)->Matrix44<T>{Matrix44::look_along(&self.to_vec4_pos(),&at.to_vec4(),&up.to_vec4())}
+	fn look_at(&self,at:&Vec3<T>,up:&Vec3<T>)->Matrix44<T>{Matrix44::look_at(&self.to_vec4_pos(),&at.to_vec4_pos(),&up.to_vec4())}
 }
 
 

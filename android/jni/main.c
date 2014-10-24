@@ -120,6 +120,7 @@ void AndroidInput_Dump(struct AndroidInput* ai) {
 	LOGI("%s", ctrl_info);
 }
 
+
 /**
  * Shared state for our app.
  */
@@ -149,6 +150,7 @@ void Engine_Init(struct engine* e) {
 /**
  * Initialize an EGL context for the current display.
  */
+
 static int engine_init_display(struct engine* engine) {
     // initialize OpenGL ES and EGL
 
@@ -360,7 +362,6 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
             break;
     }
 }
-
 
 /**
  * This is the main entry point of a native application that is using

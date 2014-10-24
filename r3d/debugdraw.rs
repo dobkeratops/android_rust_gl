@@ -51,11 +51,11 @@ impl<V:Vector<f32>+Copy> GlVertex for V {
 	fn gl_texcoord(&self){ unsafe{glTexCoord2f(self.x(),self.y());}}
 	fn gl_normal(&self){ unsafe{glNormal3f(self.x(),self.y(),self.z());}}
 }
-impl GlColor for (f32,f32,f32,f32) {
-	fn gl_color(&self) {unsafe{glColor4f(self.val0(),self.val1(),self.val2(),self.val3())}}
+ impl GlColor for (f32,f32,f32,f32) {
+	fn gl_color(&self) {unsafe{glColor4f(self.0,self.1,self.2,self.3)}}
 }
 impl GlColor for (f32,f32,f32) {
-	fn gl_color(&self) {unsafe{glColor4f(self.val0(),self.val1(),self.val2(),one())}}
+	fn gl_color(&self) {unsafe{glColor4f(self.0,self.1,self.2,one())}}
 }
 
 fn gl_color<T:GlColor>(v:&T) {v.gl_color(); }

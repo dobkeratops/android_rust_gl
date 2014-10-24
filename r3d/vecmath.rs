@@ -1,4 +1,5 @@
 #![feature(globs)]
+#![feature(tuple_indexing)]
 #![allow(unused_attribute)]
 #![feature(default_type_params)]
 #![feature(macro_rules)]
@@ -17,14 +18,14 @@ use std::io;
 /// Generic maths classes
 /// member functions prefixed with 'v' for easier life without code-completion, and to distinguish from operator overloads (official langauge level "add") etc
 
-#[deriving(Copy,Show)]
+#[deriving(Copy,Clone,Show)]
 pub struct Vec2<T=f32>(pub T,pub T);
 
-#[deriving(Copy,Show)]
+#[deriving(Copy,Clone,Show)]
 pub struct Vec3<T=f32>(pub T,pub T,pub T);
 
 
-#[deriving(Copy,Show)]
+#[deriving(Copy,Clone,Show)]
 pub struct Vec4<T=f32>(pub T,pub T,pub T,pub T);
 
 pub fn fmin<T:PartialOrd>(a:T,b:T)->T { if a<b{a}else{b} }
@@ -639,7 +640,6 @@ impl<T:Copy+Zero+One> Vector<T> for [T,..2] {
 	fn z(&self)->T { zero() }
 	fn w(&self)->T { zero() }
 	fn from_xyzw(x:T,y:T,z:T,w:T)->[T,..2] { [x,y] }
-
 }
 impl<T:Copy+Zero+One> Vector<T> for [T,..3] {
 //	type V2 = [T,..2];

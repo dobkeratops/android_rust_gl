@@ -429,6 +429,7 @@ const MaxMapHulls:uint = 4;
 enum Ambient {
 	AmbientWater=0,AmbientSky,AmbientSlime,AmbientLava
 }
+#[deriving(Show)]
 pub struct Entity(u8);
 pub struct Model {
 	pub bound:BBox,

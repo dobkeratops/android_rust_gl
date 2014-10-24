@@ -172,6 +172,7 @@ pub static g_cuboid_edges:[[uint,..2],..12]=[
 
 // entity:moving bounds.
 
+#[deriving(Clone,Copy,Show)]
 pub struct Entity {
 	pub matrix:Matrix44<f32>,
 	pub vel:Vec3,

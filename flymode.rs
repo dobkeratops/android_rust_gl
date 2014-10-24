@@ -6,6 +6,7 @@ use bsprender::*;
 use rustwin::*;
 use shadertest::*;
 
+#[deriving(Show)]
 pub struct Camera {
 	pub ent: Entity,
 	pub angvel:Vec3,
@@ -27,7 +28,11 @@ impl FlyMode {
 	}
 }
 
+
+
 impl Camera{
+
+	pub fn pos(&self)->Vec3f { self.ent.matrix.pos().to_vec3() }
 
 	pub fn new()->Camera {
 		Camera{
@@ -38,9 +43,13 @@ impl Camera{
 			angvel:Vec3(0.0f32,0.0f32,0.0f32),
 		}
 	}
-	pub fn view_matrix(&self)->Matrix44 {
+	pub fn view_matrix(&self)->Matrix44 {	// classic GL style camera
 		self.ent.matrix.inv_orthonormal()
 	}
+	pub fn modelview(&self,other:&Matrix44)->Matrix44 {
+		self.ent.matrix.inv_mul_matrix(other)
+	}
+
 	pub fn update(&mut self, dt:f32) {
 		let ax = self.ent.matrix.0.to_vec3();
 		let ay = self.ent.matrix.1.to_vec3();
@@ -50,6 +59,7 @@ impl Camera{
 
 		let move_acc=2.0f32;
 		let rot_acc=0.1f32;
+		::std::io::stdio::println(format!("{}",self).as_slice());
 
 		fn ctrl_axis(a:char,b:char)->f32 { (get_key_state(b)-get_key_state(a)) as f32}
 		let dx = ctrl_axis('a','d') * move_acc;
@@ -64,10 +74,8 @@ impl Camera{
 		self.ent.vel=vel;
 		self.angvel=Vec3(rx,ry,rz);
 
-		self.ent.matrix = Matrix44::look_along(
-			&(pos+vel*dt).to_vec4().set_w(one()),
-			&(az+ax*rx*dt+ay*ry*dt).to_vec4(),
-			&Vec3(zero(),one(),zero()).to_vec4());
+		self.ent.matrix = 
+			(pos+vel*dt).look_along(&(az+ax*rx*dt+ay*ry*dt),&Vec3(zero(),one(),zero()));
 		//rotation speed
 	}
 }
@@ -88,9 +96,9 @@ impl Screen for FlyMode {
 //		ent.set_pos(newpos);
 		
 		ScContinue
-	} 
+	}
 	fn render(&self) {
-		::render_clear();
+		render_clear();
 
 		let cam=&self.cam;
 		let mat_proj = matrix::projection(1.0f32,1.0f32,0.1f32,2048.0f32);
@@ -102,13 +110,10 @@ impl Screen for FlyMode {
 	//	draw_ground_grid();
 		draw_grid_xz(4.0f32,32,0x000000u32);
 //		::shadertest::render_spinning_lisajous();
-		::render_from_at(&mat_proj,&mat_to_cam, &matrix::identity(), &self.bsprender);
+		render_from_at(&mat_proj,&mat_to_cam, &matrix::identity(), &self.bsprender);
 
 	}
-
 }
-
-
 
 
 

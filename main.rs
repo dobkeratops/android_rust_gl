@@ -32,6 +32,7 @@ pub mod bsprender;
 pub mod rustwin;
 pub mod flymode;
 pub mod everywhere;
+pub mod voxel;
 
 // framework can be: Android, Glut, (iOS,.o.)
 // 'app_*' are hooks called from platform specific stub
