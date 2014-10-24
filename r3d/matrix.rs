@@ -1,8 +1,5 @@
-use super::vectypes::*;
 use super::vecmath::*;
-pub use std::cmp::*;
 
-// fuck this shit.
 #[deriving(Copy,Clone,Show)]
 pub struct Matrix2<AXIS=Vec2<f32>> (pub AXIS,pub AXIS);
 

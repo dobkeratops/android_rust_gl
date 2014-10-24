@@ -8,7 +8,7 @@ use r3d::*;
 use r3d::{glut,gl};
 use std::ptr;
 use collections::*;
-use r3d::vectypes::Vec2f;
+//use r3d::Vec2f;
 use collections::dlist::DList;
 
 #[deriving(Show,Clone,PartialEq)]

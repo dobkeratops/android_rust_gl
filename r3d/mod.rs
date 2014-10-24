@@ -1,18 +1,19 @@
 #![macro_escape]
 #![feature(import_shadowing)]
 
+
 pub use std::c_str;
 pub use libc::types::os::arch::c95::{c_char,c_int};
 pub use libc::types::common::c95::{c_void};
 pub use std::collections::RingBuf;
 pub use std::collections::Deque;
 
+pub use self::common::*;
 pub use self::macros::*;
 pub use self::to::*;
-pub use self::vectypes::*;
-pub use self::vecmath::{Vector,Vec2,Vec3,Vec4,Pos,ToVec2,ToVec3,ToVec4};
-pub use self::matrix::{Matrix,Matrix34,Matrix44,Matrix43,LookAt};
-pub use self::formats::{Pack,UnPack,UnPack16};	
+pub use self::vecmath::*;
+pub use self::matrix::*;
+pub use self::formats::*;
 pub use self::debugdraw::*;
 pub use self::ut::*;
 pub use self::gl::*;
@@ -28,7 +29,6 @@ pub use std::num::*;
 
 pub mod macros;
 pub mod to;
-pub mod vectypes;
 pub mod vecmath;
 pub mod matrix;
 pub mod formats;
@@ -42,10 +42,32 @@ pub mod ut;
 pub mod array3d;
 pub mod half;
 pub mod render;
-pub mod common;
 pub mod shaders;
 pub mod vertex;
 pub mod geom;
+
+/// External context brought in by all submodules
+/// created to avoid needing circular super::*
+mod common {
+	pub use std::num;
+	pub use std::vec;
+	pub use std::mem;
+	pub use std::cmp;
+	pub use std::c_str;
+	pub use libc::types::common::c95::c_void;
+	pub use std::vec::Vec;
+	pub use std::io;
+	pub use std::str::raw::*;
+	pub use std::ops::Deref;
+	pub use std::c_str::CString;
+	pub use std::intrinsics::{size_of,offset};
+	pub use std::collections::hashmap::HashSet;
+	pub use std::f32::*;
+	pub use std::num::*;
+}
+
+
+
 
 pub trait Render {
 	fn render(&self);

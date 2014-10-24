@@ -1,8 +1,7 @@
 use super::macros::*;
 use super::ut::*;
-use super::vectypes::*;
-use super::vecmath::*;
 use super::matrix::*;
+use super::vecmath::*;
 
 #[deriving(Clone,Show)]
 pub struct Extents<T=Vec3<f32>> {  
