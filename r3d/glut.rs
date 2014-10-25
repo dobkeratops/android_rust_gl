@@ -1,4 +1,3 @@
-#![allow(non_snake_case_functions)]
 use super::gl::*;
 extern
 {

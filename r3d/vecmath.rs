@@ -13,7 +13,7 @@ pub use super::common::*;
 /// TODO: Split into XYZW interface+VecTypes,& Vecath dependant on XYZW interfaces
 /// Generic maths classes
 /// member functions prefixed with 'v' for easier life without code-completion, and to distinguish from operator overloads (official langauge level "add") etc
-
+// Screen
 #[deriving(Copy,Clone,Show)]
 pub struct Vec2<T=f32>(pub T,pub T);
 

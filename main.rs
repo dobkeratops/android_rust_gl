@@ -15,7 +15,10 @@
 #![allow(unused_unsafe)]
 #![allow(unused_mut)]
 #![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
 #![macro_escape]
+#![allow(improper_ctypes)]
+#![allow(non_upper_case_globals)]
 
 extern crate debug;
 extern crate libc;
