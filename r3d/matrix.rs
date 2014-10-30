@@ -565,7 +565,7 @@ impl<T:Float> Matrix3<Vec3<T>> {
 }
 */
 // operator overload: vector*matrix - assumes vec is transposed
-
+/*
 impl<T:Float> PreMulVec4<T,Vec4<T>> for Matrix44<T> {
 	fn pre_mul_vec4(&self,v: &Vec4<T>)->Vec4<T> {
 		Vec4(
@@ -575,6 +575,8 @@ impl<T:Float> PreMulVec4<T,Vec4<T>> for Matrix44<T> {
 			v.dot(&self.3))
 	}
 }
+*/
+
 
 pub fn identity()->Matrix44 {
 	Matrix44::identity()
@@ -759,57 +761,15 @@ impl<T:FloatMath> SRT<T> {
 	fn new()->SRT<T> { SRT{scale:Vec3(one(),one(),one()), rotate:Vec3(zero(),zero(),zero()), translate:Vec3(zero(),zero(),zero())}}
 }
 
-// combines vector operations with operations aware of a matrix..
-//pub trait PreMulMat4<V,OUT> {
-//	fn pre_mul_mat4(&self,mat:&Matrix4<V>)->OUT;
-//}
-
-pub trait PreMulMat44<T,OUT> {
-	fn pre_mul_mat44(&self,mat:&Matrix44<T>)->OUT;
-}
-pub trait PreMulMat43<T,OUT> {
-	fn pre_mul_mat43(&self,mat:&Matrix43<T>)->OUT;
-}
-pub trait PreMulMat34<T,OUT> {
-	fn pre_mul_mat34(&self,mat:&Matrix34<T>)->OUT;
-}
-pub trait PreMulMat33<T,OUT> {
-	fn pre_mul_mat33(&self,mat:&Matrix33<T>)->OUT;
+impl<T:Float> Mul<Vec3<T>,Vec3<T>> for Matrix44<T> {
+	fn mul(&self, rhs:&Vec3<T>)->Vec3<T> { self.mul_axis(rhs) }
 }
 
-impl<T:Float> PreMulMat43<T,Vec3<T>> for Vec3<T> {
-	fn pre_mul_mat43(&self, mat:&Matrix43<T>)->Vec3<T> {mat.mul_vec3_w0(self)}
+impl<T:Float> Mul<Vec4<T>,Vec4<T>> for Matrix44<T> {
+	fn mul(&self, rhs:&Vec4<T>)->Vec4<T> { self.mul_vec4(rhs) }
 }
-impl<T:Float> PreMulMat44<T,Vec4<T>> for Vec4<T> {
-	fn pre_mul_mat44(&self, mat:&Matrix44<T>)->Vec4<T> {mat.mul_vec4(self)}
-}
-impl<T:Float> PreMulMat44<T,Matrix44<T>> for Matrix44<T> {
-	fn pre_mul_mat44(&self, mat:&Matrix44<T>)->Matrix44<T> {mat.mul_matrix(self)}
-}
-impl<T:Float> PreMulMat33<T,Matrix33<T>> for Matrix33<T> {
-	fn pre_mul_mat33(&self, mat:&Matrix33<T>)->Matrix33<T> {mat.mul_matrix(self)}
-}
-/*
-impl<T:Float,V:VecMath<T>> PreMulMat4<V,V> for V {
-	fn pre_mul_mat4(&self, mat:&Matrix4<V>)->V {mat.mul_vec4(self)}
-}
-
-impl<T:Float,V:VecMath<T>> PreMulMat4<V,Matrix4<V>> for Matrix4<V> {
-	fn pre_mul_mat4(&self, mat:&Matrix4<V>)->Matrix4<V> {mat.mul_matrix(self)}
-}
-*/
-
-impl<T:Float,RHS:PreMulMat44<T,OUT>,OUT> Mul<RHS,OUT> for Matrix44<T> {
-	fn mul(&self, other:&RHS)->OUT { other.pre_mul_mat44(self) }
-}
-impl<T:Float,RHS:PreMulMat43<T,OUT>,OUT> Mul<RHS,OUT> for Matrix43<T> {
-	fn mul(&self, other:&RHS)->OUT { other.pre_mul_mat43(self) }
-}
-impl<T:Float,RHS:PreMulMat34<T,OUT>,OUT> Mul<RHS,OUT> for Matrix34<T> {
-	fn mul(&self, other:&RHS)->OUT { other.pre_mul_mat34(self) }
-}
-impl<T:Float,RHS:PreMulMat33<T,OUT>,OUT> Mul<RHS,OUT> for Matrix33<T> {
-	fn mul(&self, other:&RHS)->OUT { other.pre_mul_mat33(self) }
+impl<T:Float> Mul<Matrix44<T>,Matrix44<T>> for Matrix44<T> {
+	fn mul(&self, rhs:&Matrix44<T>)->Matrix44<T> { self.mul_matrix(rhs) }
 }
 
 impl<T:Float+Copy> Matrix43<T> {

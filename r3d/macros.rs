@@ -24,8 +24,8 @@ macro_rules! logw{
 
 macro_rules! dump{ ($($a:expr),*)=>
     (   {   let mut txt=format!("{:s}:{:u}:\t",file!(), line!());
-            $( { txt=txt.append(
-                 format!(" {:s}={:?};",  stringify!($a),$a).as_slice() )
+            $( { txt=txt.push_str(
+                 format!(" {:s}={};",  stringify!($a),$a).as_slice() ).to_string()
                 }               );*;
             ::log_print(5, txt.as_slice());
         }
@@ -115,9 +115,9 @@ pub fn test() {
 //	vertex_layout!(MyVertex{pos:[f32=GL_FLOAT,..3] = 0 });
 	let f1=MyStruct::MyStruct{foo:1, bar:2.0};
 	let f2=MyStruct::new(2,3,4);
-	MyStruct::dump();
-	dump!(f1);
-	dump!(f2);
+	//MyStruct::dump();
+	//dump!(f1);
+	//dump!(f2);
 
 	forr!{(i=0u; i<10; i+=1)
 		dump!(i)

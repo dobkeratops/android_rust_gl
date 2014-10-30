@@ -111,6 +111,7 @@ impl RMesh {
 		unsafe {
 			use r3d::vertex::Vertex;
 
+
 			let	client_state:[GLenum,..3]=[GL_VERTEX_ARRAY,GL_COLOR_ARRAY,GL_TEXTURE_COORD_ARRAY];
 			for &x in client_state.iter() {glEnableClientState(x);};
 
@@ -153,7 +154,7 @@ impl RMesh {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.ibo);
 
 
-		match g_uniform_table {
+		match g_uniform_table{ 
 			Some(ref ut)=>{
 				safe_set_uniform1i(ut.uTex0, 0);
 				safe_set_uniform1i(ut.uTex1, 1);
@@ -235,6 +236,7 @@ impl Screen for ShaderTest {
 	}
 }
 
+
 pub fn render_spinning_lisajous(matP:&Matrix44, cam_mat:&Matrix44) {
 	unsafe {
 
@@ -243,7 +245,6 @@ pub fn render_spinning_lisajous(matP:&Matrix44, cam_mat:&Matrix44) {
 
 		let matI = matrix::identity();
 		gl_matrix_projection(matP);
-
 
 		let pi=3.14159265f32;
 		let tau=pi*2.0f32;
@@ -285,6 +286,10 @@ pub fn render_spinning_lisajous(matP:&Matrix44, cam_mat:&Matrix44) {
 
 			gl_matrix_projection(matP);
 			gl_matrix_modelview(&render_mat);
+
+			{
+				let (x,y,z,s)=(0.0f32,0.0f32,0.0f32,1.0f32);
+			}
 
 			glUseProgram(g_shader_program);
 			match g_uniform_table {

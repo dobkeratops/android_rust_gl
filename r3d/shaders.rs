@@ -323,8 +323,7 @@ pub unsafe fn	compile_shader_program(
 
 
 pub fn	create_shaders()
-{
-	
+{	
 	unsafe {
 		logi!("create shaders");
 		let (vsh,psh,prg)=compile_shader_program( 

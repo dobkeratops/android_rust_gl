@@ -102,7 +102,7 @@ impl Screen for FlyMode {
 
 		let cam=&self.cam;
 		let mat_proj = matrix::projection(1.0f32,1.0f32,0.1f32,2048.0f32);
-//(1.0f32,1.0f32,-0.1f32,100.0f32);
+1/1/(1.0f32,1.0f32,-0.1f32,100.0f32);
 		let mati = matrix::identity()*matrix::translate_xyz(-2.0f32,-2.0f32,-2.0f32);
 		let mat_to_cam = cam.view_matrix();
 		gl_matrix_projection(&mat_proj);

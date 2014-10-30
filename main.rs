@@ -20,7 +20,7 @@
 #![allow(improper_ctypes)]
 #![allow(non_upper_case_globals)]
 
-extern crate debug;
+//extern crate debug;
 extern crate libc;
 extern crate collections;
 
@@ -171,6 +171,34 @@ fn change_screen<S:Deque<Box<Screen+'static>>>(screens:&mut S,ns:ScreenChange) {
 	}
 }
 
+trait Collide2<T,Y> {
+	fn collide(&self,x:&T,y:&Y);
+}
+struct A; struct B;
+impl Collide2<A,A> for A { fn collide(&self,x:&A,y:&A){println!("A-A-A")}}
+impl Collide2<B,A> for B  { fn collide(&self,x:&B,y:&A){println!("B-B-A")}}
+impl Collide2<A,B> for A  { fn collide(&self,x:&A,y:&B){println!("A-A-B")}}
+impl Collide2<B,B> for B  { fn collide(&self,x:&B,y:&B){println!("B-B-B")}}
+fn test() {
+	let a=A;
+	let b=B;
+	a.collide(&a,&a);
+	b.collide(&b,&a);
+	a.collide(&a,&b);
+	b.collide(&b,&b);
+	a*b;
+	b*a;
+	//b.collide(&b);
+}
+impl Mul<B,()> for A{
+	fn mul(&self,rhs:&B)->(){println!("A * B")}
+}
+impl Mul<A,()> for B{
+	fn mul(&self,rhs:&A)->(){println!("B * A")}
+}
+
+
+
 pub static mut g_resources_init:bool=false;
 
 pub struct AppScreens{
@@ -179,7 +207,8 @@ pub struct AppScreens{
 
 #[no_mangle]
 pub extern "C" fn app_display_create(s:&mut AppScreens) {
-	for  screen in s.screens.mut_iter(){
+test();
+	for  screen in s.screens.iter_mut(){
 		screen.display_create();
 	}
 }
@@ -200,7 +229,7 @@ pub extern "C" fn app_destroy(_:Box<AppScreens>) {
 pub extern "C" fn app_create(argc:c_int, argv:*const *const c_char, w:c_int,h:c_int)->Box<AppScreens> {
 	box AppScreens{
 		screens:{
-			let mut x=RingBuf::new();
+			let mut x= RingBuf::new();
 			
 			x.push(box flymode::FlyMode::new() as Box<Screen>);
 			x.push(box shadertest::ShaderTest::new() as Box<Screen>); 
@@ -212,6 +241,7 @@ pub extern "C" fn app_create(argc:c_int, argv:*const *const c_char, w:c_int,h:c_
 #[no_mangle]
 #[cfg(target_os = "android")]
 pub extern "C" fn app_create(argc:c_int, argv:*const *const c_char, w:c_int,h:c_int)->Box<AppScreens> {
+	test();
 	box AppScreens{
 		screens:{
 			let mut x=RingBuf::new();

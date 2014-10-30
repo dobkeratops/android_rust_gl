@@ -119,7 +119,7 @@ pub unsafe fn create_index_buffer<T>(data:&Vec<T>)->GLuint {
 
 pub unsafe fn get_attrib_location(shader_prog:GLuint, name:&str)->GLint {
 	let r=glGetAttribLocation(shader_prog, c_str(name));
-	println!("get attrib location {:?}={:?}", name, r);
+	println!("get attrib location {}={}", name, r);
 	r
 }
 pub unsafe fn get_uniform_location(shader_prog:GLuint, name:&str)->GLint {
@@ -166,13 +166,13 @@ pub unsafe fn	create_and_compile_shader(shader_type:GLenum, source:&Vec<&str>) -
 	
 		let mut log_len:c_int=0;
 		glGetShaderInfoLog(shader_id, 512,&mut log_len as *mut c_int, &mut compile_log[0]);
-		logi!("Compile Shader Failed: logsize={:?}",
+		logi!("Compile Shader Failed: logsize={}",
 				log_len);
-		logi!("compile shader {:?} failed: \n{:?}\n", shader_id, 
+		logi!("compile shader {} failed: \n{}\n", shader_id, 
 			c_str::CString::new(&compile_log[0],false).as_str());
 
-		for s in source.iter() { logi!("{:?}",*s) }
-		logi!("{:?}",
+		for s in source.iter() { logi!("{}",*s) }
+		logi!("{}",
 			match c_str::CString::new(&compile_log[0],false).as_str() {
 				Some(s)=>s,
 				None=>"couldn't unwrap error lol",
@@ -181,7 +181,7 @@ pub unsafe fn	create_and_compile_shader(shader_type:GLenum, source:&Vec<&str>) -
 		loop{}
 	}	
 	else {
-		logi!("create shader{:?} - compile suceeded\n",  shader_id);
+		logi!("create shader{} - compile suceeded\n",  shader_id);
 	}
 	logi!("create shader-done");
 	shader_id
@@ -233,10 +233,10 @@ pub fn check_shader_error(prog:ShaderProgram) {
 			let mut buffer=[0 as GLchar,..1024];
 			let mut len:GLint=0;
 			glGetProgramInfoLog(prog,1024,&mut len,&mut buffer[0]);
-			logi!("link program failed: {:?}",err);
-			logi!("{:?}",c_str::CString::new(&buffer[0],false).as_str().unwrap());
+			logi!("link program failed: {}",err);
+			logi!("{}",c_str::CString::new(&buffer[0],false).as_str().unwrap());
 		} else {
-			logi!("link program status {:?}", err);
+			logi!("link program status {}", err);
 		}
 	}
 }
@@ -247,11 +247,11 @@ pub fn create_shader_program(ps:PixelShader,vs:VertexShader,f_bind_attribs:|p:Sh
 		glAttachShader(prog, ps);
 		glAttachShader(prog, vs);
 
-	logi!("linking verteshader{:?}, pixelshader{:?} to program{:?}\n", vs, ps, prog);
+	logi!("linking verteshader{}, pixelshader{} to program{}\n", vs, ps, prog);
 		f_bind_attribs(prog);
  		glLinkProgram(prog);
 		let x=glGetAttribLocation(prog,c_str("a_color"));
-		logi!("write,read attrib location in prog {:?} a_color={:?}", prog, x);
+		logi!("write,read attrib location in prog {} a_color={}", prog, x);
 
 		check_shader_error(prog);
 		prog
