@@ -42,7 +42,6 @@ pub trait Pos<V=Vec3<f32>> {
 // TODO: Packed normal 10:10:10
 // TODO: 565 colors
 
-
 impl<T:Copy+Num> Vec2<T> {
 	pub fn cross_to_scalar(&self,other:&Vec2<T>)->T {self.0*other.1-self.1*other.0}
 	pub fn cross_z(&self,z:T)->Vec2<T> { Vec2(-self.1*z,self.0*z)}

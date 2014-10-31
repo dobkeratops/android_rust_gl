@@ -24,9 +24,10 @@
 extern crate libc;
 extern crate collections;
 
-pub use shadertest::*;
-pub use r3d::*;
-pub use rustwin::*;
+use shadertest::ShaderTest;
+use r3d::*;
+use rustwin::*;
+use common::*;
 
 pub mod r3d;
 pub mod shadertest;
@@ -34,8 +35,17 @@ pub mod bsp;
 pub mod bsprender;
 pub mod rustwin;
 pub mod flymode;
-pub mod everywhere;
 pub mod voxel;
+
+pub mod common {
+	pub use r3d::*;
+	pub use std::vec;
+	pub use libc::{c_int,c_char};
+	pub use r3d::vecmath::*;
+	pub use r3d::{glut,gl};
+	pub use r3d::gl::*;
+	pub use r3d::glut::*;
+}
 
 // framework can be: Android, Glut, (iOS,.o.)
 // 'app_*' are hooks called from platform specific stub
@@ -46,11 +56,6 @@ extern { fn android_log_print(lvl:c_int,  s:*const c_char);}
 /*
 mod common {
 
-	pub use std::vec;
-	pub use libc::{c_int,c_char};
-	pub use r3d::vecmath::*;
-	pub use r3d::gl::*;
-	pub use r3d::glut::*;
 }
 */
 
@@ -88,7 +93,6 @@ extern { fn android_get_inputs()->AndroidInput; }
 // It might be nice to make a rust trait object for all this, 
 // however this is language independant. One can glue any other framework specifics ontop.
 
-
 // rustic mainloop possible on desktop OS.
 // this is replaced with C/objC stub on android/iOS
 #[cfg(not(target_os = "android"))]
@@ -99,6 +103,10 @@ pub fn main()
 	dump!(v.0, v.1, v.2);
 	dump!(v);
 
+	let mut hm = HashMap::new();
+	hm.insert("apple",2i);
+	dump!(hm["apple"],hm["banana"]);
+
 	unsafe {
 		let mut argc:c_int=0;
 		render_glut_init(argc,0 as *const *const c_char);
@@ -107,7 +115,7 @@ pub fn main()
 		let mut app = app_create(0,0 as *const *const c_char,1280,800);
 		app_display_create(&mut *app);
 
-// osx impl requires some callback, even though we render manually here. for cleaner window handling, we should ensure this shows the backbuffer without redraw?
+// osx impl requires some callback, even though we render manually here. for clean1er window handling, we should ensure this shows the backbuffer without redraw?
 		dump!(argc);
 
 		loop {
@@ -120,13 +128,12 @@ pub fn main()
 	}
 }
 
-
 /// render a load of meshes in a lissajous curve
 #[no_mangle]
 pub extern "C" fn	app_render(s:&mut AppScreens) 
 {
-	if rustwin::get_key_state('z')!=0 {
-		dump!(rustwin::get_key_state('z'));
+	if get_key_state('z')!=0 {
+		dump!(get_key_state('z'));
 	}
 	let mut screens=&mut s.screens;
 	screens.back().unwrap().render();

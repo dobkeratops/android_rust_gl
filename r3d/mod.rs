@@ -1,8 +1,6 @@
 #![macro_escape]
 #![feature(import_shadowing)]
 
-
-
 pub use self::macros::*;
 pub use self::to::*;
 pub use self::vecmath::*;
@@ -18,7 +16,6 @@ pub use self::geom::*;
 pub use self::array3d::*;
 pub use self::half::*;
 pub use self::render::*;
-pub use std::num::*;
 //pub use rustwin::WinEvent;
 
 pub mod macros;
@@ -43,24 +40,15 @@ pub mod geom;
 /// External context brought in by all submodules
 /// created to avoid needing circular super::*
 mod common {
-	pub use libc::{c_void,c_char};
-	pub use std::num;
+	pub use libc::{c_void,c_char,c_int};
+	pub use std::{num,vec,mem,cmp,io,ptr,c_str};
 	pub use std::num::*;
 	pub use std::f32::*;
-	pub use std::vec;
-	pub use std::vec::Vec;
-	pub use std::mem;
-	pub use std::cmp;
-	pub use std::io;
 	pub use std::str::raw::*;
 	pub use std::ops::Deref;
-	pub use std::c_str;
 	pub use std::c_str::CString;
 	pub use std::intrinsics::{size_of,offset};
-	pub use libc::types::os::arch::c95::{c_char,c_int};
-	pub use libc::types::common::c95::{c_void};
-	pub use std::collections::hashmap::{HashSet};
-	pub use std::collections::{RingBuf,Deque};
+	pub use std::collections::{RingBuf,Deque,HashMap,HashSet,DList};
 
 }
 

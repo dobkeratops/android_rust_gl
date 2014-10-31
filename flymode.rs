@@ -5,6 +5,7 @@ use bsp::bsp::{BspHeader,Blob};
 use bsprender::*;
 use rustwin::*;
 use shadertest::*;
+use common::*;
 
 #[deriving(Show)]
 pub struct Camera {
@@ -28,12 +29,9 @@ impl FlyMode {
 	}
 }
 
-
-
 impl Camera{
 
 	pub fn pos(&self)->Vec3f { self.ent.matrix.pos().to_vec3() }
-
 	pub fn new()->Camera {
 		Camera{
 			ent: Entity{
@@ -50,12 +48,14 @@ impl Camera{
 		self.ent.matrix.inv_mul_matrix(other)
 	}
 
+
 	pub fn update(&mut self, dt:f32) {
 		let ax = self.ent.matrix.0.to_vec3();
 		let ay = self.ent.matrix.1.to_vec3();
 		let az = self.ent.matrix.2.to_vec3();
 		let mut pos=self.ent.pos();
 		let mut vel=self.ent.vel;
+
 
 		let move_acc=2.0f32;
 		let rot_acc=0.1f32;
@@ -80,9 +80,18 @@ impl Camera{
 	}
 }
 
+struct Foo {
+	a:int,b:int
+}
+
+fn Foo(a:int)->Foo{
+	Foo{a:0,b:0}
+}
+
 impl Screen for FlyMode {
 
 	fn display_create(&mut self) {
+		let x=Foo(2);
 		match self.bsp.take() {
 			Some(bsp)=>{self.bsprender=Some(box BspRender::new(bsp));},
 			_=>{},
@@ -102,7 +111,7 @@ impl Screen for FlyMode {
 
 		let cam=&self.cam;
 		let mat_proj = matrix::projection(1.0f32,1.0f32,0.1f32,2048.0f32);
-1/1/(1.0f32,1.0f32,-0.1f32,100.0f32);
+//1/1/(1.0f32,1.0f32,-0.1f32,100.0f32);
 		let mati = matrix::identity()*matrix::translate_xyz(-2.0f32,-2.0f32,-2.0f32);
 		let mat_to_cam = cam.view_matrix();
 		gl_matrix_projection(&mat_proj);

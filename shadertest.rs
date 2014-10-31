@@ -2,12 +2,11 @@
 #![feature(import_shadowing)]
 
 use r3d::render;
-use r3d::*;
 use bsp::*;
 use bsprender::*;
 use r3d::shaders::*;
 use r3d::vertex::*;
-use everywhere::*;
+use common::*;
 use rustwin::*;
 
 struct	RMesh 
@@ -83,8 +82,8 @@ impl RMesh {
 				num_vertices:num_vertices as GLuint,
 				num_indices:num_indices as GLuint,
 				vertex_size: mem::size_of_val(&vertices[0]) as GLsizei,
-				vbo: create_vertex_buffer(&vertices),
-				ibo: create_index_buffer(&indices)
+				vbo: render::create_vertex_buffer(&vertices),
+				ibo: render::create_index_buffer(&indices)
 			}
 		}
 	}

@@ -4,12 +4,9 @@
 // provides a tablet/console oriented MVC framework
 
 
-use r3d::*;
-use r3d::{glut,gl};
-use std::ptr;
-use collections::*;
 //use r3d::Vec2f;
-use collections::dlist::DList;
+
+use common::*;
 
 #[deriving(Show,Clone,PartialEq)]
 pub struct Window{handle:i32}	// todo - a trait object ?
